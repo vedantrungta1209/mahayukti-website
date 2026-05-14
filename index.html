@@ -41,7 +41,7 @@ img{max-width:100%;}
 /* ═══════════════════════════════════════════
    NAV
 ═══════════════════════════════════════════ */
-#nav{position:fixed;top:0;left:0;right:0;z-index:800;padding:26px 64px;display:flex;align-items:center;justify-content:space-between;transition:all .4s;}
+#nav{position:fixed;top:0;left:0;right:0;z-index:900;padding:20px 64px;display:flex;align-items:center;justify-content:space-between;transition:all .4s;}
 #nav.stuck{padding:14px 64px;background:rgba(11,27,58,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
 .nav-logo{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--white);cursor:pointer;}
 .nav-logo span{color:var(--gold);}
@@ -57,11 +57,11 @@ img{max-width:100%;}
 .ham span{width:22px;height:1px;background:var(--white);display:block;transition:all .3s;}
 
 /* mobile drawer */
-#mob-nav{position:fixed;top:0;right:-100%;width:260px;height:100vh;background:rgba(11,27,58,.98);backdrop-filter:blur(20px);border-left:1px solid var(--border);z-index:900;display:flex;flex-direction:column;padding:80px 32px 40px;gap:24px;transition:right .35s cubic-bezier(.4,0,.2,1);}
+#mob-nav{position:fixed;top:0;right:-100%;width:260px;height:100vh;background:rgba(11,27,58,.98);backdrop-filter:blur(20px);border-left:1px solid var(--border);z-index:910;display:flex;flex-direction:column;padding:80px 32px 40px;gap:24px;transition:right .35s cubic-bezier(.4,0,.2,1);}
 #mob-nav.open{right:0;}
 #mob-nav a{font-size:13px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:color .2s;}
 #mob-nav a:hover{color:var(--gold);}
-#mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:850;display:none;}
+#mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:905;display:none;}
 #mob-overlay.show{display:block;}
 
 /* ═══════════════════════════════════════════
@@ -129,9 +129,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 .hero-grid{position:absolute;inset:0;
   background-image:linear-gradient(rgba(201,148,58,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,148,58,.04) 1px,transparent 1px);
   background-size:80px 80px;}
-.hero-content{position:relative;z-index:2;text-align:center;padding:0 40px;max-width:1000px;}
+.hero-content{position:relative;z-index:2;text-align:center;padding:0 24px;max-width:1000px;}
 .hero-eyebrow{font-size:11px;color:var(--gold);letter-spacing:5px;text-transform:uppercase;margin-bottom:28px;opacity:0;animation:fu .7s .3s forwards;}
-.hero-h1{font-family:var(--serif);font-size:clamp(68px,10vw,136px);font-weight:700;line-height:1;letter-spacing:-2px;color:var(--white);margin-bottom:8px;opacity:0;animation:fu .8s .5s forwards;}
+.hero-h1{font-family:var(--serif);font-size:clamp(48px,10vw,136px);font-weight:700;line-height:1.02;letter-spacing:-2px;color:var(--white);margin-bottom:8px;opacity:0;animation:fu .8s .5s forwards;}
 .hero-h1 em{color:var(--gold);font-style:italic;}
 .hero-tag{font-family:var(--serif);font-size:clamp(18px,2vw,26px);color:rgba(255,255,255,.35);font-style:italic;margin-bottom:44px;opacity:0;animation:fu .7s .7s forwards;}
 .hero-div{width:56px;height:1px;margin:0 auto 36px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;animation:fu .6s .85s forwards;}
@@ -227,7 +227,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 /* ═══════════════════════════════════════════
    NETWORK PAGE — LAYERS DETAIL
 ═══════════════════════════════════════════ */
-.network-hero{padding:160px 0 80px;position:relative;overflow:hidden;}
+.network-hero{padding:180px 0 80px;position:relative;overflow:hidden;}
 .network-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 55% 55% at 65% 45%,rgba(201,148,58,.09) 0%,transparent 65%);}
 .layer-detail{margin-bottom:28px;border-radius:var(--r);overflow:hidden;}
 .ld-hdr{padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
@@ -252,7 +252,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 .fee-val{font-size:14px;font-weight:600;color:var(--white);font-family:var(--playfair);letter-spacing:.3px;}
 .fee-note-sm{font-size:11px;color:rgba(255,255,255,.22);margin-top:10px;line-height:1.55;}
 .fee-best{display:inline-block;background:var(--gold);color:var(--navy);font-size:9px;padding:2px 7px;border-radius:2px;font-weight:700;margin-left:6px;vertical-align:middle;}
-.comp-table{width:100%;border-collapse:collapse;margin-top:48px;}
+.comp-table{width:100%;border-collapse:collapse;margin-top:48px;min-width:600px;}
 .dm-cell{padding:16px 18px;border:1px solid var(--border2);transition:all .2s;cursor:default;}
 .dm-cell:hover{background:rgba(201,148,58,.05);border-color:var(--border);}
 .dm-name{font-size:13px;font-weight:500;color:rgba(255,255,255,.68);margin-bottom:4px;}
@@ -268,7 +268,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 /* ═══════════════════════════════════════════
    VERTICALS PAGE
 ═══════════════════════════════════════════ */
-.vert-hero{padding:160px 0 80px;}
+.vert-hero{padding:180px 0 80px;}
 .vert-detail{padding:80px 0;border-top:1px solid var(--border2);}
 .vert-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start;}
 .vert-num{font-family:var(--serif);font-size:130px;font-weight:700;color:rgba(201,148,58,.07);line-height:1;margin-bottom:-24px;letter-spacing:-4px;}
@@ -288,7 +288,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 /* ═══════════════════════════════════════════
    FOUNDING PAGE
 ═══════════════════════════════════════════ */
-.founding-hero{padding:160px 0 80px;text-align:center;}
+.founding-hero{padding:180px 0 80px;text-align:center;}
 .founding-domain-section{padding:60px 0;border-top:1px solid var(--border2);}
 .domain-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
 .domain-card-big{padding:44px;border-radius:var(--r);}
@@ -311,7 +311,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 /* ═══════════════════════════════════════════
    ABOUT PAGE
 ═══════════════════════════════════════════ */
-.about-hero{padding:160px 0 80px;}
+.about-hero{padding:180px 0 80px;}
 .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
 .about-visual{position:relative;height:540px;}
 .about-main-card{position:absolute;inset:0;border:1px solid var(--border);border-radius:var(--r);padding:44px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(160deg,rgba(11,27,58,.5),rgba(11,27,58,.95));}
@@ -340,7 +340,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 /* ═══════════════════════════════════════════
    CONTACT PAGE
 ═══════════════════════════════════════════ */
-.contact-hero{padding:160px 0 80px;}
+.contact-hero{padding:180px 0 80px;}
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;margin-top:64px;}
 .contact-card{padding:36px;border:1px solid var(--border2);border-radius:var(--r);transition:all .3s;}
 .contact-card:hover{border-color:var(--border);background:rgba(201,148,58,.03);}
@@ -384,8 +384,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 /* ═══════════════════════════════════════════
    JOIN PAGE — FULL REDESIGN
 ═══════════════════════════════════════════ */
-#pg-join .j-wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:120px 64px 80px;}
-#pg-join .j-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:80px;align-items:start;}
+#pg-join .j-wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:160px 64px 80px;}
+#pg-join .j-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:64px;align-items:start;}
 #pg-join .j-left{position:sticky;top:100px;}
 #pg-join .j-eyebrow{font-size:11px;font-weight:500;color:var(--gold);letter-spacing:4px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 #pg-join .j-eyebrow::before{content:'';display:inline-block;width:24px;height:1px;background:var(--gold);}
@@ -505,7 +505,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 }
 @media(max-width:1024px){
   .wrap,.wrap-sm{padding:0 36px;}
-  #nav,#nav.stuck{padding:16px 36px;}
+  #nav,#nav.stuck{padding:14px 36px;}
   .what-grid,.about-grid,.domain-grid,.vert-grid,.contact-grid{grid-template-columns:1fr;gap:48px;}
   .what-visual,.about-visual{height:300px;}
   .v-grid{grid-template-columns:1fr;}
@@ -514,6 +514,79 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
   #footer{padding:48px 36px 28px;}
   .principles-grid{grid-template-columns:1fr 1fr;}
   .comp-table{font-size:12px;}
+  #pg-join .j-grid{grid-template-columns:1fr;gap:40px;}
+  #pg-join .j-left{position:static;}
+  #pg-join .j-stats{grid-template-columns:repeat(4,1fr);}
+  #pg-join .j-tg,#pg-join .j-fr,#pg-join .j-ig{grid-template-columns:1fr;}
+  #pg-join .j-wrap{padding:140px 36px 60px;}
+  .blog-grid{grid-template-columns:1fr 1fr;}
+  .b-card.b-featured{grid-column:span 2;grid-template-columns:1fr;}
+  .b-featured-visual{display:none;}
+  .post-related-grid{grid-template-columns:1fr 1fr;}
+  .ld-grid{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .wrap,.wrap-sm{padding:0 24px;}
+  #nav,#nav.stuck{padding:14px 24px;}
+  .nav-links{display:none;}
+  .ham{display:flex;}
+  .section{padding:80px 0;}
+  .section-sm{padding:60px 0;}
+  .hero-content{padding:0 20px;}
+  .hero-h1{font-size:clamp(42px,12vw,80px);letter-spacing:-1px;}
+  .hero-tag{font-size:clamp(14px,4vw,20px);}
+  .hero-desc{font-size:15px;}
+  .h1{font-size:clamp(36px,9vw,60px);}
+  .h2{font-size:clamp(28px,7vw,44px);}
+  .h3{font-size:clamp(22px,5vw,32px);}
+  .body-lg{font-size:15px;}
+  .body-md{font-size:14px;}
+  .founding-grid,.vert-features,.principles-grid,.ld-grid,.domain-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr;}
+  .f-bottom{flex-direction:column;gap:12px;text-align:center;}
+  .f-legal{flex-wrap:wrap;justify-content:center;}
+  .layer-row{flex-direction:column;align-items:flex-start;gap:6px;}
+  .v-grid{grid-template-columns:1fr;}
+  .v-card{padding:32px 28px;}
+  .what-chip1,.what-chip2,.about-chip1,.about-chip2{display:none;}
+  .layers-stack{max-width:100%;}
+  .blog-grid{grid-template-columns:1fr;}
+  .b-card.b-featured{grid-column:span 1;grid-template-columns:1fr;}
+  .b-card.b-featured .b-title{font-size:24px;}
+  .blog-grid-skeleton{grid-template-columns:1fr;}
+  .post-related-grid{grid-template-columns:1fr;}
+  .post-overlay-inner{padding:80px 20px 80px;}
+  .post-close{left:20px;top:20px;}
+  .post-h1{font-size:clamp(26px,8vw,44px);}
+  .post-content{font-size:15px;}
+  #pg-join .j-wrap{padding:120px 20px 60px;}
+  #pg-join .j-stats{grid-template-columns:1fr 1fr;}
+  #pg-join .j-tabs{padding:0 12px;}
+  #pg-join .j-fb{padding:20px 16px;}
+  #pg-join .j-tab{font-size:9px;letter-spacing:.5px;}
+  #pg-join .j-tg,#pg-join .j-fr,#pg-join .j-ig{grid-template-columns:1fr;}
+  .j-headline{font-size:clamp(28px,8vw,44px) !important;}
+  .contact-grid{grid-template-columns:1fr;}
+  .about-grid{grid-template-columns:1fr;}
+  .network-hero .wrap{padding-top:80px;}
+  .ld-hdr{flex-direction:column;align-items:flex-start;gap:8px;}
+  .comp-table th,.comp-table td{padding:8px 10px;font-size:11px;}
+  .lp{font-size:9px;padding:3px 7px;}
+  .j-layer{flex-wrap:wrap;}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:clamp(38px,12vw,64px);}
+  .h1{font-size:clamp(30px,9vw,48px);}
+  .h2{font-size:clamp(24px,7vw,36px);}
+  #nav,#nav.stuck{padding:12px 20px;}
+  .wrap,.wrap-sm{padding:0 16px;}
+  #footer{padding:40px 20px 24px;}
+  .btn{padding:12px 24px;font-size:11px;}
+  .hero-btns{flex-direction:column;align-items:center;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .founding-grid{grid-template-columns:1fr;}
+  .blog-grid-skeleton{grid-template-columns:1fr;}
+  .blog-grid-skeleton .b-featured{grid-column:span 1;}
 }
 @media(max-width:640px){
   .wrap,.wrap-sm{padding:0 20px;}
@@ -1070,7 +1143,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
       <div class="rv" style="margin-top:60px;">
         <p class="eyebrow">Access Comparison</p>
         <h2 class="h2" style="font-size:clamp(24px,2.8vw,40px);margin-bottom:24px;">What each layer <em>gets you.</em></h2>
-        <div style="overflow-x:auto;">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);">
           <table class="comp-table">
             <thead>
               <tr><th style="width:28%">Feature</th><th>Network Member</th><th>Participant</th><th>ACG Member</th><th>Council</th></tr>
@@ -1633,354 +1706,60 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 
 
 <!-- ═══════════════════════════════════════════
-     PAGE: BLOG
+     PAGE: BLOG — DYNAMIC
 ═══════════════════════════════════════════ -->
 <div class="page" id="pg-blog">
 
-  <!-- BLOG LIST VIEW -->
-  <div class="blog-list-view" id="blogListView">
+  <!-- BLOG LIST -->
+  <div id="blogList">
     <div class="blog-hero">
       <div class="wrap">
         <div class="rv">
           <p class="eyebrow" style="text-align:center">MahaYukti Blog</p>
-          <h1 class="h1" style="text-align:center;max-width:660px;margin:0 auto 16px;">Thinking about<br><em>professional India.</em></h1>
-          <p class="body-lg" style="text-align:center;max-width:500px;margin:0 auto;">Perspectives on professional networks, cross-domain collaboration, and what it takes to build something that lasts.</p>
+          <h1 class="h1" style="text-align:center;max-width:640px;margin:0 auto 16px;">Thinking about<br><em>professional India.</em></h1>
+          <p class="body-lg" style="text-align:center;max-width:480px;margin:0 auto 48px;">Perspectives on professional networks, cross-domain collaboration, and what it takes to build something that lasts.</p>
         </div>
-        <div class="blog-grid">
-<div class="blog-card featured rv" onclick="showPost('p1')">
-  <div class="blog-card-top">
-    <div class="blog-cat">Network Philosophy</div>
-    <div class="blog-title">Why Indian professionals are the most under-networked in the world</div>
-    <div class="blog-excerpt">India produces more engineers, lawyers, doctors, and CAs than almost any country on earth. Yet when it comes to professional networks that actually work — we are decades behind. Here is why that is, and why it is about to change.</div>
-    <div class="blog-meta">
-      <span class="blog-author">Admin · MahaYukti</span>
-      <span class="blog-date">14 May 2026</span>
-      <span class="blog-read">6 min read →</span>
-    </div>
-  </div>
-  <div class="blog-visual"><div class="bv-icon">◈</div></div>
-</div>
-<div class="blog-card rv" onclick="showPost('p2')">
-  <div class="blog-card-top">
-    <div class="blog-cat">The Network</div>
-    <div class="blog-title">The difference between a contact and a connection</div>
-    <div class="blog-excerpt">Most professionals have hundreds of contacts. Very few have genuine connections. The distinction matters more than most people realise — and it determines everything about whether a professional network actually works for you.</div>
-  </div>
-  <div class="blog-meta">
-    <span class="blog-author">Admin · MahaYukti</span>
-    <span class="blog-date">13 May 2026</span>
-    <span class="blog-read">4 min read →</span>
-  </div>
-</div>
-<div class="blog-card rv" onclick="showPost('p3')">
-  <div class="blog-card-top">
-    <div class="blog-cat">MY Concierge</div>
-    <div class="blog-title">What MY Concierge does — and who it is for</div>
-    <div class="blog-excerpt">Some situations require more than a single professional. They require a coordinated network, discreet and available at short notice, that knows exactly who to call. That is what MY Concierge exists to do.</div>
-  </div>
-  <div class="blog-meta">
-    <span class="blog-author">Admin · MahaYukti</span>
-    <span class="blog-date">12 May 2026</span>
-    <span class="blog-read">5 min read →</span>
-  </div>
-</div>
-<div class="blog-card rv" onclick="showPost('p4')">
-  <div class="blog-card-top">
-    <div class="blog-cat">Founding Members</div>
-    <div class="blog-title">The mango tree — why founding membership is not a job offer</div>
-    <div class="blog-excerpt">When we tell people that founding membership carries no salary, no equity, and no immediate financial return — most people pause. A few lean in. Those few are the ones we are looking for.</div>
-  </div>
-  <div class="blog-meta">
-    <span class="blog-author">Admin · MahaYukti</span>
-    <span class="blog-date">11 May 2026</span>
-    <span class="blog-read">4 min read →</span>
-  </div>
-</div>
-<div class="blog-card rv" onclick="showPost('p5')">
-  <div class="blog-card-top">
-    <div class="blog-cat">Network Structure</div>
-    <div class="blog-title">Five layers, one ecosystem — how MahaYukti is organised</div>
-    <div class="blog-excerpt">Most networks are flat. Everyone is a member. Everyone has the same access. Everyone sees the same thing. MahaYukti is built differently — and the difference matters.</div>
-  </div>
-  <div class="blog-meta">
-    <span class="blog-author">Admin · MahaYukti</span>
-    <span class="blog-date">10 May 2026</span>
-    <span class="blog-read">5 min read →</span>
-  </div>
-</div>
-<div class="blog-card rv" onclick="showPost('p6')">
-  <div class="blog-card-top">
-    <div class="blog-cat">MY Advisory</div>
-    <div class="blog-title">What a cross-domain mandate actually looks like</div>
-    <div class="blog-excerpt">The most valuable professional work rarely fits neatly into a single domain. A corporate acquisition needs a lawyer, a CA, a market researcher, and a strategist. Here is how MahaYukti coordinates all four.</div>
-  </div>
-  <div class="blog-meta">
-    <span class="blog-author">Admin · MahaYukti</span>
-    <span class="blog-date">9 May 2026</span>
-    <span class="blog-read">4 min read →</span>
-  </div>
-</div>
+        <!-- Loading skeleton -->
+        <div class="blog-grid-skeleton" id="blogSkeleton">
+          <div class="skeleton-card b-card b-featured" style="grid-column:span 3;min-height:220px;padding:0;border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;display:grid;grid-template-columns:1.3fr 1fr;">
+            <div style="padding:44px;">
+              <div class="skeleton sk-line short" style="margin-bottom:16px;"></div>
+              <div class="skeleton sk-line title" style="height:32px;margin-bottom:10px;"></div>
+              <div class="skeleton sk-line title" style="height:32px;width:60%;margin-bottom:20px;"></div>
+              <div class="skeleton sk-line full" style="margin-bottom:8px;"></div>
+              <div class="skeleton sk-line med"></div>
+            </div>
+            <div class="skeleton" style="border-radius:0;opacity:.4;"></div>
+          </div>
+          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
+          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
+          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
+          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
+          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
+        </div>
+        <!-- Actual posts grid -->
+        <div class="blog-grid" id="blogGrid" style="display:none;margin-top:0;"></div>
+        <!-- Error state -->
+        <div class="blog-error" id="blogError" style="display:none;">
+          <div class="blog-error-icon">◈</div>
+          <div class="blog-error-msg">Unable to load posts right now. Please try again shortly.</div>
+          <button class="btn btn-outline btn-sm" onclick="loadBlogPosts()">Try Again</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- POST VIEWS -->
-<div class="post-view" id="post-p1">
-  <div class="wrap-sm" style="padding-top:140px;">
-    <div class="post-back" onclick="showBlogList()">← Back to Blog</div>
-    <div class="post-header">
-      <div class="post-cat">Network Philosophy</div>
-      <h1 class="post-title">Why Indian professionals are the most under-networked in the world</h1>
-      <div class="post-meta-row">
-        <span>Admin · MahaYukti</span>
-        <span>14 May 2026</span>
-        <span>6 min read</span>
-      </div>
+  <!-- POST OVERLAY — full screen scrollable post view -->
+  <div class="post-overlay" id="postOverlay">
+    <div class="post-progress"><div class="post-progress-fill" id="postProgress"></div></div>
+    <div class="post-close" onclick="closePost()">
+      <div class="post-close-line"></div>
+      <span>Back to Blog</span>
     </div>
-    <div class="post-body">
-      <p>India produces more engineers, lawyers, doctors, and chartered accountants than almost any country on earth. We graduate hundreds of thousands of professionals every year across every conceivable domain. By raw numbers, we should have the most powerful professional ecosystem in the world.</p>
-<p>We don't. And the reason is not capability. It is infrastructure.</p>
-<h2>The Problem Nobody Talks About</h2>
-<p>In London, a newly qualified barrister knows that after five years of practice, they will have a network of solicitors, judges, clients, and peers that spans the city and beyond. Not because they are exceptional. Because the infrastructure — the chambers system, the professional associations, the informal circuits of dinners and events — exists and functions.</p>
-<p>In Mumbai, a newly qualified advocate with equal or superior ability starts from scratch. Their network is whoever they happened to sit next to in law school, whoever they clerked under, and whoever their family already knew. The infrastructure does not exist in the same way. And so the most talented professionals spend the first decade of their careers building what their counterparts in the West inherit on arrival.</p>
-<blockquote><p>"The most powerful professional networks are the ones no single person owns — but every member builds."</p></blockquote>
-<h2>What LinkedIn Does and Does Not Do</h2>
-<p>LinkedIn is a directory. A very large, very noisy directory. It connects you to everyone, which in practice means it connects you to no one in particular. The signal-to-noise ratio is so poor that most serious professionals treat it as a broadcast channel — a place to post, not a place to connect.</p>
-<p>Real professional networks have always been private. The chambers that matter. The clubs that produce decisions. The rooms where mandates are assigned before they are ever advertised publicly. These exist in India too — but they are fragmented, domain-specific, and inaccessible unless you already know someone inside.</p>
-<h2>The Cross-Domain Gap</h2>
-<p>Here is the specific problem MahaYukti was built to solve.</p>
-<p>A CA in Lucknow who is brilliant at forensic accounting has no infrastructure to reach the corporate litigation lawyer in Bangalore who needs exactly that expertise. A startup founder in Coimbatore who needs a CA, a lawyer, and a banker — coordinated and vetted — has no single place to find all three. A retiring IPS officer whose three decades of institutional knowledge is invaluable to the private sector has no platform to reach the companies that would pay handsomely for it.</p>
-<p>These professionals are not missing expertise. They are missing each other.</p>
-<h2>What Changes Now</h2>
-<p>MahaYukti is built on a simple premise: Indian professionals deserve the same private, cross-domain network infrastructure that the West has long taken for granted. Not a job board. Not a freelance marketplace. A private professional network — by professionals, for professionals, of professionals.</p>
-<ul>
-<li>No gatekeeping between domains</li>
-<li>No fees between members</li>
-<li>No platform taking a cut of what professionals earn together</li>
-</ul>
-<p>The mango tree you plant today will not bear fruit immediately. But the person who plants it is not the same as the person who simply buys the fruit later.</p>
-<div class="post-divider"></div>
-<p>If this resonates — mahayukti.com is open.</p>
-      <div class="post-cta-box">
-        <p class="eyebrow" style="text-align:center">Join MahaYukti</p>
-        <h3 class="h3" style="text-align:center;color:var(--white);font-family:var(--serif);font-size:28px;margin-bottom:10px;">The network is open.<br><em style="color:var(--gold)">Membership is earned.</em></h3>
-        <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;max-width:440px;margin-left:auto;margin-right:auto;">Every domain. Every geography. Every experience level. Apply at mahayukti.com or write to info@mahayukti.com.</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a class="btn btn-gold btn-sm" onclick="goto('join')">Apply Now</a>
-          <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
-        </div>
-      </div>
+    <div class="post-overlay-inner" id="postContent">
+      <!-- Populated dynamically -->
     </div>
   </div>
-</div>
-<div class="post-view" id="post-p2">
-  <div class="wrap-sm" style="padding-top:140px;">
-    <div class="post-back" onclick="showBlogList()">← Back to Blog</div>
-    <div class="post-header">
-      <div class="post-cat">The Network</div>
-      <h1 class="post-title">The difference between a contact and a connection</h1>
-      <div class="post-meta-row">
-        <span>Admin · MahaYukti</span>
-        <span>13 May 2026</span>
-        <span>4 min read</span>
-      </div>
-    </div>
-    <div class="post-body">
-      <p>Most professionals confuse contacts with connections. They are not the same thing. And understanding the difference changes how you think about every professional network you are ever part of.</p>
-<h2>A Contact Is Someone You Know Of</h2>
-<p>You met them at a conference. You connected on LinkedIn. You have their card somewhere. If you emailed them cold today, they would probably remember your name — or they might not. A contact is a weak tie. Useful in aggregate. Unreliable individually.</p>
-<h2>A Connection Is Someone Who Acts</h2>
-<p>A connection is someone who, when you need something, picks up the phone. Who refers you without being asked. Who thinks of you when an opportunity arises that suits you. Connections are built on trust, mutual value, and time. They are rare. They are irreplaceable.</p>
-<blockquote><p>"The quality of your professional life is determined almost entirely by the quality of your connections — not the quantity of your contacts."</p></blockquote>
-<h2>Why Most Networks Produce Contacts, Not Connections</h2>
-<p>Most professional networks are optimised for breadth. More members. More connections. More visibility. This is useful for broadcasting — but it is the enemy of depth. When you are connected to ten thousand people, you are genuinely connected to none of them.</p>
-<p>The networks that produce real connections are private, selective, and built around genuine professional alignment. They are small enough that members actually know each other. They are structured so that value flows in both directions. They have a reason to exist beyond visibility.</p>
-<h2>What MahaYukti Is Built For</h2>
-<p>MahaYukti is not built to maximise your contact list. It is built to give you ten genuine connections you would not otherwise have — across domains, across geographies, across experience levels — that change what you are able to do professionally.</p>
-<p>A lawyer who connects with a forensic CA and a cybersecurity expert through MahaYukti does not just have two new contacts. They have the foundation for a mandate they could not have delivered alone.</p>
-<div class="post-divider"></div>
-<p>That is the difference. And that is what the network is built for.</p>
-      <div class="post-cta-box">
-        <p class="eyebrow" style="text-align:center">Join MahaYukti</p>
-        <h3 class="h3" style="text-align:center;color:var(--white);font-family:var(--serif);font-size:28px;margin-bottom:10px;">The network is open.<br><em style="color:var(--gold)">Membership is earned.</em></h3>
-        <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;max-width:440px;margin-left:auto;margin-right:auto;">Every domain. Every geography. Every experience level. Apply at mahayukti.com or write to info@mahayukti.com.</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a class="btn btn-gold btn-sm" onclick="goto('join')">Apply Now</a>
-          <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="post-view" id="post-p3">
-  <div class="wrap-sm" style="padding-top:140px;">
-    <div class="post-back" onclick="showBlogList()">← Back to Blog</div>
-    <div class="post-header">
-      <div class="post-cat">MY Concierge</div>
-      <h1 class="post-title">What MY Concierge does — and who it is for</h1>
-      <div class="post-meta-row">
-        <span>Admin · MahaYukti</span>
-        <span>12 May 2026</span>
-        <span>5 min read</span>
-      </div>
-    </div>
-    <div class="post-body">
-      <p>Most professional services operate in silos. You hire a lawyer for a legal matter. You hire a CA for a financial one. You find a consultant for strategy. Each engagement is separate. Each professional works without knowing what the others are doing. The client — you — carries the coordination burden alone.</p>
-<p>Some situations are too complex, too sensitive, or too time-critical for that model to work.</p>
-<h2>The Problem MY Concierge Solves</h2>
-<p>Consider a scenario. A business family in Ahmedabad is facing a hostile acquisition attempt. They need a corporate lawyer to review the takeover bid. A CA to analyse the financial implications. A strategic advisor to model the response options. A public affairs specialist if the matter becomes public. And they need all of this coordinated, confidential, and fast.</p>
-<p>Who do they call? Where does that call go?</p>
-<p>MY Concierge exists to answer that call.</p>
-<h2>What MY Concierge Actually Does</h2>
-<p>MY Concierge is MahaYukti's bespoke facilitation vertical. It is not a consulting firm. It does not employ anyone. It is a private coordination layer — connecting individuals and organisations who face complex, sensitive, or time-critical circumstances with the precisely right professionals across MahaYukti's network.</p>
-<ul>
-<li>Cross-jurisdictional legal and regulatory navigation</li>
-<li>Discreet personal and reputational matter management</li>
-<li>Crisis coordination across multiple professional domains</li>
-<li>High-value introductions that require institutional trust</li>
-<li>Complex financial and legal structuring across borders</li>
-</ul>
-<blockquote><p>"Some situations require more than expertise. They require discretion, speed, and the right people — coordinated."</p></blockquote>
-<h2>Who It Is For</h2>
-<p>MY Concierge is not a public service. It is accessible to MahaYukti members and referred clients only. The first conversation is always confidential. Client identities are never disclosed outside the immediate engagement team.</p>
-<p>It is for the situations that cannot wait. The matters that cannot be posted on a public platform. The needs that require someone to simply make the right calls — quietly, quickly, and correctly.</p>
-<div class="post-divider"></div>
-<p>If you have a situation that fits this description — write to info@mahayukti.com. The first conversation is always confidential.</p>
-      <div class="post-cta-box">
-        <p class="eyebrow" style="text-align:center">Join MahaYukti</p>
-        <h3 class="h3" style="text-align:center;color:var(--white);font-family:var(--serif);font-size:28px;margin-bottom:10px;">The network is open.<br><em style="color:var(--gold)">Membership is earned.</em></h3>
-        <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;max-width:440px;margin-left:auto;margin-right:auto;">Every domain. Every geography. Every experience level. Apply at mahayukti.com or write to info@mahayukti.com.</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a class="btn btn-gold btn-sm" onclick="goto('join')">Apply Now</a>
-          <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="post-view" id="post-p4">
-  <div class="wrap-sm" style="padding-top:140px;">
-    <div class="post-back" onclick="showBlogList()">← Back to Blog</div>
-    <div class="post-header">
-      <div class="post-cat">Founding Members</div>
-      <h1 class="post-title">The mango tree — why founding membership is not a job offer</h1>
-      <div class="post-meta-row">
-        <span>Admin · MahaYukti</span>
-        <span>11 May 2026</span>
-        <span>4 min read</span>
-      </div>
-    </div>
-    <div class="post-body">
-      <p>When we explain founding membership to most professionals, we watch a specific thing happen. They hear "no salary" and their attention shifts. They are still polite. But they are already looking for the exit.</p>
-<p>A few people hear the same words and lean forward. Those are the ones we are building with.</p>
-<h2>What Founding Membership Actually Is</h2>
-<p>Founding membership is not a job. It is not a gig. It is not an internship with a future promise. It is an invitation to plant something — with the understanding that the person who plants the tree is not the same as the person who simply buys the fruit later.</p>
-<p>The founding members of MahaYukti are helping build the legal framework, the technology infrastructure, and the financial architecture of a network that will serve thousands of professionals. In exchange, they receive permanent status, all Advisory & Consulting Group privileges at no cost, forever, and a seat on the founding council that governs who enters the inner layers of the network.</p>
-<h2>Why No Salary Makes It More Valuable, Not Less</h2>
-<p>When you pay someone to do something, you are buying a transaction. They deliver. You pay. It ends there. The relationship is transactional and bounded.</p>
-<p>When someone contributes to something because they believe in it — because they see what it can become — the relationship is fundamentally different. They are not an employee. They are a co-builder. And co-builders of something significant carry a status that no salary can purchase later.</p>
-<blockquote><p>"The person who plants the mango tree is not the same as the person who simply buys the fruit later."</p></blockquote>
-<h2>What We Are Actually Asking</h2>
-<p>No commitment. No non-compete. No exclusivity. Founding membership is a lifetime designation — on your terms, always. Contribute when you want. Step back when you need to. The tag stays regardless.</p>
-<p>What we are asking for is genuine alignment. The belief that India's professionals deserve better infrastructure. The willingness to help build it. The understanding that the value of what you are building will compound over time in ways that a one-time payment never could.</p>
-<div class="post-divider"></div>
-<p>Phase 1 founding member applications are closed. Network Membership is open to all — mahayukti.com.</p>
-      <div class="post-cta-box">
-        <p class="eyebrow" style="text-align:center">Join MahaYukti</p>
-        <h3 class="h3" style="text-align:center;color:var(--white);font-family:var(--serif);font-size:28px;margin-bottom:10px;">The network is open.<br><em style="color:var(--gold)">Membership is earned.</em></h3>
-        <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;max-width:440px;margin-left:auto;margin-right:auto;">Every domain. Every geography. Every experience level. Apply at mahayukti.com or write to info@mahayukti.com.</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a class="btn btn-gold btn-sm" onclick="goto('join')">Apply Now</a>
-          <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="post-view" id="post-p5">
-  <div class="wrap-sm" style="padding-top:140px;">
-    <div class="post-back" onclick="showBlogList()">← Back to Blog</div>
-    <div class="post-header">
-      <div class="post-cat">Network Structure</div>
-      <h1 class="post-title">Five layers, one ecosystem — how MahaYukti is organised</h1>
-      <div class="post-meta-row">
-        <span>Admin · MahaYukti</span>
-        <span>10 May 2026</span>
-        <span>5 min read</span>
-      </div>
-    </div>
-    <div class="post-body">
-      <p>Most professional networks make the same structural mistake. They treat all members as equal. Same access. Same visibility. Same experience. The logic is democratic — but the result is mediocre.</p>
-<p>When everyone has access to everything, nothing has value. When the most junior member and the most senior professional see the same platform, the most senior professional leaves.</p>
-<h2>Why Layers Matter</h2>
-<p>MahaYukti is built on five layers. Not as hierarchy for its own sake — but because different professionals at different stages of their journey and contribution need and deserve different things from a network.</p>
-<p>A fresher who just joined the network needs peer connections, mentoring access, and a verified credential. They do not need — and should not have — access to a sensitive client mandate board.</p>
-<p>An ACG member who has been active in the network for a year, has delivered three mandates, and has built a track record of professional excellence deserves access to a different class of engagement entirely.</p>
-<h2>The Five Layers</h2>
-<ul>
-<li>Network Member — the entry point. Verified credential. Directory listing. Lead routing. Peer community.</li>
-<li>Network Participant — active professionals with client-facing visibility, domain forums, and mentoring access.</li>
-<li>Advisory & Consulting Group — the operational core. Internal mandates, MY Advisory, MY Consultancy, MY Concierge.</li>
-<li>Network Council — Founding Members and Caretakers. Governance, standards, and ACG selection.</li>
-<li>Network President — Admin. The apex. Ghost identity. Involved only when the network needs it.</li>
-</ul>
-<blockquote><p>"The path upward is earned — never bought. That is what makes each layer mean something."</p></blockquote>
-<h2>What Each Layer Earns You</h2>
-<p>Every layer is earned. You start as a Network Member. You demonstrate value, contribution, and professional excellence. You become a Participant. Outstanding Participants are invited — by the Council, not by application — to the ACG. Exceptional ACG members become Council members.</p>
-<p>Money does not determine your layer. Contribution does. That is the design. And that is what makes the network worth being inside.</p>
-<div class="post-divider"></div>
-<p>Apply at mahayukti.com. Start at Network Member. The path upward is yours to build.</p>
-      <div class="post-cta-box">
-        <p class="eyebrow" style="text-align:center">Join MahaYukti</p>
-        <h3 class="h3" style="text-align:center;color:var(--white);font-family:var(--serif);font-size:28px;margin-bottom:10px;">The network is open.<br><em style="color:var(--gold)">Membership is earned.</em></h3>
-        <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;max-width:440px;margin-left:auto;margin-right:auto;">Every domain. Every geography. Every experience level. Apply at mahayukti.com or write to info@mahayukti.com.</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a class="btn btn-gold btn-sm" onclick="goto('join')">Apply Now</a>
-          <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="post-view" id="post-p6">
-  <div class="wrap-sm" style="padding-top:140px;">
-    <div class="post-back" onclick="showBlogList()">← Back to Blog</div>
-    <div class="post-header">
-      <div class="post-cat">MY Advisory</div>
-      <h1 class="post-title">What a cross-domain mandate actually looks like</h1>
-      <div class="post-meta-row">
-        <span>Admin · MahaYukti</span>
-        <span>9 May 2026</span>
-        <span>4 min read</span>
-      </div>
-    </div>
-    <div class="post-body">
-      <p>Most professional engagements are artificially constrained by domain. A client comes to a lawyer. The lawyer handles the legal. The CA handles the financial. The consultant handles the strategy. Each works in isolation. The client pays three retainers. Nobody sees the full picture.</p>
-<p>The best outcomes — and the most valuable mandates — require all three simultaneously. That is what MY Advisory is built to deliver.</p>
-<h2>A Real Example</h2>
-<p>A mid-sized corporate group in Pune is evaluating the acquisition of a competitor. The mandate involves legal due diligence on the target company's contracts, compliance history, and litigation exposure. It involves financial forensics on the target's accounts, related-party transactions, and off-balance-sheet liabilities. It involves market intelligence on the target's actual competitive position versus their reported position. And it involves strategic advisory on whether the acquisition makes sense at the proposed valuation.</p>
-<p>Four disciplines. Four domain experts. One coordinated mandate.</p>
-<h2>How MY Advisory Coordinates This</h2>
-<p>The mandate arrives through MahaYukti. Admin or the ACG mandate board routes it to the relevant domain experts across the network. A corporate lawyer. A forensic CA. A market intelligence analyst. A strategy advisor. All four are MahaYukti ACG members. All four have been vetted. All four operate under MahaYukti's confidentiality framework.</p>
-<p>They work in coordination — not in silos. The forensic CA's findings inform the lawyer's due diligence questions. The market intelligence shapes the strategist's valuation thesis. The client receives one integrated briefing. Not four disconnected reports.</p>
-<blockquote><p>"The most valuable mandates are never single-domain. They require a network, not just a professional."</p></blockquote>
-<h2>What This Means for ACG Members</h2>
-<p>ACG members access mandates they could not access alone. A forensic CA who is exceptional at their work but has limited business development reach is suddenly visible to every corporate, political, and institutional client that engages MahaYukti. The network becomes their business development function — and they keep everything they earn from their professional work.</p>
-<div class="post-divider"></div>
-<p>ACG membership is by invitation from the Network Council. Start at mahayukti.com.</p>
-      <div class="post-cta-box">
-        <p class="eyebrow" style="text-align:center">Join MahaYukti</p>
-        <h3 class="h3" style="text-align:center;color:var(--white);font-family:var(--serif);font-size:28px;margin-bottom:10px;">The network is open.<br><em style="color:var(--gold)">Membership is earned.</em></h3>
-        <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;max-width:440px;margin-left:auto;margin-right:auto;">Every domain. Every geography. Every experience level. Apply at mahayukti.com or write to info@mahayukti.com.</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a class="btn btn-gold btn-sm" onclick="goto('join')">Apply Now</a>
-          <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 </div><!-- /blog -->
 <!-- FOOTER -->
@@ -2050,6 +1829,7 @@ function goto(name){
   if(t){t.classList.add('active');window.scrollTo({top:0,behavior:'instant'});}
   document.querySelectorAll('.nav-links a[data-p]').forEach(a=>a.classList.toggle('active',a.dataset.p===name));
   setTimeout(initReveal,80);
+  if(name==='blog'&&!blogLoaded){loadBlogPosts();}
 }
 
 // REVEAL
@@ -2201,6 +1981,102 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElement
 
 // TOAST
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+
+// ── BLOG DYNAMIC ──────────────────────────────────────────────────────────────
+const BLOG_API='https://script.google.com/macros/s/AKfycbzCmFO-SCSZ-tAh4vU5lBRy6UJ3xJMxJikpdCEaUIMPOEOvoOuZIVfoQG6Et8doJ_yD/exec';
+let blogPosts=[],blogLoaded=false,currentPost=null;
+
+async function loadBlogPosts(){
+  const sk=document.getElementById('blogSkeleton');
+  const gr=document.getElementById('blogGrid');
+  const er=document.getElementById('blogError');
+  if(sk)sk.style.display='grid';
+  if(gr)gr.style.display='none';
+  if(er)er.style.display='none';
+  try{
+    const res=await fetch(BLOG_API+'?t='+Date.now());
+    const data=await res.json();
+    if(data.status==='success'&&data.posts&&data.posts.length>0){blogPosts=data.posts;renderBlogGrid();}
+    else throw new Error('empty');
+  }catch(e){blogPosts=getBlogFallback();renderBlogGrid();}
+}
+
+function renderBlogGrid(){
+  const grid=document.getElementById('blogGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  blogPosts.forEach((post,i)=>{
+    const card=document.createElement('div');
+    card.className='b-card rv'+(i===0?' b-featured':'');
+    card.onclick=()=>openPost(post.id);
+    if(i===0){
+      card.innerHTML=`<div class="b-card-top"><div class="b-cat">${bEsc(post.category)}</div><div class="b-title">${bEsc(post.title)}</div><div class="b-excerpt">${bEsc(post.excerpt)}</div><div class="b-meta"><span class="b-author">Admin · MahaYukti</span><span class="b-date">${bEsc(post.date)}</span><span class="b-read">${bEsc(post.readTime)} →</span></div></div><div class="b-featured-visual"><div class="b-feat-icon">◈</div></div>`;
+    }else{
+      card.innerHTML=`<div class="b-card-top"><div class="b-cat">${bEsc(post.category)}</div><div class="b-title">${bEsc(post.title)}</div><div class="b-excerpt">${bEsc(post.excerpt)}</div></div><div class="b-meta"><span class="b-author">Admin · MahaYukti</span><span class="b-date">${bEsc(post.date)}</span><span class="b-read">${bEsc(post.readTime)} →</span></div>`;
+    }
+    grid.appendChild(card);
+  });
+  const sk=document.getElementById('blogSkeleton');
+  if(sk)sk.style.display='none';
+  grid.style.display='grid';
+  setTimeout(initReveal,80);
+  blogLoaded=true;
+}
+
+function bEsc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+function openPost(id){
+  const post=blogPosts.find(p=>p.id===id);
+  if(!post)return;
+  currentPost=post;
+  const related=blogPosts.filter(p=>p.id!==id).slice(0,3);
+  const relHTML=related.length?`<div class="post-related"><div class="post-related-title">More from MahaYukti</div><div class="post-related-grid">${related.map(r=>`<div class="related-card" onclick="openPost('${r.id}')"><div class="related-cat">${bEsc(r.category)}</div><div class="related-title">${bEsc(r.title)}</div></div>`).join('')}</div></div>`:'';
+  document.getElementById('postContent').innerHTML=`
+    <div class="post-cat-label">${bEsc(post.category)}</div>
+    <h1 class="post-h1">${bEsc(post.title)}</h1>
+    <div class="post-meta-bar">
+      <span>Admin · MahaYukti</span><span class="post-meta-dot">·</span>
+      <span>${bEsc(post.date)}</span><span class="post-meta-dot">·</span>
+      <span>${bEsc(post.readTime)}</span>
+    </div>
+    <div class="post-content">${post.body}</div>
+    <div class="post-cta">
+      <p class="eyebrow" style="text-align:center">Join MahaYukti</p>
+      <h3 style="font-family:var(--serif);font-size:28px;font-weight:700;color:var(--white);text-align:center;margin-bottom:10px;">The network is open.<br><em style="color:var(--gold)">Membership is earned.</em></h3>
+      <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;max-width:440px;margin-left:auto;margin-right:auto;">Every domain. Every geography. Every experience level.</p>
+      <div class="post-cta-btns">
+        <button class="btn btn-gold btn-sm" onclick="closePost();goto('join')">Apply Now</button>
+        <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
+      </div>
+    </div>
+    ${relHTML}`;
+  const overlay=document.getElementById('postOverlay');
+  overlay.classList.add('open');
+  overlay.scrollTop=0;
+  document.body.style.overflow='hidden';
+  overlay.onscroll=function(){
+    const pct=Math.min(100,(overlay.scrollTop/(overlay.scrollHeight-overlay.clientHeight))*100)||0;
+    document.getElementById('postProgress').style.width=pct+'%';
+  };
+}
+
+function closePost(){
+  const overlay=document.getElementById('postOverlay');
+  if(overlay)overlay.classList.remove('open');
+  document.body.style.overflow='';
+  currentPost=null;
+  const prog=document.getElementById('postProgress');
+  if(prog)prog.style.width='0%';
+}
+
+function getBlogFallback(){return[
+  {id:'p1',category:'Network Philosophy',title:'Why Indian professionals are the most under-networked in the world',excerpt:'India produces more engineers, lawyers, doctors, and CAs than almost any country on earth. Yet when it comes to professional networks that actually work — we are decades behind.',date:'14 May 2026',readTime:'6 min read',body:'<p>India produces more engineers, lawyers, doctors, and chartered accountants than almost any country on earth. We graduate hundreds of thousands of professionals every year. By raw numbers, we should have the most powerful professional ecosystem in the world.</p><p>We do not. And the reason is not capability. It is infrastructure.</p><h2>The Problem Nobody Talks About</h2><p>In London, a newly qualified barrister knows that after five years of practice, they will have a network of solicitors, judges, clients, and peers that spans the city and beyond. Not because they are exceptional. Because the infrastructure exists and functions.</p><p>In Mumbai, a newly qualified advocate with equal or superior ability starts from scratch. Their network is whoever they happened to sit next to in law school, whoever they clerked under, and whoever their family already knew. And so the most talented professionals spend the first decade of their careers building what their counterparts in the West inherit on arrival.</p><blockquote><p>The most powerful professional networks are the ones no single person owns — but every member builds.</p></blockquote><h2>The Cross-Domain Gap</h2><p>A CA in Lucknow who is brilliant at forensic accounting has no infrastructure to reach the corporate litigation lawyer in Bangalore who needs exactly that expertise. A startup founder in Coimbatore who needs a CA, a lawyer, and a banker — coordinated and vetted — has no single place to find all three. These professionals are not missing expertise. They are missing each other.</p><h2>What Changes Now</h2><p>MahaYukti is built on a simple premise: Indian professionals deserve the same private, cross-domain network infrastructure that the West has long taken for granted. Not a job board. Not a freelance marketplace. A private professional network — by professionals, for professionals, of professionals.</p>'},
+  {id:'p2',category:'The Network',title:'The difference between a contact and a connection',excerpt:'Most professionals have hundreds of contacts. Very few have genuine connections. The distinction determines everything about whether a network actually works for you.',date:'13 May 2026',readTime:'4 min read',body:'<p>Most professionals confuse contacts with connections. They are not the same thing. And understanding the difference changes how you think about every professional network you are ever part of.</p><h2>A Contact Is Someone You Know Of</h2><p>You met them at a conference. You connected on LinkedIn. You have their card somewhere. A contact is a weak tie. Useful in aggregate. Unreliable individually.</p><h2>A Connection Is Someone Who Acts</h2><p>A connection is someone who, when you need something, picks up the phone. Who refers you without being asked. Who thinks of you when an opportunity arises. Connections are built on trust, mutual value, and time. They are rare. They are irreplaceable.</p><blockquote><p>The quality of your professional life is determined almost entirely by the quality of your connections — not the quantity of your contacts.</p></blockquote><h2>What MahaYukti Is Built For</h2><p>MahaYukti is not built to maximise your contact list. It is built to give you ten genuine connections you would not otherwise have — across domains, across geographies, across experience levels — that change what you are able to do professionally. A lawyer who connects with a forensic CA and a cybersecurity expert does not just have two new contacts. They have the foundation for a mandate they could not have delivered alone.</p>'},
+  {id:'p3',category:'MY Concierge',title:'What MY Concierge does — and who it is for',excerpt:'Some situations require more than a single professional. They require a coordinated network — discreet and available at short notice — that knows exactly who to call.',date:'12 May 2026',readTime:'5 min read',body:'<p>Most professional services operate in silos. You hire a lawyer for a legal matter. You hire a CA for a financial one. Each works in isolation. The client carries the coordination burden alone. Some situations are too complex, too sensitive, or too time-critical for that model to work.</p><h2>The Problem MY Concierge Solves</h2><p>Consider a scenario. A business family in Ahmedabad is facing a hostile acquisition attempt. They need a corporate lawyer, a CA to analyse the financial implications, a strategic advisor, and a public affairs specialist — all coordinated, confidential, and fast. MY Concierge exists to answer that call.</p><blockquote><p>Some situations require more than expertise. They require discretion, speed, and the right people — coordinated.</p></blockquote><h2>Who It Is For</h2><p>MY Concierge is not a public service. It is accessible to MahaYukti members and referred clients only. The first conversation is always confidential. It is for the situations that cannot wait. The matters that cannot be posted on a public platform. The needs that require someone to make the right calls — quietly, quickly, and correctly.</p>'},
+  {id:'p4',category:'Founding Members',title:'The mango tree — why founding membership is not a job offer',excerpt:'When we tell people that founding membership carries no salary — most people pause. A few lean in. Those few are the ones we are looking for.',date:'11 May 2026',readTime:'4 min read',body:'<p>When we explain founding membership to most professionals, we watch a specific thing happen. They hear no salary and their attention shifts. They are still polite. But they are already looking for the exit. A few people hear the same words and lean forward. Those are the ones we are building with.</p><h2>What Founding Membership Actually Is</h2><p>Founding membership is not a job. It is not a gig. It is an invitation to plant something — with the understanding that the person who plants the tree is not the same as the person who simply buys the fruit later. The founding members of MahaYukti are helping build the legal framework, the technology infrastructure, and the financial architecture of a network that will serve thousands of professionals.</p><blockquote><p>The person who plants the mango tree is not the same as the person who simply buys the fruit later.</p></blockquote><h2>What We Are Actually Asking</h2><p>No commitment. No non-compete. No exclusivity. Founding membership is a lifetime designation — on your terms, always. Contribute when you want. Step back when you need to. The tag stays regardless. What we are asking for is genuine alignment. The belief that India\'s professionals deserve better infrastructure. The willingness to help build it.</p>'},
+  {id:'p5',category:'Network Structure',title:'Five layers one ecosystem — how MahaYukti is organised',excerpt:'Most networks are flat. Everyone has the same access. MahaYukti is built differently — and the difference matters more than you might expect.',date:'10 May 2026',readTime:'5 min read',body:'<p>Most professional networks make the same structural mistake. They treat all members as equal. Same access. Same visibility. The logic is democratic — but the result is mediocre. When everyone has access to everything, nothing has value. When the most junior member and the most senior professional see the same platform, the most senior professional leaves.</p><h2>Why Layers Matter</h2><p>MahaYukti is built on five layers. Not as hierarchy for its own sake — but because different professionals at different stages of their journey and contribution need and deserve different things from a network.</p><blockquote><p>The path upward is earned — never bought. That is what makes each layer mean something.</p></blockquote><h2>What Each Layer Earns You</h2><p>Every layer is earned. You start as a Network Member. You demonstrate value, contribution, and professional excellence. You become a Participant. Outstanding Participants are invited by the Council to the ACG. Exceptional ACG members become Council members. Money does not determine your layer. Contribution does. That is the design.</p>'},
+  {id:'p6',category:'MY Advisory',title:'What a cross-domain mandate actually looks like',excerpt:'The most valuable professional work rarely fits into a single domain. A corporate acquisition needs a lawyer, a CA, a market researcher, and a strategist. Here is how MahaYukti coordinates all four.',date:'9 May 2026',readTime:'4 min read',body:'<p>Most professional engagements are artificially constrained by domain. A client comes to a lawyer. The lawyer handles the legal. The CA handles the financial. The consultant handles the strategy. Each works in isolation. The client pays three retainers. Nobody sees the full picture. The best outcomes require all three simultaneously. That is what MY Advisory is built to deliver.</p><h2>A Real Example</h2><p>A mid-sized corporate group in Pune is evaluating the acquisition of a competitor. The mandate involves legal due diligence on the target company\'s contracts and compliance history, financial forensics on the target\'s accounts and off-balance-sheet liabilities, market intelligence on the target\'s actual competitive position, and strategic advisory on whether the acquisition makes sense at the proposed valuation. Four disciplines. Four domain experts. One coordinated mandate.</p><blockquote><p>The most valuable mandates are never single-domain. They require a network, not just a professional.</p></blockquote><h2>What This Means for ACG Members</h2><p>ACG members access mandates they could not access alone. A forensic CA who is exceptional at their work but has limited business development reach is suddenly visible to every corporate, political, and institutional client that engages MahaYukti. The network becomes their business development function — and they keep everything they earn from their professional work.</p>'}
+];}
 </script>
 </body>
 </html>
