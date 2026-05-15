@@ -2230,7 +2230,7 @@ document.addEventListener('mouseover',e=>{
 
 
 // Google Sheet ID: 1QeLegeJQ67K3IasAp3vqlAXJ_SZZeHlJxy2u1fIQ0Ck
-const JURL='https://script.google.com/macros/s/AKfycbwTquqtQEk9d-uvvz7yv2RKVtHqbs6QSDyKoXG1slCu8W8JS80mPFolxhbwZyODdFUeSQ/exec';
+const JURL='https://script.google.com/macros/s/AKfycbxBsqOS_Afx99B2qYr1DxIDTYZwapEFiBDCznSZarcm9cLSULPevCYpbYmfx84cwhY3/exec';
 let jCS=1,jTR='member',jIN=[];
 function jST(t){jTR=t;['m','p'].forEach(x=>{const el=document.getElementById('jTC'+x);if(el){el.classList.toggle('sel',x==='m'?t==='member':t==='participant');el.querySelector('.jtcc').textContent=((x==='m'&&t==='member')||(x==='p'&&t==='participant'))?'✓':'';}});const isMember=t==='member';document.getElementById('jIBL').textContent=isMember?'Network Member includes':'Network Participant includes';document.getElementById('jIBB').textContent=isMember?'Verified credential · Directory listing · Lead & referral routing · MY Help community · Cross-domain peer connections · Path to Participant and ACG':'Everything in Member · Active service listing · Domain forums · Priority referral routing · MY Help mentoring · Client visibility · ACG consideration';}
 function jTI(el){el.classList.toggle('sel');const t=el.textContent.trim();jIN=el.classList.contains('sel')?[...new Set([...jIN,t])]:jIN.filter(i=>i!==t);}
@@ -2252,7 +2252,7 @@ function toggleFaq(el){
 
 
 // ── JOIN FORM ─────────────────────────────────────────────────────────────────
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwTquqtQEk9d-uvvz7yv2RKVtHqbs6QSDyKoXG1slCu8W8JS80mPFolxhbwZyODdFUeSQ/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxBsqOS_Afx99B2qYr1DxIDTYZwapEFiBDCznSZarcm9cLSULPevCYpbYmfx84cwhY3/exec';
 let jCurStep=1;
 function jGoStep(n){
   if(n===jCurStep)return;
