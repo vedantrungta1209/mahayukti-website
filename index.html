@@ -2303,44 +2303,79 @@ document.addEventListener('keydown',e=>{
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
 // ── BLOG DYNAMIC ──────────────────────────────────────────────────────────────
-const BLOG_API='https://script.google.com/macros/s/AKfycbzm07nNIM5o88eA4fqjFPVFyj4gvxIqjmonH6omcUW4SYeUqDp2iYLMnApfYXPINQ9W/exec';
+// Blog loads from Google Sheets CSV — no Apps Script needed
 let blogPosts=[],blogLoaded=false,currentPost=null;
 
 async function loadBlogPosts(){
-  // Show fallback posts IMMEDIATELY — never keep user waiting
+  // Show fallback instantly — no waiting ever
   blogPosts = getBlogFallback();
   renderBlogCarousel();
 
-  // Silently try to fetch live posts in background
+  // Fetch live posts from Google Sheets CSV — no Apps Script, no CORS, no 403
+  // Works as long as the sheet is publicly shared (view access)
   try {
-    await new Promise((resolve) => {
-      const cb = '__blogCB_' + Date.now();
-      const script = document.createElement('script');
-      const timer = setTimeout(() => {
-        delete window[cb];
-        if(script.parentNode) script.remove();
-        resolve();
-      }, 6000);
-      window[cb] = function(data) {
-        clearTimeout(timer);
-        delete window[cb];
-        if(script.parentNode) script.remove();
-        if(data && data.status === 'success' && data.posts && data.posts.length > 0) {
-          blogPosts = data.posts;
-          // Silently refresh carousel with live posts
-          const cur = blogCurrent;
-          renderBlogCarousel();
-          blogGoTo(cur, true);
-        }
-        resolve();
-      };
-      script.src = BLOG_API + '?callback=' + cb + '&t=' + Date.now();
-      script.onerror = () => { clearTimeout(timer); delete window[cb]; resolve(); };
-      document.head.appendChild(script);
-    });
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/1au-dPDL3oS10VqqPAcKp5MQ4Et0PzlmbKxFzgqA-t0Y/export?format=csv&gid=0';
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error('fetch failed');
+    const text = await res.text();
+    const parsed = parseCSV(text);
+    if (parsed && parsed.length > 0) {
+      const cur = blogCurrent;
+      blogPosts = parsed;
+      renderBlogCarousel();
+      blogGoTo(cur, true);
+    }
   } catch(e) {
-    // Already showing fallback — nothing to do
+    // Fallback already showing — nothing to do
   }
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  
+  // Parse header
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+  const posts = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseCSVLine(lines[i]);
+    if (!vals || vals.length < 3) continue;
+    const row = {};
+    headers.forEach((h, j) => { row[h] = vals[j] || ''; });
+    if (row.status && row.status.toLowerCase() === 'published' && row.title) {
+      posts.push({
+        id:       row.id       || 'p' + i,
+        category: row.category || '',
+        title:    row.title    || '',
+        excerpt:  row.excerpt  || '',
+        date:     row.date     || '',
+        readTime: row.readtime || row['read time'] || '5 min read',
+        body:     row.body     || ''
+      });
+    }
+  }
+  return posts.reverse(); // newest first
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
 }
 
 
@@ -2397,7 +2432,8 @@ function getBlogFallback(){return[
   {id:'p3',category:'MY Concierge',title:'What MY Concierge does — and who it is for',excerpt:'Some situations require more than a single professional. They require a coordinated network — discreet and available at short notice — that knows exactly who to call.',date:'12 May 2026',readTime:'5 min read',body:'<p>Most professional services operate in silos. You hire a lawyer for a legal matter. You hire a CA for a financial one. Each works in isolation. The client carries the coordination burden alone. Some situations are too complex, too sensitive, or too time-critical for that model to work.</p><h2>The Problem MY Concierge Solves</h2><p>Consider a scenario. A business family in Ahmedabad is facing a hostile acquisition attempt. They need a corporate lawyer, a CA to analyse the financial implications, a strategic advisor, and a public affairs specialist — all coordinated, confidential, and fast. MY Concierge exists to answer that call.</p><blockquote><p>Some situations require more than expertise. They require discretion, speed, and the right people — coordinated.</p></blockquote><h2>Who It Is For</h2><p>MY Concierge is not a public service. It is accessible to MahaYukti members and referred clients only. The first conversation is always confidential. It is for the situations that cannot wait. The matters that cannot be posted on a public platform. The needs that require someone to make the right calls — quietly, quickly, and correctly.</p>'},
   {id:'p4',category:'Founding Members',title:'The mango tree — why founding membership is not a job offer',excerpt:'When we tell people that founding membership carries no salary — most people pause. A few lean in. Those few are the ones we are looking for.',date:'11 May 2026',readTime:'4 min read',body:'<p>When we explain founding membership to most professionals, we watch a specific thing happen. They hear no salary and their attention shifts. They are still polite. But they are already looking for the exit. A few people hear the same words and lean forward. Those are the ones we are building with.</p><h2>What Founding Membership Actually Is</h2><p>Founding membership is not a job. It is not a gig. It is an invitation to plant something — with the understanding that the person who plants the tree is not the same as the person who simply buys the fruit later. The founding members of MahaYukti are helping build the legal framework, the technology infrastructure, and the financial architecture of a network that will serve thousands of professionals.</p><blockquote><p>The person who plants the mango tree is not the same as the person who simply buys the fruit later.</p></blockquote><h2>What We Are Actually Asking</h2><p>No commitment. No non-compete. No exclusivity. Founding membership is a lifetime designation — on your terms, always. Contribute when you want. Step back when you need to. The tag stays regardless. What we are asking for is genuine alignment. The belief that India\'s professionals deserve better infrastructure. The willingness to help build it.</p>'},
   {id:'p5',category:'Network Structure',title:'Five layers one ecosystem — how MahaYukti is organised',excerpt:'Most networks are flat. Everyone has the same access. MahaYukti is built differently — and the difference matters more than you might expect.',date:'10 May 2026',readTime:'5 min read',body:'<p>Most professional networks make the same structural mistake. They treat all members as equal. Same access. Same visibility. The logic is democratic — but the result is mediocre. When everyone has access to everything, nothing has value. When the most junior member and the most senior professional see the same platform, the most senior professional leaves.</p><h2>Why Layers Matter</h2><p>MahaYukti is built on five layers. Not as hierarchy for its own sake — but because different professionals at different stages of their journey and contribution need and deserve different things from a network.</p><blockquote><p>The path upward is earned — never bought. That is what makes each layer mean something.</p></blockquote><h2>What Each Layer Earns You</h2><p>Every layer is earned. You start as a Network Member. You demonstrate value, contribution, and professional excellence. You become a Participant. Outstanding Participants are invited by the Council to the ACG. Exceptional ACG members become Council members. Money does not determine your layer. Contribution does. That is the design.</p>'},
-  {id:'p6',category:'MY Advisory',title:'What a cross-domain mandate actually looks like',excerpt:'The most valuable professional work rarely fits into a single domain. A corporate acquisition needs a lawyer, a CA, a market researcher, and a strategist. Here is how MahaYukti coordinates all four.',date:'9 May 2026',readTime:'4 min read',body:'<p>Most professional engagements are artificially constrained by domain. A client comes to a lawyer. The lawyer handles the legal. The CA handles the financial. The consultant handles the strategy. Each works in isolation. The client pays three retainers. Nobody sees the full picture. The best outcomes require all three simultaneously. That is what MY Advisory is built to deliver.</p><h2>A Real Example</h2><p>A mid-sized corporate group in Pune is evaluating the acquisition of a competitor. The mandate involves legal due diligence on the target company\'s contracts and compliance history, financial forensics on the target\'s accounts and off-balance-sheet liabilities, market intelligence on the target\'s actual competitive position, and strategic advisory on whether the acquisition makes sense at the proposed valuation. Four disciplines. Four domain experts. One coordinated mandate.</p><blockquote><p>The most valuable mandates are never single-domain. They require a network, not just a professional.</p></blockquote><h2>What This Means for ACG Members</h2><p>ACG members access mandates they could not access alone. A forensic CA who is exceptional at their work but has limited business development reach is suddenly visible to every corporate, political, and institutional client that engages MahaYukti. The network becomes their business development function — and they keep everything they earn from their professional work.</p>'}
+  {id:'p6',category:'MY Advisory',title:'What a cross-domain mandate actually looks like',excerpt:'The most valuable professional work rarely fits into a single domain. A corporate acquisition needs a lawyer, a CA, a market researcher, and a strategist. Here is how MahaYukti coordinates all four.',date:'9 May 2026',readTime:'4 min read',body:'<p>Most professional engagements are artificially constrained by domain. A client comes to a lawyer. The lawyer handles the legal. The CA handles the financial. The consultant handles the strategy. Each works in isolation. The client pays three retainers. Nobody sees the full picture. The best outcomes require all three simultaneously. That is what MY Advisory is built to deliver.</p><h2>A Real Example</h2><p>A mid-sized corporate group in Pune is evaluating the acquisition of a competitor. The mandate involves legal due diligence on the target company\'s contracts and compliance history, financial forensics on the target\'s accounts and off-balance-sheet liabilities, market intelligence on the target\'s actual competitive position, and strategic advisory on whether the acquisition makes sense at the proposed valuation. Four disciplines. Four domain experts. One coordinated mandate.</p><blockquote><p>The most valuable mandates are never single-domain. They require a network, not just a professional.</p></blockquote><h2>What This Means for ACG Members</h2><p>ACG members access mandates they could not access alone. A forensic CA who is exceptional at their work but has limited business development reach is suddenly visible to every corporate, political, and institutional client that engages MahaYukti. The network becomes their business development function — and they keep everything they earn from their professional work.</p>'},
+  {id:'p7',category:'Community Update',title:'We have been trying to reach you — and here is where things stand',excerpt:'Over the last few days hundreds of you expressed interest in MahaYukti. We have been reaching out personally. Here is why some of you may not have heard — and exactly what to do right now.',date:'15 May 2026',readTime:'3 min read',body:'<p>Over the last few days, hundreds of professionals reached out to express interest in MahaYukti. Every single one of you matters to us — and we have been trying to reach every single one of you personally.</p><p>Here is the honest problem. LinkedIn does not share email addresses with us. So our outreach has been going to inboxes we cannot always confirm — and some of those emails may have landed in spam, because info@mahayukti.com is a new domain still building its sender reputation.</p><h2>If You Expressed Interest — Please Do One of These Three Things</h2><p>First — check your spam folder for an email with the subject line: Re: Your interest in MahaYukti — let\'s talk. If you find it, please mark it Not Spam and reply. We are waiting for your response.</p><p>Second — if you have not received anything at all, write to us directly at info@mahayukti.com. Tell us your name, domain, and city. We will get back to you personally. No automation. No template replies.</p><p>Third — apply directly from the website. Registration is now open at mahayukti.com. You can apply for Network Membership through the form on the site — no email exchange needed to get started.</p><blockquote><p>We read every email and every application personally. Nothing goes unread. Nothing goes unanswered.</p></blockquote><h2>What MahaYukti Is — For Those Who Are New</h2><p>MahaYukti is India\'s first private cross-domain professional network. Not a job board. Not a platform that pays you. Not a marketplace that takes a cut of what you earn. A network built by professionals, for professionals, of professionals.</p><p>Network Membership is open to every domain, every geography, and every experience level across India. The path upward — from Member to Participant to ACG to Council — is earned, never bought.</p><h2>The Blog Is Live Too</h2><p>We just launched the MahaYukti Blog — seven pieces published, all written by Admin, all about what we are building and why it matters. Read them at mahayukti.com and let us know what you think.</p><p>We are building something real. We are glad you are here. And we are looking forward to hearing from you.</p>'}
 ];}
 </script>
 </body>
