@@ -420,6 +420,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 #pg-join .j-fb{padding:32px 28px;}
 #pg-join .j-step{display:none;}
 #pg-join .j-step.active{display:block;animation:jfu .35s ease;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes jfu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 #pg-join .j-st{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--white);margin-bottom:5px;}
 #pg-join .j-ss{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.6;}
@@ -489,6 +490,110 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 #pg-join .j-ssub{font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:18px;}
 #pg-join .j-sid{font-size:12px;color:rgba(201,148,58,.6);margin-bottom:22px;padding:7px 14px;background:rgba(201,148,58,.06);border:1px solid var(--border);border-radius:var(--r);display:inline-block;}
 /* responsive */
+
+/* ═══════════════════════════════════════════
+   BLOG — FULL CAROUSEL
+═══════════════════════════════════════════ */
+#pg-blog{overflow:hidden;}
+
+/* Loading */
+.blog-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;}
+.blog-loading-icon{font-size:32px;color:var(--gold);animation:pulse 1.5s ease infinite;}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.blog-loading-text{font-size:12px;color:rgba(255,255,255,.3);letter-spacing:3px;text-transform:uppercase;}
+
+/* Carousel wrapper */
+.blog-carousel{position:relative;width:100%;height:100vh;overflow:hidden;}
+
+/* Slides */
+.blog-slides{display:flex;height:100%;transition:transform .6s cubic-bezier(.77,0,.18,1);}
+.blog-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;}
+.blog-slide::-webkit-scrollbar{width:3px;}
+.blog-slide::-webkit-scrollbar-track{background:transparent;}
+.blog-slide::-webkit-scrollbar-thumb{background:rgba(201,148,58,.4);border-radius:2px;}
+
+/* Slide inner layout */
+.slide-inner{min-height:100vh;display:grid;grid-template-columns:1fr 1.8fr;position:relative;}
+
+/* Left panel — sticky meta */
+.slide-left{position:sticky;top:0;height:100vh;padding:0;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border2);}
+.slide-left-bg{position:absolute;inset:0;background:linear-gradient(160deg,rgba(201,148,58,.08) 0%,rgba(11,27,58,.98) 60%);z-index:0;}
+.slide-left-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(201,148,58,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,148,58,.04) 1px,transparent 1px);background-size:48px 48px;z-index:0;}
+.slide-left-content{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;padding:120px 48px 48px;}
+.slide-num{font-family:var(--serif);font-size:120px;font-weight:700;color:rgba(201,148,58,.07);line-height:1;position:absolute;bottom:40px;right:-10px;pointer-events:none;letter-spacing:-4px;}
+.slide-eyebrow{font-size:10px;font-weight:500;color:var(--gold);letter-spacing:5px;text-transform:uppercase;margin-bottom:20px;opacity:.9;}
+.slide-title{font-family:var(--serif);font-size:clamp(26px,2.8vw,38px);font-weight:700;color:var(--white);line-height:1.18;margin-bottom:20px;letter-spacing:-.3px;}
+.slide-divider{width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);margin-bottom:20px;}
+.slide-excerpt{font-size:14px;font-weight:300;color:rgba(255,255,255,.48);line-height:1.82;margin-bottom:32px;flex:1;}
+.slide-meta{display:flex;flex-direction:column;gap:6px;}
+.slide-meta-row{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,.28);}
+.slide-meta-dot{color:var(--gold);font-size:8px;}
+
+/* Right panel — full article */
+.slide-right{padding:120px 72px 80px 64px;}
+.article-body{max-width:640px;}
+.article-body p{font-family:var(--sans);font-size:16px;font-weight:300;color:rgba(255,255,255,.62);line-height:2;margin-bottom:26px;letter-spacing:.01em;}
+.article-body h2{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--white);margin:48px 0 16px;line-height:1.2;letter-spacing:-.3px;}
+.article-body h3{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--gold);margin:32px 0 12px;font-style:italic;}
+.article-body blockquote{border-left:2px solid var(--gold);padding:20px 28px;margin:32px 0;background:rgba(201,148,58,.04);border-radius:0 var(--r) var(--r) 0;}
+.article-body blockquote p{font-family:var(--serif);font-size:20px;font-style:italic;font-weight:400;color:rgba(255,255,255,.75);line-height:1.65;margin:0;letter-spacing:.01em;}
+.article-body ul{list-style:none;margin:0 0 26px;display:flex;flex-direction:column;gap:12px;}
+.article-body ul li{display:flex;align-items:flex-start;gap:12px;font-size:16px;font-weight:300;color:rgba(255,255,255,.58);line-height:1.85;}
+.article-body ul li::before{content:'◆';color:var(--gold);font-size:8px;margin-top:8px;flex-shrink:0;}
+.article-divider{width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);margin:40px 0;}
+
+/* Article CTA */
+.article-cta{background:rgba(201,148,58,.06);border:1px solid var(--border);border-radius:var(--r);padding:36px 40px;margin-top:48px;}
+.article-cta-eyebrow{font-size:10px;font-weight:500;color:var(--gold);letter-spacing:5px;text-transform:uppercase;margin-bottom:14px;}
+.article-cta-title{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--white);margin-bottom:10px;line-height:1.2;}
+.article-cta-title em{color:var(--gold);font-style:italic;}
+.article-cta p{font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.7;}
+.article-cta-btns{display:flex;gap:12px;flex-wrap:wrap;}
+
+/* Nav controls */
+.blog-nav{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:20px;background:rgba(11,27,58,.85);border:1px solid var(--border);border-radius:40px;padding:12px 24px;backdrop-filter:blur(20px);}
+.blog-nav-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:14px;transition:all .2s;}
+.blog-nav-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,148,58,.08);}
+.blog-nav-btn:disabled{opacity:.25;cursor:not-allowed;}
+.blog-nav-dots{display:flex;align-items:center;gap:8px;}
+.blog-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s;}
+.blog-dot.act{background:var(--gold);width:20px;border-radius:3px;}
+.blog-nav-count{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px;min-width:40px;text-align:center;}
+
+/* Side progress bar */
+.blog-progress{position:fixed;left:0;top:0;bottom:0;width:3px;z-index:100;background:rgba(255,255,255,.05);}
+.blog-progress-fill{width:100%;background:linear-gradient(180deg,var(--gold),var(--gold2));transition:height .15s linear;}
+
+/* Keyboard hint */
+.blog-hint{position:fixed;bottom:40px;right:48px;z-index:100;display:flex;flex-direction:column;align-items:flex-end;gap:6px;opacity:.4;}
+.blog-hint-item{display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:1px;}
+.blog-hint-key{width:20px;height:20px;border:1px solid rgba(255,255,255,.25);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;}
+
+/* Error */
+.blog-error{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;text-align:center;}
+.blog-error-icon{font-size:48px;opacity:.3;}
+.blog-error-msg{font-size:15px;color:var(--muted);}
+
+/* Responsive */
+@media(max-width:1024px){
+  .slide-inner{grid-template-columns:1fr;}
+  .slide-left{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border2);}
+  .slide-left-content{padding:120px 36px 36px;}
+  .slide-num{display:none;}
+  .slide-right{padding:48px 36px 120px;}
+  .blog-hint{display:none;}
+}
+@media(max-width:640px){
+  .slide-left-content{padding:100px 20px 28px;}
+  .slide-right{padding:32px 20px 120px;}
+  .slide-title{font-size:clamp(22px,6vw,30px);}
+  .article-body p{font-size:15px;}
+  .article-body blockquote p{font-size:17px;}
+  .article-cta{padding:24px;}
+  .blog-nav{bottom:24px;padding:10px 18px;gap:14px;}
+  .blog-progress{display:none;}
+}
+
 @media(max-width:1024px){
   #pg-join .j-wrap{padding:100px 36px 60px;}
   #pg-join .j-grid{grid-template-columns:1fr;gap:40px;}
@@ -503,6 +608,110 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
   #pg-join .j-tab{font-size:9px;letter-spacing:.5px;}
   #pg-join .j-fb{padding:18px 14px;}
 }
+
+/* ═══════════════════════════════════════════
+   BLOG — FULL CAROUSEL
+═══════════════════════════════════════════ */
+#pg-blog{overflow:hidden;}
+
+/* Loading */
+.blog-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;}
+.blog-loading-icon{font-size:32px;color:var(--gold);animation:pulse 1.5s ease infinite;}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.blog-loading-text{font-size:12px;color:rgba(255,255,255,.3);letter-spacing:3px;text-transform:uppercase;}
+
+/* Carousel wrapper */
+.blog-carousel{position:relative;width:100%;height:100vh;overflow:hidden;}
+
+/* Slides */
+.blog-slides{display:flex;height:100%;transition:transform .6s cubic-bezier(.77,0,.18,1);}
+.blog-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;}
+.blog-slide::-webkit-scrollbar{width:3px;}
+.blog-slide::-webkit-scrollbar-track{background:transparent;}
+.blog-slide::-webkit-scrollbar-thumb{background:rgba(201,148,58,.4);border-radius:2px;}
+
+/* Slide inner layout */
+.slide-inner{min-height:100vh;display:grid;grid-template-columns:1fr 1.8fr;position:relative;}
+
+/* Left panel — sticky meta */
+.slide-left{position:sticky;top:0;height:100vh;padding:0;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border2);}
+.slide-left-bg{position:absolute;inset:0;background:linear-gradient(160deg,rgba(201,148,58,.08) 0%,rgba(11,27,58,.98) 60%);z-index:0;}
+.slide-left-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(201,148,58,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,148,58,.04) 1px,transparent 1px);background-size:48px 48px;z-index:0;}
+.slide-left-content{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;padding:120px 48px 48px;}
+.slide-num{font-family:var(--serif);font-size:120px;font-weight:700;color:rgba(201,148,58,.07);line-height:1;position:absolute;bottom:40px;right:-10px;pointer-events:none;letter-spacing:-4px;}
+.slide-eyebrow{font-size:10px;font-weight:500;color:var(--gold);letter-spacing:5px;text-transform:uppercase;margin-bottom:20px;opacity:.9;}
+.slide-title{font-family:var(--serif);font-size:clamp(26px,2.8vw,38px);font-weight:700;color:var(--white);line-height:1.18;margin-bottom:20px;letter-spacing:-.3px;}
+.slide-divider{width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);margin-bottom:20px;}
+.slide-excerpt{font-size:14px;font-weight:300;color:rgba(255,255,255,.48);line-height:1.82;margin-bottom:32px;flex:1;}
+.slide-meta{display:flex;flex-direction:column;gap:6px;}
+.slide-meta-row{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,.28);}
+.slide-meta-dot{color:var(--gold);font-size:8px;}
+
+/* Right panel — full article */
+.slide-right{padding:120px 72px 80px 64px;}
+.article-body{max-width:640px;}
+.article-body p{font-family:var(--sans);font-size:16px;font-weight:300;color:rgba(255,255,255,.62);line-height:2;margin-bottom:26px;letter-spacing:.01em;}
+.article-body h2{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--white);margin:48px 0 16px;line-height:1.2;letter-spacing:-.3px;}
+.article-body h3{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--gold);margin:32px 0 12px;font-style:italic;}
+.article-body blockquote{border-left:2px solid var(--gold);padding:20px 28px;margin:32px 0;background:rgba(201,148,58,.04);border-radius:0 var(--r) var(--r) 0;}
+.article-body blockquote p{font-family:var(--serif);font-size:20px;font-style:italic;font-weight:400;color:rgba(255,255,255,.75);line-height:1.65;margin:0;letter-spacing:.01em;}
+.article-body ul{list-style:none;margin:0 0 26px;display:flex;flex-direction:column;gap:12px;}
+.article-body ul li{display:flex;align-items:flex-start;gap:12px;font-size:16px;font-weight:300;color:rgba(255,255,255,.58);line-height:1.85;}
+.article-body ul li::before{content:'◆';color:var(--gold);font-size:8px;margin-top:8px;flex-shrink:0;}
+.article-divider{width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);margin:40px 0;}
+
+/* Article CTA */
+.article-cta{background:rgba(201,148,58,.06);border:1px solid var(--border);border-radius:var(--r);padding:36px 40px;margin-top:48px;}
+.article-cta-eyebrow{font-size:10px;font-weight:500;color:var(--gold);letter-spacing:5px;text-transform:uppercase;margin-bottom:14px;}
+.article-cta-title{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--white);margin-bottom:10px;line-height:1.2;}
+.article-cta-title em{color:var(--gold);font-style:italic;}
+.article-cta p{font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.7;}
+.article-cta-btns{display:flex;gap:12px;flex-wrap:wrap;}
+
+/* Nav controls */
+.blog-nav{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:20px;background:rgba(11,27,58,.85);border:1px solid var(--border);border-radius:40px;padding:12px 24px;backdrop-filter:blur(20px);}
+.blog-nav-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:14px;transition:all .2s;}
+.blog-nav-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,148,58,.08);}
+.blog-nav-btn:disabled{opacity:.25;cursor:not-allowed;}
+.blog-nav-dots{display:flex;align-items:center;gap:8px;}
+.blog-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s;}
+.blog-dot.act{background:var(--gold);width:20px;border-radius:3px;}
+.blog-nav-count{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px;min-width:40px;text-align:center;}
+
+/* Side progress bar */
+.blog-progress{position:fixed;left:0;top:0;bottom:0;width:3px;z-index:100;background:rgba(255,255,255,.05);}
+.blog-progress-fill{width:100%;background:linear-gradient(180deg,var(--gold),var(--gold2));transition:height .15s linear;}
+
+/* Keyboard hint */
+.blog-hint{position:fixed;bottom:40px;right:48px;z-index:100;display:flex;flex-direction:column;align-items:flex-end;gap:6px;opacity:.4;}
+.blog-hint-item{display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:1px;}
+.blog-hint-key{width:20px;height:20px;border:1px solid rgba(255,255,255,.25);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;}
+
+/* Error */
+.blog-error{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;text-align:center;}
+.blog-error-icon{font-size:48px;opacity:.3;}
+.blog-error-msg{font-size:15px;color:var(--muted);}
+
+/* Responsive */
+@media(max-width:1024px){
+  .slide-inner{grid-template-columns:1fr;}
+  .slide-left{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border2);}
+  .slide-left-content{padding:120px 36px 36px;}
+  .slide-num{display:none;}
+  .slide-right{padding:48px 36px 120px;}
+  .blog-hint{display:none;}
+}
+@media(max-width:640px){
+  .slide-left-content{padding:100px 20px 28px;}
+  .slide-right{padding:32px 20px 120px;}
+  .slide-title{font-size:clamp(22px,6vw,30px);}
+  .article-body p{font-size:15px;}
+  .article-body blockquote p{font-size:17px;}
+  .article-cta{padding:24px;}
+  .blog-nav{bottom:24px;padding:10px 18px;gap:14px;}
+  .blog-progress{display:none;}
+}
+
 @media(max-width:1024px){
   .wrap,.wrap-sm{padding:0 36px;}
   #nav,#nav.stuck{padding:14px 36px;}
@@ -1706,59 +1915,42 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
 
 
 <!-- ═══════════════════════════════════════════
-     PAGE: BLOG — DYNAMIC
+     PAGE: BLOG — FULL CAROUSEL
 ═══════════════════════════════════════════ -->
 <div class="page" id="pg-blog">
 
-  <!-- BLOG LIST -->
-  <div id="blogList">
-    <div class="blog-hero">
-      <div class="wrap">
-        <div class="rv">
-          <p class="eyebrow" style="text-align:center">MahaYukti Blog</p>
-          <h1 class="h1" style="text-align:center;max-width:640px;margin:0 auto 16px;">Thinking about<br><em>professional India.</em></h1>
-          <p class="body-lg" style="text-align:center;max-width:480px;margin:0 auto 48px;">Perspectives on professional networks, cross-domain collaboration, and what it takes to build something that lasts.</p>
-        </div>
-        <!-- Loading skeleton -->
-        <div class="blog-grid-skeleton" id="blogSkeleton">
-          <div class="skeleton-card b-card b-featured" style="grid-column:span 3;min-height:220px;padding:0;border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;display:grid;grid-template-columns:1.3fr 1fr;">
-            <div style="padding:44px;">
-              <div class="skeleton sk-line short" style="margin-bottom:16px;"></div>
-              <div class="skeleton sk-line title" style="height:32px;margin-bottom:10px;"></div>
-              <div class="skeleton sk-line title" style="height:32px;width:60%;margin-bottom:20px;"></div>
-              <div class="skeleton sk-line full" style="margin-bottom:8px;"></div>
-              <div class="skeleton sk-line med"></div>
-            </div>
-            <div class="skeleton" style="border-radius:0;opacity:.4;"></div>
-          </div>
-          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
-          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
-          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
-          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
-          <div class="skeleton-card"><div class="skeleton sk-line short" style="margin-bottom:14px;"></div><div class="skeleton sk-line title"></div><div class="skeleton sk-line full" style="margin-bottom:6px;"></div><div class="skeleton sk-line med"></div></div>
-        </div>
-        <!-- Actual posts grid -->
-        <div class="blog-grid" id="blogGrid" style="display:none;margin-top:0;"></div>
-        <!-- Error state -->
-        <div class="blog-error" id="blogError" style="display:none;">
-          <div class="blog-error-icon">◈</div>
-          <div class="blog-error-msg">Unable to load posts right now. Please try again shortly.</div>
-          <button class="btn btn-outline btn-sm" onclick="loadBlogPosts()">Try Again</button>
-        </div>
-      </div>
-    </div>
+  <div id="blogLoading" style="display:none;"></div>
+
+  <!-- Error state -->
+  <div class="blog-error" id="blogErrorState" style="display:none;">
+    <div class="blog-error-icon">◈</div>
+    <div class="blog-error-msg">Unable to load posts right now.</div>
+    <button class="btn btn-outline btn-sm" onclick="loadBlogPosts()" style="margin-top:8px;">Try Again</button>
   </div>
 
-  <!-- POST OVERLAY — full screen scrollable post view -->
-  <div class="post-overlay" id="postOverlay">
-    <div class="post-progress"><div class="post-progress-fill" id="postProgress"></div></div>
-    <div class="post-close" onclick="closePost()">
-      <div class="post-close-line"></div>
-      <span>Back to Blog</span>
+  <!-- Carousel -->
+  <div class="blog-carousel" id="blogCarousel" style="display:none;">
+
+    <!-- Side progress bar -->
+    <div class="blog-progress"><div class="blog-progress-fill" id="blogProgressFill" style="height:0%"></div></div>
+
+    <!-- Slides container -->
+    <div class="blog-slides" id="blogSlides"></div>
+
+    <!-- Bottom navigation -->
+    <div class="blog-nav" id="blogNavBar">
+      <button class="blog-nav-btn" id="blogPrevBtn" onclick="blogGoTo(blogCurrent-1)" disabled>←</button>
+      <div class="blog-nav-dots" id="blogDots"></div>
+      <div class="blog-nav-count" id="blogCount">1 / 1</div>
+      <button class="blog-nav-btn" id="blogNextBtn" onclick="blogGoTo(blogCurrent+1)">→</button>
     </div>
-    <div class="post-overlay-inner" id="postContent">
-      <!-- Populated dynamically -->
+
+    <!-- Keyboard hint -->
+    <div class="blog-hint">
+      <div class="blog-hint-item"><div class="blog-hint-key">←</div><span>Previous</span></div>
+      <div class="blog-hint-item"><div class="blog-hint-key">→</div><span>Next</span></div>
     </div>
+
   </div>
 
 </div><!-- /blog -->
@@ -1977,51 +2169,181 @@ function jToggleFaq(el){
 }
 
 // KEYBOARD
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-overlay').classList.remove('show');}});
+
+// ── BLOG CAROUSEL ─────────────────────────────────────────────────────────────
+
+
+
+function renderBlogCarousel(){
+  const slides=document.getElementById('blogSlides');
+  const dots=document.getElementById('blogDots');
+  if(!slides)return;
+  slides.innerHTML='';
+  dots.innerHTML='';
+
+  blogPosts.forEach((post,i)=>{
+    // Slide
+    const slide=document.createElement('div');
+    slide.className='blog-slide';
+    slide.id='bslide-'+i;
+    slide.innerHTML=`
+      <div class="slide-inner">
+        <div class="slide-left">
+          <div class="slide-left-bg"></div>
+          <div class="slide-left-grid"></div>
+          <div class="slide-left-content">
+            <div class="slide-eyebrow">${bEsc(post.category)}</div>
+            <div class="slide-title">${bEsc(post.title)}</div>
+            <div class="slide-divider"></div>
+            <div class="slide-excerpt">${bEsc(post.excerpt)}</div>
+            <div class="slide-meta">
+              <div class="slide-meta-row">
+                <span class="slide-meta-dot">◆</span>
+                <span>Admin · MahaYukti</span>
+              </div>
+              <div class="slide-meta-row">
+                <span class="slide-meta-dot">◆</span>
+                <span>${bEsc(post.date)}</span>
+              </div>
+              <div class="slide-meta-row">
+                <span class="slide-meta-dot">◆</span>
+                <span>${bEsc(post.readTime)}</span>
+              </div>
+            </div>
+            <div class="slide-num">${String(i+1).padStart(2,'0')}</div>
+          </div>
+        </div>
+        <div class="slide-right">
+          <div class="article-body">
+            ${post.body}
+            <div class="article-divider"></div>
+            <div class="article-cta">
+              <div class="article-cta-eyebrow">Join MahaYukti</div>
+              <div class="article-cta-title">The network is open.<br><em>Membership is earned.</em></div>
+              <p>Every domain. Every geography. Every experience level.</p>
+              <div class="article-cta-btns">
+                <button class="btn btn-gold btn-sm" onclick="goto('join')">Apply Now</button>
+                <a class="btn btn-outline btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    slides.appendChild(slide);
+
+    // Dot
+    const dot=document.createElement('div');
+    dot.className='blog-dot'+(i===0?' act':'');
+    dot.onclick=()=>blogGoTo(i);
+    dots.appendChild(dot);
+  });
+
+  document.getElementById('blogLoading').style.display='none';
+  document.getElementById('blogCarousel').style.display='block';
+  blogLoaded=true;
+  blogGoTo(0,true);
+
+  // Touch/swipe support
+  let tx=0,ty=0;
+  const carousel=document.getElementById('blogSlides');
+  carousel.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+  carousel.addEventListener('touchend',e=>{
+    const dx=tx-e.changedTouches[0].clientX;
+    const dy=ty-e.changedTouches[0].clientY;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40){
+      dx>0?blogGoTo(blogCurrent+1):blogGoTo(blogCurrent-1);
+    }
+  },{passive:true});
+}
+
+function blogGoTo(n,instant){
+  const posts=blogPosts;
+  if(n<0||n>=posts.length)return;
+  blogCurrent=n;
+  const slides=document.getElementById('blogSlides');
+  if(slides)slides.style.transition=instant?'none':'transform .6s cubic-bezier(.77,0,.18,1)';
+  if(slides)slides.style.transform=`translateX(-${n*100}%)`;
+
+  // Dots
+  document.querySelectorAll('.blog-dot').forEach((d,i)=>d.classList.toggle('act',i===n));
+
+  // Count
+  const count=document.getElementById('blogCount');
+  if(count)count.textContent=`${n+1} / ${posts.length}`;
+
+  // Buttons
+  const prev=document.getElementById('blogPrevBtn');
+  const next=document.getElementById('blogNextBtn');
+  if(prev)prev.disabled=n===0;
+  if(next)next.disabled=n===posts.length-1;
+
+  // Progress
+  const fill=document.getElementById('blogProgressFill');
+  if(fill)fill.style.height=((n+1)/posts.length*100)+'%';
+
+  // Scroll slide to top
+  setTimeout(()=>{
+    const slide=document.getElementById('bslide-'+n);
+    if(slide)slide.scrollTop=0;
+  },50);
+}
+
+
+
+
+
+document.addEventListener('keydown',e=>{
+  // Blog carousel keyboard nav
+  if(document.getElementById('pg-blog')&&document.getElementById('pg-blog').classList.contains('active')){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown')blogGoTo(blogCurrent+1);
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp')blogGoTo(blogCurrent-1);
+  }if(e.key==='Escape'){document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-overlay').classList.remove('show');}});
 
 // TOAST
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
 // ── BLOG DYNAMIC ──────────────────────────────────────────────────────────────
-const BLOG_API='https://script.google.com/macros/s/AKfycbzCmFO-SCSZ-tAh4vU5lBRy6UJ3xJMxJikpdCEaUIMPOEOvoOuZIVfoQG6Et8doJ_yD/exec';
+const BLOG_API='https://script.google.com/macros/s/AKfycbzm07nNIM5o88eA4fqjFPVFyj4gvxIqjmonH6omcUW4SYeUqDp2iYLMnApfYXPINQ9W/exec';
 let blogPosts=[],blogLoaded=false,currentPost=null;
 
 async function loadBlogPosts(){
-  const sk=document.getElementById('blogSkeleton');
-  const gr=document.getElementById('blogGrid');
-  const er=document.getElementById('blogError');
-  if(sk)sk.style.display='grid';
-  if(gr)gr.style.display='none';
-  if(er)er.style.display='none';
-  try{
-    const res=await fetch(BLOG_API+'?t='+Date.now());
-    const data=await res.json();
-    if(data.status==='success'&&data.posts&&data.posts.length>0){blogPosts=data.posts;renderBlogGrid();}
-    else throw new Error('empty');
-  }catch(e){blogPosts=getBlogFallback();renderBlogGrid();}
+  // Show fallback posts IMMEDIATELY — never keep user waiting
+  blogPosts = getBlogFallback();
+  renderBlogCarousel();
+
+  // Silently try to fetch live posts in background
+  try {
+    await new Promise((resolve) => {
+      const cb = '__blogCB_' + Date.now();
+      const script = document.createElement('script');
+      const timer = setTimeout(() => {
+        delete window[cb];
+        if(script.parentNode) script.remove();
+        resolve();
+      }, 6000);
+      window[cb] = function(data) {
+        clearTimeout(timer);
+        delete window[cb];
+        if(script.parentNode) script.remove();
+        if(data && data.status === 'success' && data.posts && data.posts.length > 0) {
+          blogPosts = data.posts;
+          // Silently refresh carousel with live posts
+          const cur = blogCurrent;
+          renderBlogCarousel();
+          blogGoTo(cur, true);
+        }
+        resolve();
+      };
+      script.src = BLOG_API + '?callback=' + cb + '&t=' + Date.now();
+      script.onerror = () => { clearTimeout(timer); delete window[cb]; resolve(); };
+      document.head.appendChild(script);
+    });
+  } catch(e) {
+    // Already showing fallback — nothing to do
+  }
 }
 
-function renderBlogGrid(){
-  const grid=document.getElementById('blogGrid');
-  if(!grid)return;
-  grid.innerHTML='';
-  blogPosts.forEach((post,i)=>{
-    const card=document.createElement('div');
-    card.className='b-card rv'+(i===0?' b-featured':'');
-    card.onclick=()=>openPost(post.id);
-    if(i===0){
-      card.innerHTML=`<div class="b-card-top"><div class="b-cat">${bEsc(post.category)}</div><div class="b-title">${bEsc(post.title)}</div><div class="b-excerpt">${bEsc(post.excerpt)}</div><div class="b-meta"><span class="b-author">Admin · MahaYukti</span><span class="b-date">${bEsc(post.date)}</span><span class="b-read">${bEsc(post.readTime)} →</span></div></div><div class="b-featured-visual"><div class="b-feat-icon">◈</div></div>`;
-    }else{
-      card.innerHTML=`<div class="b-card-top"><div class="b-cat">${bEsc(post.category)}</div><div class="b-title">${bEsc(post.title)}</div><div class="b-excerpt">${bEsc(post.excerpt)}</div></div><div class="b-meta"><span class="b-author">Admin · MahaYukti</span><span class="b-date">${bEsc(post.date)}</span><span class="b-read">${bEsc(post.readTime)} →</span></div>`;
-    }
-    grid.appendChild(card);
-  });
-  const sk=document.getElementById('blogSkeleton');
-  if(sk)sk.style.display='none';
-  grid.style.display='grid';
-  setTimeout(initReveal,80);
-  blogLoaded=true;
-}
+
 
 function bEsc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
