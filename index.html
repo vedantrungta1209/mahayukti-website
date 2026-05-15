@@ -2240,7 +2240,12 @@ function jGo(n){document.querySelectorAll('.j-step').forEach(s=>s.classList.remo
 function jV(n){let ok=true;const F={2:[{id:'jFN',w:'jFw1'},{id:'jLN',w:'jFw2'},{id:'jEM',w:'jFw3',em:true},{id:'jCT',w:'jFw4'}],3:[{id:'jDO',w:'jFw5'},{id:'jRO',w:'jFw6'},{id:'jEX',w:'jFw7'}],4:[{id:'jAB',w:'jFw8'}]};if(F[n])F[n].forEach(f=>{const el=document.getElementById(f.id),w=document.getElementById(f.w);if(!el?.value||(f.em&&!el.value.includes('@'))){w?.classList.add('err');ok=false;}else w?.classList.remove('err');});if(n===4&&jIN.length===0){showToast('Please select at least one intent.');ok=false;}if(!ok)showToast('Please fill in all required fields.');return ok;}
 function jG(id){return document.getElementById(id)?.value||'';}
 function jBR(){const d={'Track':jTR==='member'?'○ Network Member':'◇ Network Participant','Name':jG('jFN')+' '+jG('jLN'),'Email':jG('jEM'),'Phone':jG('jPH')||'—','Location':[jG('jCT'),jG('jST2'),jG('jCO')].filter(Boolean).join(', '),'LinkedIn':jG('jLI')||'—','Domain':jG('jDO'),'Role':jG('jRO'),'Organisation':jG('jOR')||'—','Experience':jG('jEX'),'Intent':jIN.join(', ')||'—'};document.getElementById('jRC').innerHTML=Object.entries(d).map(([k,v])=>`<div class="j-rr"><div class="j-rk">${k}</div><div class="j-rv">${v}</div></div>`).join('');}
-async function jSub(){if(!document.getElementById('jAG').checked){showToast('Please confirm the declaration.');return;}const btn=document.getElementById('jSB');btn.textContent='Submitting...';btn.disabled=true;const now=new Date();const sid='MY-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substr(2,6).toUpperCase();const p={submissionId:sid,submissionDate:now.toISOString(),track:jTR==='member'?'Network Member':'Network Participant',firstName:jG('jFN'),lastName:jG('jLN'),fullName:jG('jFN')+' '+jG('jLN'),email:jG('jEM'),phone:jG('jPH'),city:jG('jCT'),state:jG('jST2'),country:jG('jCO'),linkedin:jG('jLI'),domain:jG('jDO'),role:jG('jRO'),organisation:jG('jOR'),experience:jG('jEX'),qualification:jG('jQU'),intent:jIN.join(', '),about:jG('jAB'),otherNotes:jG('jOT'),source:'Website Form',status:'New'};try{await fetch(JURL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});}catch(e){}document.querySelectorAll('.j-step').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.j-tab').forEach(t=>t.classList.add('done'));const pf=document.getElementById('jP');if(pf)pf.style.width='100%';document.getElementById('jSID').textContent='Submission ID: '+sid;document.getElementById('jSUC').classList.add('show');showToast('Application submitted — we will be in touch within 5–7 working days.');}
+async function jSub(){if(!document.getElementById('jAG').checked){showToast('Please confirm the declaration.');return;}const btn=document.getElementById('jSB');btn.textContent='Submitting...';btn.disabled=true;const now=new Date();const sid='MY-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substr(2,6).toUpperCase();const p={submissionId:sid,submissionDate:now.toISOString(),track:jTR==='member'?'Network Member':'Network Participant',firstName:jG('jFN'),lastName:jG('jLN'),fullName:jG('jFN')+' '+jG('jLN'),email:jG('jEM'),phone:jG('jPH'),city:jG('jCT'),state:jG('jST2'),country:jG('jCO'),linkedin:jG('jLI'),domain:jG('jDO'),role:jG('jRO'),organisation:jG('jOR'),experience:jG('jEX'),qualification:jG('jQU'),intent:jIN.join(', '),about:jG('jAB'),otherNotes:jG('jOT'),source:'Website Form',status:'New'};try{
+    // Use form-data approach — works reliably with Google Apps Script
+    const form = new FormData();
+    form.append('data', JSON.stringify(p));
+    await fetch(JURL, {method:'POST', mode:'no-cors', body:form});
+  }catch(e){}document.querySelectorAll('.j-step').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.j-tab').forEach(t=>t.classList.add('done'));const pf=document.getElementById('jP');if(pf)pf.style.width='100%';document.getElementById('jSID').textContent='Submission ID: '+sid;document.getElementById('jSUC').classList.add('show');showToast('Application submitted — we will be in touch within 5–7 working days.');}
 
 // ── FAQ ───────────────────────────────────────────────────────────────────────
 function toggleFaq(el){
@@ -2342,8 +2347,11 @@ async function jSubmit(){
     about:document.getElementById('j-about').value,otherNotes:document.getElementById('j-other').value,
     source:'Website Form',status:'New'
   };
-  try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
-  catch(e){console.log(e);}
+  try{
+    const form2 = new FormData();
+    form2.append('data', JSON.stringify(payload));
+    await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:form2});
+  }catch(e){}
   document.querySelectorAll('#pg-join .jstep').forEach(s=>s.classList.remove('act'));
   document.querySelectorAll('#pg-join .fp-head,#pg-join .fp-foot').forEach(s=>{if(s)s.style.display='none';});
   const suc=document.getElementById('jsuccess');
