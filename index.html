@@ -2241,10 +2241,14 @@ function jV(n){let ok=true;const F={2:[{id:'jFN',w:'jFw1'},{id:'jLN',w:'jFw2'},{
 function jG(id){return document.getElementById(id)?.value||'';}
 function jBR(){const d={'Track':jTR==='member'?'○ Network Member':'◇ Network Participant','Name':jG('jFN')+' '+jG('jLN'),'Email':jG('jEM'),'Phone':jG('jPH')||'—','Location':[jG('jCT'),jG('jST2'),jG('jCO')].filter(Boolean).join(', '),'LinkedIn':jG('jLI')||'—','Domain':jG('jDO'),'Role':jG('jRO'),'Organisation':jG('jOR')||'—','Experience':jG('jEX'),'Intent':jIN.join(', ')||'—'};document.getElementById('jRC').innerHTML=Object.entries(d).map(([k,v])=>`<div class="j-rr"><div class="j-rk">${k}</div><div class="j-rv">${v}</div></div>`).join('');}
 async function jSub(){if(!document.getElementById('jAG').checked){showToast('Please confirm the declaration.');return;}const btn=document.getElementById('jSB');btn.textContent='Submitting...';btn.disabled=true;const now=new Date();const sid='MY-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substr(2,6).toUpperCase();const p={submissionId:sid,submissionDate:now.toISOString(),track:jTR==='member'?'Network Member':'Network Participant',firstName:jG('jFN'),lastName:jG('jLN'),fullName:jG('jFN')+' '+jG('jLN'),email:jG('jEM'),phone:jG('jPH'),city:jG('jCT'),state:jG('jST2'),country:jG('jCO'),linkedin:jG('jLI'),domain:jG('jDO'),role:jG('jRO'),organisation:jG('jOR'),experience:jG('jEX'),qualification:jG('jQU'),intent:jIN.join(', '),about:jG('jAB'),otherNotes:jG('jOT'),source:'Website Form',status:'New'};try{
-    // Use form-data approach — works reliably with Google Apps Script
-    const form = new FormData();
-    form.append('data', JSON.stringify(p));
-    await fetch(JURL, {method:'POST', mode:'no-cors', body:form});
+    // URL-encoded POST — most reliable with Google Apps Script no-cors
+    const encoded = 'data=' + encodeURIComponent(JSON.stringify(p));
+    await fetch(JURL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: encoded
+    });
   }catch(e){}document.querySelectorAll('.j-step').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.j-tab').forEach(t=>t.classList.add('done'));const pf=document.getElementById('jP');if(pf)pf.style.width='100%';document.getElementById('jSID').textContent='Submission ID: '+sid;document.getElementById('jSUC').classList.add('show');showToast('Application submitted — we will be in touch within 5–7 working days.');}
 
 // ── FAQ ───────────────────────────────────────────────────────────────────────
@@ -2550,7 +2554,7 @@ function parseCSV(text) {
         excerpt:  row.excerpt  || '',
         date:     row.date     || '',
         readTime: row.readtime || row['read time'] || '5 min read',
-        body:     row.body     || ''
+        body:     unescapeHTML(row.body || '')
       });
     }
   }
@@ -2575,6 +2579,25 @@ function parseCSVLine(line) {
   }
   result.push(cur.trim());
   return result;
+}
+
+function unescapeHTML(str) {
+  if (!str) return '';
+  return str
+    .replace(/\u003c/gi, '<')
+    .replace(/\u003e/gi, '>')
+    .replace(/\u0026/gi, '&')
+    .replace(/\u0027/gi, "'")
+    .replace(/\u0022/gi, '"')
+    .replace(/\\u003c/gi, '<')
+    .replace(/\\u003e/gi, '>')
+    .replace(/\\u0026/gi, '&')
+    .replace(/\\/g, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 }
 
 
