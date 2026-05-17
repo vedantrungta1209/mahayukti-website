@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MahaYukti">
+<meta name="theme-color" content="#0B1B3A">
+<title>MahaYukti</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0B1B3A;--navy2:#0D2040;--gold:#C9943A;--gold2:#E8B86D;
+  --white:#FFFFFF;--green:#3ECF8E;--red:#E05555;
+  --muted:rgba(255,255,255,0.45);--border:rgba(201,148,58,0.22);--border2:rgba(255,255,255,0.08);
+  --serif:'Cormorant Garamond',serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --r:8px;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);font-family:var(--sans)}
+#app{height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;background:var(--navy);display:none;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+.nav-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(13,32,64,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border2);display:flex;padding-bottom:var(--safe-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;cursor:pointer;border:none;background:none;color:rgba(255,255,255,0.3);transition:color .2s}
+.nav-item.active{color:var(--gold)}
+.nav-item svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav-item span{font-size:10px;font-family:var(--sans)}
+.status-bar{height:var(--safe-top);background:var(--navy2);flex-shrink:0}
+.page-header{padding:20px 20px 16px;flex-shrink:0}
+.page-header.gradient{background:linear-gradient(180deg,var(--navy2) 0%,var(--navy) 100%)}
+.eyebrow{font-size:10px;font-weight:600;color:var(--gold);letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;font-family:var(--sans)}
+.page-title{font-size:28px;font-family:var(--serif);font-weight:700;color:var(--white);line-height:1.2}
+.page-subtitle{font-size:13px;color:var(--muted);font-family:var(--sans);font-weight:300;margin-top:4px}
+.card{background:rgba(255,255,255,0.025);border:1px solid var(--border2);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.card.gold-border{border-color:rgba(201,148,58,0.25);background:rgba(201,148,58,0.04)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:4px;font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:opacity .2s;-webkit-appearance:none}
+.btn:active{opacity:0.8}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--gold)}
+.btn-full{width:100%}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10px;font-weight:600;color:rgba(255,255,255,0.38);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-family:var(--sans)}
+.field input,.field textarea,.field select{width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px 14px;font-size:15px;color:var(--white);font-family:var(--sans);-webkit-appearance:none;outline:none;transition:border-color .2s}
+.field input:focus,.field textarea:focus{border-color:var(--gold)}
+.field textarea{min-height:100px;resize:none;line-height:1.6}
+#toast{position:fixed;top:calc(var(--safe-top) + 20px);left:50%;transform:translateX(-50%);z-index:999;background:rgba(13,32,64,0.95);border:1px solid var(--border2);border-radius:var(--r);padding:12px 20px;font-size:13px;font-family:var(--sans);max-width:85%;text-align:center;backdrop-filter:blur(20px);transition:opacity .3s;opacity:0;pointer-events:none}
+#toast.show{opacity:1}
+#toast.error{border-color:rgba(224,85,85,0.4);color:#ff8080}
+#toast.success{border-color:rgba(62,207,142,0.4);color:var(--green)}
+.loader{display:flex;align-items:center;justify-content:center;padding:40px}
+.spinner{width:28px;height:28px;border:2px solid rgba(201,148,58,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.layer-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid;border-radius:4px;padding:5px 10px;font-size:10px;font-weight:600;letter-spacing:1px;font-family:var(--sans)}
+.badge-member{border-color:rgba(62,207,142,0.3);color:var(--green);background:rgba(62,207,142,0.06)}
+.badge-participant{border-color:rgba(201,148,58,0.3);color:var(--gold);background:rgba(201,148,58,0.06)}
+.badge-acg{border-color:rgba(232,184,109,0.3);color:var(--gold2);background:rgba(232,184,109,0.06)}
+.badge-council{border-color:rgba(245,212,138,0.3);color:#F5D48A;background:rgba(245,212,138,0.06)}
+.badge-admin{border-color:rgba(255,255,255,0.25);color:var(--white);background:rgba(255,255,255,0.06)}
+.badge-founding{background:rgba(201,148,58,0.1);border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:1px;text-transform:uppercase;font-family:var(--sans)}
+.avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid;font-family:var(--serif);font-weight:700}
+.avatar-sm{width:36px;height:36px;font-size:16px}
+.avatar-md{width:48px;height:48px;font-size:20px}
+.avatar-lg{width:72px;height:72px;font-size:32px}
+.search-bar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1.5px solid var(--border2);border-radius:var(--r);padding:10px 14px;margin-bottom:12px}
+.search-bar input{flex:1;background:none;border:none;font-size:15px;color:var(--white);font-family:var(--sans);outline:none}
+.search-bar input::placeholder{color:rgba(255,255,255,0.2)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--border2);font-size:11px;font-family:var(--sans);color:rgba(255,255,255,0.42);cursor:pointer;background:rgba(255,255,255,0.02);white-space:nowrap;transition:all .2s}
+.chip.active{border-color:var(--gold);background:rgba(201,148,58,0.08);color:var(--gold);font-weight:600}
+.bubble-wrap{display:flex;flex-direction:column;gap:8px;padding:16px}
+.bubble{max-width:78%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.5;font-family:var(--sans)}
+.bubble.me{background:var(--gold);color:var(--navy);align-self:flex-end;border-bottom-right-radius:4px}
+.bubble.them{background:rgba(255,255,255,0.07);color:var(--white);align-self:flex-start;border-bottom-left-radius:4px}
+.bubble-time{font-size:10px;opacity:0.5;margin-top:3px;text-align:right}
+.bubble-author{font-size:10px;color:var(--gold);margin-bottom:3px;font-family:var(--sans)}
+.chat-input-row{display:flex;align-items:flex-end;gap:10px;padding:10px 16px;padding-bottom:calc(10px + var(--safe-bottom));border-top:1px solid var(--border2);background:var(--navy2);flex-shrink:0}
+.chat-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:10px 16px;font-size:15px;color:var(--white);font-family:var(--sans);outline:none;max-height:100px;resize:none;line-height:1.5}
+.chat-send{width:38px;height:38px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:flex-end}
+.modal-overlay.open{display:flex}
+.modal{background:var(--navy2);border-radius:16px 16px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px;padding-bottom:calc(20px + var(--safe-bottom))}
+.modal-handle{width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 20px}
+.tab-row{display:flex;gap:6px;margin-bottom:14px}
+.tab-btn{flex:1;padding:8px;border-radius:6px;border:1px solid var(--border2);font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;font-family:var(--sans);color:rgba(255,255,255,0.38);background:none;cursor:pointer;transition:all .2s}
+.tab-btn.active{border-color:var(--gold);background:rgba(201,148,58,0.08);color:var(--gold)}
+.progress-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin:12px 0 4px}
+.progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px 20px;text-align:center}
+.empty-icon{font-size:48px;opacity:0.2}
+.empty-text{font-size:15px;color:var(--muted);font-family:var(--sans)}
+.empty-sub{font-size:13px;color:rgba(255,255,255,0.25);font-family:var(--sans);line-height:1.6}
+.post-body{font-size:15px;color:rgba(255,255,255,0.62);font-family:var(--sans);font-weight:300;line-height:1.85;padding:0 20px}
+.post-body h2{font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin:32px 0 12px}
+.post-body blockquote{border-left:2px solid var(--gold);padding:16px 20px;margin:24px 0;background:rgba(201,148,58,0.04);border-radius:0 var(--r) var(--r) 0;font-family:var(--serif);font-style:italic;font-size:18px;color:rgba(255,255,255,0.75);line-height:1.65}
+.post-body p{margin-bottom:20px}
+.divider{height:1px;background:var(--border2);margin:12px 0}
+.muted-text{color:var(--muted);font-size:13px}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)}
+.info-label{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;font-family:var(--sans)}
+.info-value{font-size:13px;color:rgba(255,255,255,0.7);font-family:var(--sans);text-align:right;max-width:60%}
+.section-title{font-size:10px;font-weight:600;color:var(--gold);letter-spacing:4px;text-transform:uppercase;font-family:var(--sans);margin-bottom:12px}
+.alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.alert-card{background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer}
+.alert-card.urgent{border-color:rgba(201,148,58,0.3);background:rgba(201,148,58,0.04)}
+.alert-val{font-size:32px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:4px}
+.alert-val.gold{color:var(--gold)}
+.alert-lbl{font-size:10px;color:rgba(255,255,255,0.35);font-family:var(--sans)}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:12px;font-family:var(--sans);cursor:pointer;padding:4px 0 12px;letter-spacing:1px;text-transform:uppercase}
+.back-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.step-content{display:none}.step-content.active{display:block}
+.track-card{display:flex;align-items:flex-start;gap:14px;padding:14px;border:1.5px solid var(--border2);border-radius:var(--r);background:rgba(255,255,255,0.02);cursor:pointer;margin-bottom:10px;transition:border-color .2s}
+.track-card.selected{border-color:var(--gold);background:rgba(201,148,58,0.06)}
+.track-icon{font-size:22px;color:var(--gold);flex-shrink:0;margin-top:2px}
+.track-name{font-size:16px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:3px}
+.track-desc{font-size:12px;color:rgba(255,255,255,0.38);font-family:var(--sans);line-height:1.6}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.quick-card{background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+.quick-card:active{border-color:var(--gold)}
+.quick-card svg{width:24px;height:24px;stroke:var(--gold);fill:none;stroke-width:1.8}
+.quick-card span{font-size:12px;color:rgba(255,255,255,0.55);font-family:var(--sans)}
+.stats-row{display:flex;gap:10px;margin-bottom:20px}
+.stat-card{flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:var(--r);padding:12px}
+.stat-val{font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat-lbl{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;font-family:var(--sans)}
+.member-card{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border2);cursor:pointer}
+.member-info{flex:1;min-width:0}
+.member-name{font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:2px}
+.member-domain{font-size:12px;color:var(--muted);font-family:var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-city{font-size:11px;color:rgba(255,255,255,0.28);font-family:var(--sans)}
+.scroll-content{padding:16px 20px;padding-bottom:calc(80px + var(--safe-bottom))}
+.scroll-content-no-nav{padding:16px 20px;padding-bottom:calc(20px + var(--safe-bottom))}
+.pending-inner{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 24px;text-align:center}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+.nav-badge{position:absolute;top:6px;right:20px;background:var(--gold);color:var(--navy);font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="status-bar"></div>
+
+<!-- SPLASH -->
+<div class="screen active" id="screen-splash">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 24px" class="fade-in">
+    <div style="font-size:10px;color:var(--gold);letter-spacing:5px;text-transform:uppercase;font-family:var(--sans)">Private Professional Network</div>
+    <div style="font-size:52px;font-family:var(--serif);font-weight:700;color:var(--white);letter-spacing:-1px">Maha<span style="color:var(--gold)">Yukti</span></div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.3);font-family:var(--serif);font-style:italic;letter-spacing:1px">Maha Strategy. Every Scale.</div>
+    <div style="width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"></div>
+    <div style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:300;line-height:1.8;text-align:center;max-width:300px">India's first private cross-domain professional network.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">
+      <button class="btn btn-gold btn-full" onclick="goto('apply')">Apply for Membership</button>
+      <button class="btn btn-outline btn-full" onclick="goto('login')">Member Login</button>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <button onclick="goto('blog-public')" style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">Blog</button>
+      <span style="color:rgba(255,255,255,0.15);font-size:10px">·</span>
+      <button onclick="goto('concierge')" style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">MY Concierge</button>
+      <span style="color:rgba(255,255,255,0.15);font-size:10px">·</span>
+      <button onclick="goto('about')" style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">About</button>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:calc(24px + var(--safe-bottom));font-size:10px;color:rgba(255,255,255,0.15);font-family:var(--mono);letter-spacing:2px">mahayukti.com</div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div style="font-size:32px;font-family:var(--serif);color:var(--white)">Maha<span style="color:var(--gold)">Yukti</span></div>
+    <div class="page-title" style="margin-top:8px">Member Login</div>
+    <div class="page-subtitle">Approved members only.</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocapitalize="none"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Your password"></div>
+    <button class="btn btn-gold btn-full" id="login-btn" onclick="handleLogin()">Login to MahaYukti</button>
+    <div style="text-align:center;margin-top:20px"><span class="muted-text">Not a member? </span><button onclick="goto('apply')" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer">Apply</button></div>
+  </div></div>
+</div>
+
+<!-- PENDING -->
+<div class="screen" id="screen-pending">
+  <div class="pending-inner">
+    <div style="font-size:56px;color:var(--gold)">◈</div>
+    <div style="font-size:26px;font-family:var(--serif);font-weight:700;color:var(--white)">Application Under Review</div>
+    <div class="muted-text" style="max-width:280px;line-height:1.8">Admin reviews every application personally. You will hear from us within 5–7 working days.</div>
+    <p style="font-size:11px;color:rgba(255,255,255,0.25);font-family:var(--sans)">info@mahayukti.com</p>
+    <button class="btn btn-outline" onclick="handleSignOut()">Sign Out</button>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="screen" id="screen-about">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="eyebrow">About MahaYukti</div>
+    <div class="page-title">India's first private cross-domain network.</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="line-height:1.8;margin-bottom:20px">Not a job board. Not a platform. A network built by professionals, for professionals, of professionals.</p>
+    <div class="section-title">Four Verticals</div>
+    <div id="about-verticals"></div>
+    <div class="divider" style="margin:20px 0"></div>
+    <div class="section-title">Network Structure</div>
+    <div id="about-layers"></div>
+    <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-gold btn-full" onclick="goto('apply')">Apply for Membership</button>
+      <button class="btn btn-outline btn-full" onclick="goto('concierge')">Submit a Client Brief</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- APPLY -->
+<div class="screen" id="screen-apply">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="applyBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="eyebrow">Apply for Membership</div>
+    <div class="page-title" id="apply-title">Choose your track</div>
+    <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:25%"></div></div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.28);font-family:var(--sans)" id="apply-step-lbl">Step 1 of 4</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="step-content active" id="apply-s1">
+      <div class="track-card selected" id="tr-member" onclick="selTrack('member')"><div class="track-icon">○</div><div><div class="track-name">Network Member</div><div class="track-desc">Entry into MahaYukti. Directory listing, MY Help community access.</div></div></div>
+      <div class="track-card" id="tr-participant" onclick="selTrack('participant')"><div class="track-icon">◇</div><div><div class="track-name">Network Participant</div><div class="track-desc">Active service listing, domain forums, priority referrals.</div></div></div>
+    </div>
+    <div class="step-content" id="apply-s2">
+      <div class="field"><label>First Name *</label><input type="text" id="a-fname" autocapitalize="words"></div>
+      <div class="field"><label>Last Name *</label><input type="text" id="a-lname" autocapitalize="words"></div>
+      <div class="field"><label>Email Address *</label><input type="email" id="a-email" autocapitalize="none"></div>
+      <div class="field"><label>Mobile Number</label><input type="tel" id="a-phone" placeholder="+91 XXXXX XXXXX"></div>
+      <div class="field"><label>City *</label><input type="text" id="a-city" autocapitalize="words"></div>
+    </div>
+    <div class="step-content" id="apply-s3">
+      <div class="field"><label>Domain *</label><input type="text" id="a-domain" placeholder="e.g. Chartered Accountancy, Legal, Technology" autocapitalize="words"></div>
+      <div class="field"><label>Current Role *</label><input type="text" id="a-role" placeholder="e.g. Senior Advocate, CTO, CA" autocapitalize="words"></div>
+      <div class="field"><label>Years of Experience</label><input type="text" id="a-exp" placeholder="e.g. 3–5 years"></div>
+      <div class="field"><label>LinkedIn Profile</label><input type="url" id="a-linkedin" placeholder="https://linkedin.com/in/..." autocapitalize="none"></div>
+    </div>
+    <div class="step-content" id="apply-s4">
+      <div class="field"><label>About You *</label><textarea id="a-about" placeholder="In 3–5 sentences — who are you professionally and what do you bring to a cross-domain network?" rows="6"></textarea></div>
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border2);border-radius:6px;padding:12px;margin-bottom:16px"><p style="font-size:11px;color:rgba(255,255,255,0.35);font-family:var(--sans);line-height:1.7">By submitting, I confirm the information provided is accurate and agree to uphold MahaYukti's network standards.</p></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" id="apply-prev" onclick="applyPrev()" style="display:none;flex:1">← Back</button>
+      <button class="btn btn-gold" id="apply-next" onclick="applyNext()" style="flex:2">Continue →</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- APPLY SUCCESS -->
+<div class="screen" id="screen-apply-success">
+  <div class="pending-inner">
+    <div style="font-size:56px;color:var(--gold)">◈</div>
+    <div style="font-size:26px;font-family:var(--serif);font-weight:700;color:var(--white)">Application Received</div>
+    <div class="muted-text" style="max-width:280px;line-height:1.8">Admin will review personally and be in touch within 5–7 working days.</div>
+    <div id="apply-subid" style="font-size:10px;color:var(--gold);font-family:var(--mono);letter-spacing:1px"></div>
+    <button class="btn btn-outline" onclick="goto('splash')">Back to Home</button>
+  </div>
+</div>
+
+<!-- CONCIERGE -->
+<div class="screen" id="screen-concierge">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto(ST.profile?'home':'splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="eyebrow">MY Concierge</div>
+    <div class="page-title">Submit a Confidential Brief</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="line-height:1.8;margin-bottom:20px">Describe what you need. Admin coordinates the right professionals. All communication is strictly confidential.</p>
+    <div class="field"><label>Domain Required *</label><div class="chips" id="conc-domains"></div></div>
+    <div class="field"><label>Describe Your Requirement *</label><textarea id="c-desc" rows="5" placeholder="Describe the mandate, context, timeline..."></textarea></div>
+    <div class="field"><label>Urgency</label><div style="display:flex;gap:8px"><button class="chip active" id="urg-standard" onclick="selUrg('standard')">Standard</button><button class="chip" id="urg-urgent" onclick="selUrg('urgent')">Urgent</button><button class="chip" id="urg-critical" onclick="selUrg('critical')">Critical</button></div></div>
+    <div class="field"><label>Your Name *</label><input type="text" id="c-name" autocapitalize="words"></div>
+    <div class="field"><label>Email *</label><input type="email" id="c-email" autocapitalize="none"></div>
+    <div class="field"><label>Organisation (Optional)</label><input type="text" id="c-org" autocapitalize="words"></div>
+    <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:var(--r);padding:12px;margin-bottom:16px"><p style="font-size:12px;color:rgba(255,255,255,0.5);font-family:var(--sans);line-height:1.7">🔒 All information is kept strictly confidential.</p></div>
+    <button class="btn btn-gold btn-full" onclick="submitConcierge()">Submit Brief to Admin</button>
+  </div></div>
+</div>
+
+<!-- BLOG PUBLIC -->
+<div class="screen" id="screen-blog-public">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="eyebrow">MahaYukti Blog</div>
+    <div class="page-title">Thinking about<br><span style="color:var(--gold)">professional India.</span></div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="blog-pub-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- BLOG POST -->
+<div class="screen" id="screen-blog-post">
+  <div class="page-header gradient">
+    <button class="back-btn" id="bp-back"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="eyebrow" id="bp-cat"></div>
+    <div class="page-title" id="bp-title" style="font-size:22px;line-height:1.25"></div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.28);font-family:var(--sans);margin-top:8px" id="bp-meta"></div>
+  </div>
+  <div class="scroll">
+    <div style="padding-top:20px;padding-bottom:calc(20px + var(--safe-bottom))">
+      <div class="post-body" id="bp-body"></div>
+      <div style="margin:32px 20px;background:rgba(201,148,58,0.06);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
+        <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:8px">Join MahaYukti</div>
+        <div class="muted-text" style="margin-bottom:16px">The network is open. Membership is earned.</div>
+        <button class="btn btn-gold" onclick="goto('apply')">Apply Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MEMBER HOME -->
+<div class="screen" id="screen-home">
+  <div class="page-header gradient" style="padding-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:13px;color:var(--muted)">Welcome back,</div><div style="font-size:26px;font-family:var(--serif);font-weight:700;color:var(--white)" id="home-name">Member</div></div>
+      <button onclick="goto('notifications')" style="background:none;border:none;cursor:pointer;position:relative;padding:4px">
+        <svg style="width:24px;height:24px;stroke:var(--white);fill:none;stroke-width:1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="nav-badge" id="notif-badge" style="display:none">0</div>
+      </button>
+    </div>
+    <div id="home-badge" style="margin-top:10px"></div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="section-title">Quick Actions</div>
+    <div class="quick-grid">
+      <div class="quick-card" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></div>
+      <div class="quick-card" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></div>
+      <div class="quick-card" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>MY Help</span></div>
+      <div class="quick-card" onclick="goto('forums')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg><span>Forums</span></div>
+    </div>
+    <div class="stats-row" id="home-stats"></div>
+    <div class="section-title">From the Blog</div>
+    <div id="home-blog"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
+  <div class="nav-bar">
+    <button class="nav-item active" onclick="gotoTab('home')" id="nt-home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
+    <button class="nav-item" onclick="gotoTab('directory')" id="nt-directory"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('messages')" id="nt-messages"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
+    <button class="nav-item" onclick="gotoTab('help')" id="nt-help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>Help</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')" id="nt-profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+  </div>
+</div>
+
+<!-- DIRECTORY -->
+<div class="screen" id="screen-directory">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Directory</div>
+    <div class="page-subtitle">Active Network Members</div>
+  </div>
+  <div style="padding:0 20px 8px;flex-shrink:0">
+    <div class="search-bar"><svg style="width:16px;height:16px;stroke:rgba(255,255,255,0.3);fill:none;stroke-width:2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search username or domain..." id="dir-search" oninput="filterDir()" autocapitalize="none"></div>
+    <div class="chips" id="dir-chips"></div>
+  </div>
+  <div class="scroll"><div style="padding:0 20px;padding-bottom:calc(80px + var(--safe-bottom))" id="dir-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
+    <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>Help</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+  </div>
+</div>
+
+<!-- MEMBER PROFILE -->
+<div class="screen" id="screen-member-profile">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('directory')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;text-align:center">
+      <div class="avatar avatar-lg" id="mp-av" style="border-color:rgba(201,148,58,0.3);color:var(--gold)"></div>
+      <div id="mp-founding" style="display:none"><div class="badge-founding">◈ Founding Member</div></div>
+      <div style="font-size:18px;color:var(--white);font-family:var(--sans);font-weight:600" id="mp-uname"></div>
+      <div style="font-size:13px;color:var(--muted);font-family:var(--serif);font-style:italic" id="mp-rname"></div>
+      <div id="mp-badge"></div>
+    </div>
+    <div id="mp-info"></div>
+    <button class="btn btn-gold btn-full" id="mp-msg-btn" onclick="chatWithCurrent()" style="margin-top:20px"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Send Message</button>
+  </div></div>
+</div>
+
+<!-- MESSAGES -->
+<div class="screen" id="screen-messages">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="page-title">Messages</div>
+      <button onclick="goto('directory')" style="background:none;border:none;cursor:pointer"><svg style="width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.8" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+    </div>
+  </div>
+  <div class="scroll">
+    <div style="padding:0;padding-bottom:calc(80px + var(--safe-bottom))">
+      <div onclick="goto('group-chats')" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border2);cursor:pointer">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(201,148,58,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:var(--serif);font-size:18px;flex-shrink:0">◆</div>
+        <div style="flex:1"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500">Domain Group Chats</div><div style="font-size:12px;color:var(--muted)">Connect with your domain community</div></div>
+        <svg style="width:16px;height:16px;stroke:rgba(255,255,255,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+      </div>
+      <div id="convos-list"><div class="loader"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
+    <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
+    <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>Help</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="screen" id="screen-chat">
+  <div class="page-header gradient" style="padding-bottom:12px">
+    <button class="back-btn" onclick="goto('messages')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="avatar avatar-sm" id="chat-av" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0"></div>
+      <div><div style="font-size:16px;color:var(--white);font-family:var(--sans);font-weight:500" id="chat-name"></div><div style="font-size:11px;color:var(--muted)" id="chat-domain"></div></div>
+    </div>
+  </div>
+  <div class="scroll" id="chat-scroll"><div class="bubble-wrap" id="chat-msgs"></div></div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chat-inp" placeholder="Type a message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDM()}"></textarea>
+    <button class="chat-send" onclick="sendDM()"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2;transform:rotate(45deg)" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button>
+  </div>
+</div>
+
+<!-- GROUP CHATS -->
+<div class="screen" id="screen-group-chats">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('messages')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Group Chats</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="gc-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- GROUP CHAT -->
+<div class="screen" id="screen-group-chat">
+  <div class="page-header gradient" style="padding-bottom:12px">
+    <button class="back-btn" onclick="goto('group-chats')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700" id="gc-name"></div>
+    <div style="font-size:11px;color:var(--muted)" id="gc-desc"></div>
+  </div>
+  <div class="scroll" id="gc-scroll"><div class="bubble-wrap" id="gc-msgs"></div></div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="gc-inp" placeholder="Message the group..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGC()}"></textarea>
+    <button class="chat-send" onclick="sendGC()"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2;transform:rotate(45deg)" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button>
+  </div>
+</div>
+
+<!-- MY HELP -->
+<div class="screen" id="screen-help">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="page-title">MY Help</div>
+      <button onclick="document.getElementById('modal-help').classList.add('open')" style="background:var(--gold);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+    </div>
+  </div>
+  <div class="scroll"><div class="scroll-content" id="help-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
+    <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>Help</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+  </div>
+</div>
+
+<!-- FORUMS -->
+<div class="screen" id="screen-forums">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Forums</div>
+  </div>
+  <div style="padding:0 20px 8px;flex-shrink:0"><div class="chips" id="forum-chips"></div></div>
+  <div class="scroll"><div class="scroll-content" id="forum-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div class="screen" id="screen-notifications">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Notifications</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="notif-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- MY PROFILE -->
+<div class="screen" id="screen-profile">
+  <div class="page-header gradient"><button class="back-btn" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button></div>
+  <div class="scroll"><div class="scroll-content">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;text-align:center">
+      <div class="avatar avatar-lg" id="my-av" style="border-color:rgba(201,148,58,0.3);color:var(--gold)"></div>
+      <div id="my-founding" style="display:none"><div class="badge-founding">◈ Founding Member</div></div>
+      <div style="font-size:18px;color:var(--white);font-family:var(--sans);font-weight:600" id="my-uname"></div>
+      <div style="font-size:13px;color:var(--muted);font-family:var(--serif);font-style:italic" id="my-rname"></div>
+      <div id="my-badge"></div>
+    </div>
+    <div class="section-title">Professional Info</div>
+    <div id="my-info"></div>
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px">
+      <div class="section-title" style="margin:0">About</div>
+      <button onclick="toggleAboutEdit()" id="edit-btn" style="background:none;border:none;color:var(--gold);font-size:12px;cursor:pointer">Edit</button>
+    </div>
+    <div id="my-about-view"></div>
+    <div id="my-about-edit" style="display:none">
+      <textarea id="about-inp" style="width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;font-size:14px;color:var(--white);font-family:var(--sans);min-height:100px;resize:none;outline:none" rows="4"></textarea>
+      <button class="btn btn-gold btn-full" onclick="saveAbout()" style="margin-top:8px">Save Changes</button>
+    </div>
+    <div class="divider"></div>
+    <div style="background:rgba(255,255,255,0.02);border-radius:6px;padding:10px;margin-top:12px"><p style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--sans)">📵 Phone numbers are never displayed to anyone on MahaYukti.</p></div>
+    <div class="divider"></div>
+    <button onclick="handleSignOut()" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:rgba(255,255,255,0.35);font-size:13px;font-family:var(--sans);cursor:pointer;padding:16px 0"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
+  </div></div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
+    <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
+    <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>Help</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+  </div>
+</div>
+
+<!-- ADMIN HOME -->
+<div class="screen" id="screen-admin-home">
+  <div class="page-header gradient">
+    <div class="eyebrow">Admin Panel</div>
+    <div class="page-title">Maha<span style="color:var(--gold)">Yukti</span></div>
+    <div class="page-subtitle">Network Operations</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="section-title">Requires Attention</div>
+    <div class="alert-grid" id="admin-stats"></div>
+    <div class="section-title">Recent Applications</div>
+    <div id="admin-apps"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="section-title" style="margin-top:16px">Quick Actions</div>
+    <div class="card" onclick="goto('admin-applications')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span style="font-size:14px;color:rgba(255,255,255,0.6);font-family:var(--sans)">Review All Applications</span><svg style="width:16px;height:16px;stroke:rgba(255,255,255,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-briefs')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span style="font-size:14px;color:rgba(255,255,255,0.6);font-family:var(--sans)">Client Briefs</span><svg style="width:16px;height:16px;stroke:rgba(255,255,255,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+  </div></div>
+  <div class="nav-bar">
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
+    <button class="nav-item" onclick="goto('admin-applications')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Applications</span></button>
+    <button class="nav-item" onclick="goto('admin-briefs')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span>Briefs</span></button>
+    <button class="nav-item" onclick="handleSignOut()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign Out</span></button>
+  </div>
+</div>
+
+<!-- ADMIN APPLICATIONS -->
+<div class="screen" id="screen-admin-applications">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div style="display:flex;justify-content:space-between;align-items:center"><div class="page-title">Applications</div><div id="adm-app-cnt" style="font-size:13px;color:var(--gold);font-family:var(--sans)"></div></div>
+  </div>
+  <div style="padding:0 20px 8px;flex-shrink:0"><div class="search-bar"><svg style="width:16px;height:16px;stroke:rgba(255,255,255,0.3);fill:none;stroke-width:2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search name, domain, city..." id="adm-app-search" oninput="filterAdmApps()" autocapitalize="none"></div></div>
+  <div class="scroll"><div style="padding:0 20px;padding-bottom:calc(80px + var(--safe-bottom))" id="adm-apps-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Applications</span></button>
+    <button class="nav-item" onclick="goto('admin-briefs')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span>Briefs</span></button>
+    <button class="nav-item" onclick="handleSignOut()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign Out</span></button>
+  </div>
+</div>
+
+<!-- ADMIN REVIEW -->
+<div class="screen" id="screen-admin-review">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-applications')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Review Application</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="adm-review-content"></div></div>
+</div>
+
+<!-- ADMIN BRIEFS -->
+<div class="screen" id="screen-admin-briefs">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Client Briefs</div>
+  </div>
+  <div style="padding:0 20px 8px;flex-shrink:0">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchBriefTab('pending')" id="bt-pending">Pending</button>
+      <button class="tab-btn" onclick="switchBriefTab('reviewing')" id="bt-reviewing">Reviewing</button>
+      <button class="tab-btn" onclick="switchBriefTab('assigned')" id="bt-assigned">Assigned</button>
+      <button class="tab-btn" onclick="switchBriefTab('completed')" id="bt-completed">Done</button>
+    </div>
+  </div>
+  <div class="scroll"><div style="padding:0 20px;padding-bottom:calc(80px + var(--safe-bottom))" id="adm-briefs-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
+    <button class="nav-item" onclick="goto('admin-applications')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Applications</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span>Briefs</span></button>
+    <button class="nav-item" onclick="handleSignOut()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign Out</span></button>
+  </div>
+</div>
+
+<!-- MODAL: MY HELP COMPOSE -->
+<div class="modal-overlay" id="modal-help">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:16px">Post to MY Help</div>
+    <div class="field"><label>Title *</label><input type="text" id="help-title" placeholder="What do you need help with?" autocapitalize="sentences"></div>
+    <div class="field"><label>Details *</label><textarea id="help-content" placeholder="Describe your question or request..." rows="4"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" onclick="document.getElementById('modal-help').classList.remove('open')" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" onclick="submitHelp()" style="flex:2">Post to Community</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+</div>
+
+<script>
+const SB_URL='https://zlkowzqfowwpkvauuzzw.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpsa293enFmb3d3cGt2YXV1enp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzkxMTksImV4cCI6MjA5NDUxNTExOX0.wOZlyBhIwp05Wg6hrbcfw03kaMibFe9VTKSIphyRIwg';
+const FORM='https://script.google.com/macros/s/AKfycbxBsqOS_Afx99B2qYr1DxIDTYZwapEFiBDCznSZarcm9cLSULPevCYpbYmfx84cwhY3/exec';
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+
+const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyTrack:'member',applyStep:1,realtimeSubs:[]};
+const DG=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Strategy & Management','Engineering & Infrastructure','Public Sector & Defence','Agriculture & Food','Energy & Environment','Media, Arts & Culture','Education & Research','Other'];
+const CD=['Legal','Finance & Accounting','Technology','Medicine & Healthcare','Strategy','Engineering','Real Estate','Agriculture','Energy','Media','Education','Other'];
+
+function $(i){return document.getElementById(i)}
+function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+(t?' '+t:'');clearTimeout(el._t);el._t=setTimeout(()=>el.className='',3000)}
+function goto(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{}};
+  if(loads[n])loads[n]();
+}
+function gotoTab(n){
+  goto(n);
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  const el=$('nt-'+n);if(el)el.classList.add('active');
+}
+function dname(u){return(u?.show_real_name&&u?.real_name_approved&&u?.real_name)?u.real_name:u?.username||'?'}
+function subId(){return'MY-'+new Date().getFullYear()+String(new Date().getMonth()+1).padStart(2,'0')+String(new Date().getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substr(2,6).toUpperCase()}
+function lbadge(r){return'badge-'+(r||'member')}
+function lbadgeLabel(r){return r==='member'?'○ Network Member':r==='participant'?'◇ Network Participant':r==='acg'?'◆ Advisory & Consulting Group':r==='council'?'◈ Network Council':'◈ Admin'}
+
+async function api(t,p='',m='GET',b=null){
+  const o={method:m,headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json'}};
+  if(b)o.body=JSON.stringify(b);
+  const r=await fetch(`${SB_URL}/rest/v1/${t}${p}`,o);
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'API error');}
+  if(m==='DELETE'||r.status===204)return null;
+  return r.json();
+}
+
+async function init(){
+  renderAbout();renderConciergeChips();loadBlogPublic();
+  const{data:{session}}=await sb.auth.getSession();
+  if(session)await handleSess(session);else goto('splash');
+  sb.auth.onAuthStateChange(async(_,s)=>{if(s)await handleSess(s);else{ST.user=null;ST.profile=null;goto('splash');}});
+}
+
+async function handleSess(s){
+  ST.user=s.user;ST.user.access_token=s.access_token;
+  try{
+    const p=await api('users','?auth_id=eq.'+s.user.id+'&select=*');
+    if(!p||!p.length){goto('splash');return;}
+    ST.profile=p[0];
+    if(ST.profile.status==='pending'||ST.profile.status==='rejected'){goto('pending');return;}
+    if(ST.profile.role==='admin')loadAdminHome();else loadMemberHome();
+  }catch(e){goto('splash');}
+}
+
+async function handleLogin(){
+  const e=$('login-email').value.trim().toLowerCase(),p=$('login-password').value;
+  if(!e||!p){toast('Please enter email and password','error');return;}
+  const btn=$('login-btn');btn.disabled=true;btn.textContent='Logging in...';
+  try{const{error}=await sb.auth.signInWithPassword({email:e,password:p});if(error)throw error;}
+  catch(e){toast(e.message||'Login failed','error');btn.disabled=false;btn.textContent='Login to MahaYukti';}
+}
+
+async function handleSignOut(){
+  ST.realtimeSubs.forEach(s=>s.unsubscribe&&s.unsubscribe());ST.realtimeSubs=[];
+  await sb.auth.signOut();ST.user=null;ST.profile=null;goto('splash');
+}
+
+async function loadMemberHome(){
+  const p=ST.profile;
+  $('home-name').textContent=dname(p);
+  $('home-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>${p.founding_member&&p.founding_approved?'<div class="badge-founding" style="margin-left:8px">◈ Founding Member</div>':''}`;
+  $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${p.domain_group||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${p.city||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${p.role.charAt(0).toUpperCase()+p.role.slice(1)}</div><div class="stat-lbl">Level</div></div>`;
+  goto('home');gotoTab('home');
+  loadBlogFeed('home-blog','home');
+  setupRT();
+}
+
+async function loadBlog(){
+  if(ST.blogPosts.length)return ST.blogPosts;
+  try{ST.blogPosts=await api('blog_posts','?status=eq.published&order=id.asc&select=*')||[];}catch(e){ST.blogPosts=[];}
+  return ST.blogPosts;
+}
+
+async function loadBlogPublic(){
+  const posts=await loadBlog();const el=$('blog-pub-list');
+  if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet</div></div>';return;}
+  el.innerHTML=posts.map((p,i)=>`
+    <div class="${i===0?'card gold-border':'card'}" onclick="openPost('${p.id}','public')" style="cursor:pointer;margin-bottom:${i===0?'16px':'10px'}">
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px">${p.category||''}</div>
+      <div style="font-size:${i===0?'20px':'17px'};color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${p.title}</div>
+      ${i===0?`<div style="font-size:13px;color:rgba(255,255,255,0.42);font-family:var(--sans);font-weight:300;line-height:1.7;margin-bottom:12px">${p.excerpt||''}</div>`:''}
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(255,255,255,0.28);font-family:var(--sans)">${p.date||''}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${p.read_time||''} →</span></div>
+    </div>`).join('');
+}
+
+async function loadBlogFeed(cid,ctx){
+  const posts=await loadBlog();const el=$(cid);if(!el)return;
+  el.innerHTML=posts.slice(0,5).map(p=>`
+    <div class="card" onclick="openPost('${p.id}','${ctx}')" style="cursor:pointer;margin-bottom:10px">
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px">${p.category||''}</div>
+      <div style="font-size:17px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${p.title}</div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(255,255,255,0.28);font-family:var(--sans)">${p.date||''}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${p.read_time||''} →</span></div>
+    </div>`).join('');
+}
+
+function openPost(id,ctx){
+  const p=ST.blogPosts.find(x=>x.id===id);if(!p)return;
+  $('bp-cat').textContent=p.category||'';
+  $('bp-title').textContent=p.title;
+  $('bp-meta').textContent=`Admin · MahaYukti · ${p.date||''} · ${p.read_time||''}`;
+  $('bp-body').innerHTML=p.body||'';
+  $('bp-back').onclick=()=>goto(ctx==='public'?'blog-public':'home');
+  goto('blog-post');
+}
+
+async function loadDir(){
+  if(!ST.members.length){
+    try{ST.members=await api('users','?status=eq.active&role=neq.admin&select=id,username,real_name,show_real_name,real_name_approved,city,domain,domain_group,role,founding_member,founding_approved,experience,organisation,show_organisation,about&order=created_at.desc&limit=200')||[];}
+    catch(e){ST.members=[];}
+  }
+  $('dir-chips').innerHTML=DG.slice(0,8).map(g=>`<div class="chip${g===ST.dirFilter?' active':''}" onclick="setDirFilter('${g}')">${g}</div>`).join('');
+  filterDir();
+}
+
+function setDirFilter(g){ST.dirFilter=g;
+  document.querySelectorAll('#dir-chips .chip').forEach(c=>c.classList.toggle('active',c.textContent===g));
+  filterDir();
+}
+
+function filterDir(){
+  const q=($('dir-search')?.value||'').toLowerCase();
+  const f=ST.members.filter(m=>(ST.dirFilter==='All'||m.domain_group===ST.dirFilter)&&(!q||(m.username||'').toLowerCase().includes(q)||(m.domain||'').toLowerCase().includes(q)||(m.city||'').toLowerCase().includes(q)));
+  const el=$('dir-list');
+  if(!f.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No members found</div></div>';return;}
+  const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(232,184,109,0.3)',council:'rgba(245,212,138,0.3)'};
+  el.innerHTML=f.map(m=>{const n=dname(m);const bc=colors[m.role]||colors.member;return`<div class="member-card" onclick="viewMember('${m.id}')"><div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${n.charAt(0).toUpperCase()}</div><div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${m.domain||''}</div><div class="member-city">${m.city||''}</div></div><svg style="width:16px;height:16px;stroke:rgba(255,255,255,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
+}
+
+function viewMember(id){
+  const m=ST.members.find(x=>x.id===id);if(!m)return;ST.currentMember=m;
+  const n=dname(m);const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(232,184,109,0.3)',council:'rgba(245,212,138,0.3)'};
+  $('mp-av').textContent=n.charAt(0).toUpperCase();$('mp-av').style.borderColor=colors[m.role]||colors.member;
+  $('mp-uname').textContent='@'+m.username;
+  $('mp-rname').textContent=(m.show_real_name&&m.real_name_approved&&m.real_name)?m.real_name:'';
+  $('mp-founding').style.display=m.founding_member&&m.founding_approved?'':'none';
+  $('mp-badge').innerHTML=`<div class="layer-badge ${lbadge(m.role)}">${lbadgeLabel(m.role)}</div>`;
+  $('mp-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${m.domain||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${m.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${m.experience||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${m.organisation}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:300;line-height:1.75">${m.about}</p></div>`:''}`;
+  $('mp-msg-btn').style.display=m.id===ST.profile?.id?'none':'';
+  goto('member-profile');
+}
+
+function chatWithCurrent(){if(ST.currentMember)openChat(ST.currentMember);}
+
+async function loadConvos(){
+  if(!ST.profile)return;
+  try{
+    const data=await api('messages',`?or=(from_id.eq.${ST.profile.id},to_id.eq.${ST.profile.id})&select=id,content,created_at,read,from_id,to_id&order=created_at.desc&limit=100`);
+    const seen=new Set(),convos=[];
+    (data||[]).forEach(m=>{const o=m.from_id===ST.profile.id?m.to_id:m.from_id;if(!seen.has(o)){seen.add(o);convos.push(m);}});
+    if(!convos.length){$('convos-list').innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No messages yet</div><div class="empty-sub">Find a member in Directory and start a conversation</div></div>';return;}
+    const uids=[...seen];
+    const users=await api('users',`?id=in.(${uids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);
+    const um={};(users||[]).forEach(u=>um[u.id]=u);
+    $('convos-list').innerHTML=convos.map(m=>{
+      const oid=m.from_id===ST.profile.id?m.to_id:m.from_id;
+      const o=um[oid]||{username:'Unknown'};const n=dname(o);const unread=!m.read&&m.to_id===ST.profile.id;
+      const enc=JSON.stringify(o).replace(/"/g,'&quot;');
+      return`<div onclick="openChat(${enc})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border2);cursor:pointer"><div class="avatar avatar-md" style="border-color:rgba(201,148,58,0.3);color:var(--gold)">${n.charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:2px">${n}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px">${o.domain||''}</div><div style="font-size:12px;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.content}</div></div>${unread?'<div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>':''}</div>`;
+    }).join('');
+  }catch(e){$('convos-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function openChat(m){
+  ST.currentChat=m;const n=dname(m);
+  $('chat-av').textContent=n.charAt(0).toUpperCase();$('chat-name').textContent=n;$('chat-domain').textContent=m.domain||'';
+  $('chat-msgs').innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  goto('chat');await loadDMs();setupChatRT();
+}
+
+async function loadDMs(){
+  if(!ST.profile||!ST.currentChat)return;
+  try{
+    const d=await api('messages',`?or=(and(from_id.eq.${ST.profile.id},to_id.eq.${ST.currentChat.id}),and(from_id.eq.${ST.currentChat.id},to_id.eq.${ST.profile.id}))&order=created_at.asc&select=*`);
+    const el=$('chat-msgs');
+    if(!d||!d.length){el.innerHTML='<div class="empty-state" style="padding:40px 20px"><div class="empty-text">No messages yet. Say hello.</div></div>';return;}
+    el.innerHTML=d.map(m=>{const me=m.from_id===ST.profile.id;const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div class="bubble ${me?'me':'them'}">${m.content}<div class="bubble-time">${t}</div></div>`;}).join('');
+    const sc=$('chat-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
+  }catch(e){}
+}
+
+async function sendDM(){
+  const inp=$('chat-inp'),c=inp.value.trim();
+  if(!c||!ST.profile||!ST.currentChat)return;
+  inp.value='';
+  try{await api('messages','','POST',{from_id:ST.profile.id,to_id:ST.currentChat.id,content:c});await loadDMs();}
+  catch(e){toast('Failed to send','error');}
+}
+
+function setupChatRT(){
+  ST.realtimeSubs.forEach(s=>s.unsubscribe&&s.unsubscribe());ST.realtimeSubs=[];
+  if(!ST.profile)return;
+  const s=sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`to_id=eq.${ST.profile.id}`},()=>loadDMs()).subscribe();
+  ST.realtimeSubs.push(s);
+}
+
+async function loadGCs(){
+  try{
+    const d=await api('group_chats','?select=*&order=name');const el=$('gc-list');
+    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-text">No group chats</div></div>';return;}
+    el.innerHTML=d.map(c=>{const enc=JSON.stringify(c).replace(/"/g,'&quot;');return`<div class="card" onclick="openGC(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer"><div style="width:40px;height:40px;border-radius:50%;background:rgba(201,148,58,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:var(--serif);font-size:18px;flex-shrink:0">${c.type==='help'?'?':'◆'}</div><div style="flex:1"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:3px">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.description||''}</div></div><svg style="width:16px;height:16px;stroke:rgba(255,255,255,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`;}).join('');
+  }catch(e){}
+}
+
+async function openGC(c){
+  ST.currentGC=c;$('gc-name').textContent=c.name;$('gc-desc').textContent=c.description||'';
+  $('gc-msgs').innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  goto('group-chat');await loadGCMsgs();
+}
+
+async function loadGCMsgs(){
+  if(!ST.currentGC)return;
+  try{
+    const d=await api('group_messages',`?chat_id=eq.${ST.currentGC.id}&order=created_at.asc&select=id,content,created_at,from_id&limit=100`);
+    if(!d||!d.length){$('gc-msgs').innerHTML='<div class="empty-state" style="padding:32px 20px"><div class="empty-text">Be the first to say something.</div></div>';return;}
+    const aids=[...new Set(d.map(m=>m.from_id))];
+    const authors=await api('users',`?id=in.(${aids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const am={};(authors||[]).forEach(a=>am[a.id]=a);
+    $('gc-msgs').innerHTML=d.map(m=>{const me=m.from_id===ST.profile?.id;const n=dname(am[m.from_id]||{username:'Member'});const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${m.content}<div class="bubble-time">${t}</div></div></div>`;}).join('');
+    const sc=$('gc-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
+  }catch(e){}
+}
+
+async function sendGC(){
+  const inp=$('gc-inp'),c=inp.value.trim();
+  if(!c||!ST.profile||!ST.currentGC)return;inp.value='';
+  try{await api('group_messages','','POST',{chat_id:ST.currentGC.id,from_id:ST.profile.id,content:c});await loadGCMsgs();}
+  catch(e){toast('Failed to send','error');}
+}
+
+async function loadHelp(){
+  try{
+    const d=await api('help_posts','?order=created_at.desc&select=id,title,content,type,reply_count,created_at,author_id&limit=50');
+    const el=$('help-list');
+    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet. Ask the first question.</div></div>';return;}
+    const ids=[...new Set(d.map(p=>p.author_id))];
+    let am={};try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card" style="margin-bottom:10px"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:1px;text-transform:uppercase;font-family:var(--sans);display:inline-block;margin-bottom:8px">${p.type||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(255,255,255,0.28)">${n} · ${am[p.author_id]?.domain||''}</span><span style="font-size:11px;color:var(--gold)">${p.reply_count||0} replies</span></div></div>`;}).join('');
+  }catch(e){$('help-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function submitHelp(){
+  const t=$('help-title').value.trim(),c=$('help-content').value.trim();
+  if(!t||!c){toast('Please fill in all fields','error');return;}
+  try{
+    await api('help_posts','','POST',{author_id:ST.profile.id,title:t,content:c,type:'question'});
+    $('help-title').value='';$('help-content').value='';
+    $('modal-help').classList.remove('open');
+    toast('Posted to MY Help','success');await loadHelp();
+  }catch(e){toast('Failed to post','error');}
+}
+
+async function loadForums(){
+  const DGS=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Public Sector & Defence','Other'];
+  $('forum-chips').innerHTML=DGS.map(g=>`<div class="chip${g===ST.dirFilter?' active':''}" onclick="setForumFilter('${g}')">${g}</div>`).join('');
+  try{
+    let p=`?order=pinned.desc,created_at.desc&select=id,title,content,domain_group,pinned,reply_count,created_at,author_id&limit=50`;
+    const d=await api('forum_posts',p);const el=$('forum-list');
+    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No forum posts yet.</div></div>';return;}
+    const ids=[...new Set(d.map(p=>p.author_id))];let am={};
+    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card${p.pinned?' gold-border':''}" style="margin-bottom:10px">${p.pinned?'<div style="font-size:10px;color:var(--gold);margin-bottom:6px">📌 Pinned</div>':''}<div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">${p.domain_group||''}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(255,255,255,0.28)">${n}</span><span style="font-size:11px;color:var(--gold)">${p.reply_count||0} replies →</span></div></div>`;}).join('');
+  }catch(e){$('forum-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+function setForumFilter(g){
+  document.querySelectorAll('#forum-chips .chip').forEach(c=>c.classList.toggle('active',c.textContent===g));
+  loadForums();
+}
+
+async function loadNotifs(){
+  if(!ST.profile)return;
+  try{
+    const d=await api('notifications',`?user_id=eq.${ST.profile.id}&order=created_at.desc&limit=50&select=*`);
+    const el=$('notif-list');
+    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No notifications</div></div>';return;}
+    const unread=d.filter(n=>!n.read).length;
+    const badge=$('notif-badge');if(unread>0){badge.textContent=unread;badge.style.display='';}else badge.style.display='none';
+    el.innerHTML=d.map(n=>`<div class="card${!n.read?' gold-border':''}" onclick="markNotifRead('${n.id}')" style="cursor:pointer;margin-bottom:10px;position:relative">${!n.read?'<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>':''}<div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:4px;padding-right:20px">${n.title}</div>${n.body?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">${n.body}</div>`:''}<div style="font-size:11px;color:rgba(255,255,255,0.25)">${new Date(n.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');
+  }catch(e){}
+}
+
+async function markNotifRead(id){try{await api('notifications','?id=eq.'+id,'PATCH',{read:true});await loadNotifs();}catch(e){}}
+
+function setupRT(){
+  if(!ST.profile)return;
+  const s=sb.channel('notifs').on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${ST.profile.id}`},async()=>await loadNotifs()).subscribe();
+  ST.realtimeSubs.push(s);
+}
+
+function renderProfile(){
+  const p=ST.profile;if(!p)return;const n=dname(p);
+  $('my-av').textContent=n.charAt(0).toUpperCase();
+  $('my-uname').textContent='@'+p.username;
+  $('my-rname').textContent=(p.show_real_name&&p.real_name_approved&&p.real_name)?p.real_name:'';
+  $('my-founding').style.display=p.founding_member&&p.founding_approved?'':'none';
+  $('my-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>`;
+  $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${p.domain||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${p.domain_group||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${p.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${p.experience||'—'}</div></div>`;
+  $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:300;line-height:1.75">${p.about}</p>`:'<p style="font-size:13px;color:rgba(255,255,255,0.25);font-family:var(--sans)">No about text yet.</p>';
+  $('about-inp').value=p.about||'';
+}
+
+function toggleAboutEdit(){
+  const e=$('my-about-edit'),v=$('my-about-view'),b=$('edit-btn');
+  if(e.style.display==='none'){e.style.display='';v.style.display='none';b.textContent='Cancel';}
+  else{e.style.display='none';v.style.display='';b.textContent='Edit';}
+}
+
+async function saveAbout(){
+  const a=$('about-inp').value.trim();
+  try{await api('users','?id=eq.'+ST.profile.id,'PATCH',{about:a});ST.profile.about=a;toggleAboutEdit();renderProfile();toast('Updated','success');}
+  catch(e){toast('Failed','error');}
+}
+
+// APPLY
+let applyStep=1;
+function selTrack(t){ST.applyTrack=t;$('tr-member').classList.toggle('selected',t==='member');$('tr-participant').classList.toggle('selected',t==='participant');}
+function applyBack(){if(applyStep===1)goto('splash');else applyPrev();}
+function applyNext(){
+  if(applyStep===2&&(!$('a-fname').value.trim()||!$('a-email').value.trim()||!$('a-city').value.trim())){toast('Please fill required fields','error');return;}
+  if(applyStep===3&&(!$('a-domain').value.trim()||!$('a-role').value.trim())){toast('Please fill domain and role','error');return;}
+  if(applyStep===4){doApply();return;}
+  applyStep++;updApply();
+}
+function applyPrev(){if(applyStep>1){applyStep--;updApply();}}
+function updApply(){
+  for(let i=1;i<=4;i++)$('apply-s'+i).classList.toggle('active',i===applyStep);
+  $('apply-prog').style.width=(applyStep/4*100)+'%';
+  $('apply-step-lbl').textContent='Step '+applyStep+' of 4';
+  const ts=['Choose your track','Personal details','Professional details','About you'];
+  $('apply-title').textContent=ts[applyStep-1];
+  $('apply-prev').style.display=applyStep>1?'':'none';
+  $('apply-next').textContent=applyStep===4?'Submit Application':'Continue →';
+}
+async function doApply(){
+  const about=$('a-about').value.trim();if(!about){toast('Please tell us about yourself','error');return;}
+  const btn=$('apply-next');btn.disabled=true;btn.textContent='Submitting...';
+  const sid=subId();const domain=$('a-domain').value.trim();
+  const dg=domain.toLowerCase().includes('ca')||domain.toLowerCase().includes('accounting')||domain.toLowerCase().includes('finance')?'Finance & Accounting':domain.toLowerCase().includes('legal')||domain.toLowerCase().includes('law')?'Law & Compliance':domain.toLowerCase().includes('tech')||domain.toLowerCase().includes('software')?'Technology':domain.toLowerCase().includes('doctor')||domain.toLowerCase().includes('medical')?'Medicine & Healthcare':'Other';
+  try{
+    await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:sid,submissionDate:new Date().toISOString(),track:ST.applyTrack==='member'?'Network Member':'Network Participant',firstName:$('a-fname').value.trim(),lastName:$('a-lname').value.trim(),fullName:$('a-fname').value.trim()+' '+$('a-lname').value.trim(),email:$('a-email').value.trim(),phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,role:$('a-role').value.trim(),experience:$('a-exp').value.trim(),linkedin:$('a-linkedin').value.trim(),about,domainGroup:dg,source:'MahaYukti PWA',status:'New'}))});
+  }catch(e){}
+  $('apply-subid').textContent='Submission ID: '+sid;
+  goto('apply-success');btn.disabled=false;btn.textContent='Continue →';
+  applyStep=1;updApply();
+}
+
+// CONCIERGE
+function renderConciergeChips(){$('conc-domains').innerHTML=CD.map(d=>`<div class="chip" onclick="selConc('${d}')">${d}</div>`).join('');}
+function selConc(d){document.querySelectorAll('#conc-domains .chip').forEach(c=>c.classList.toggle('active',c.textContent===d));}
+function selUrg(u){ST.urgency=u;['standard','urgent','critical'].forEach(x=>$('urg-'+x).classList.toggle('active',x===u));}
+async function submitConcierge(){
+  const dom=document.querySelector('#conc-domains .chip.active')?.textContent||'';
+  const desc=$('c-desc').value.trim(),name=$('c-name').value.trim(),email=$('c-email').value.trim();
+  if(!dom||!desc||!name||!email){toast('Please fill all required fields','error');return;}
+  try{await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:subId(),type:'MY Concierge Brief',domain:dom,description:desc,urgency:ST.urgency,name,email,organisation:$('c-org').value.trim(),source:'MahaYukti PWA'}))});}catch(e){}
+  $('c-desc').value='';$('c-name').value='';$('c-email').value='';$('c-org').value='';
+  toast('Brief submitted. Admin will be in touch within 24 hours.','success');
+  setTimeout(()=>goto(ST.profile?'home':'splash'),2000);
+}
+
+// ABOUT
+function renderAbout(){
+  $('about-verticals').innerHTML=[{i:'◈',n:'MY Advisory',d:'Research, intelligence, and strategic counsel across domains.'},{i:'◆',n:'MY Consultancy',d:'Expert professional services coordinated through the network.'},{i:'◇',n:'MY Concierge',d:'Bespoke facilitation for complex, sensitive, time-critical needs.'},{i:'○',n:'MY Help',d:'Community, peer connection, mentoring, and referrals.'}].map(v=>`<div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border2)"><div style="font-size:22px;color:var(--gold);width:28px;flex-shrink:0">${v.i}</div><div><div style="font-size:16px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:3px">${v.n}</div><div style="font-size:12px;color:var(--muted);line-height:1.6">${v.d}</div></div></div>`).join('');
+  $('about-layers').innerHTML=[{s:'◈',n:'Network Council',t:'Invite Only',o:false},{s:'◆',n:'Advisory & Consulting Group',t:'By Selection',o:false},{s:'◇',n:'Network Participant',t:'Apply',o:true},{s:'○',n:'Network Member',t:'Apply',o:true}].map(l=>`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border2)"><div style="font-size:16px;color:var(--gold);width:24px;flex-shrink:0">${l.s}</div><div style="flex:1;font-size:13px;color:rgba(255,255,255,0.6)">${l.n}</div><div style="border:1px solid ${l.o?'rgba(201,148,58,0.3)':'rgba(255,255,255,0.15)'};border-radius:3px;padding:3px 8px;font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${l.o?'var(--gold)':'rgba(255,255,255,0.3)'}">${l.t}</div></div>`).join('');
+}
+
+// ADMIN
+async function loadAdminHome(){
+  goto('admin-home');
+  try{
+    const[apps,briefs]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100')]);
+    const pc=(apps||[]).length,bc=(briefs||[]).length;
+    $('admin-stats').innerHTML=[{l:'Pending Applications',v:pc,u:pc>0,s:'admin-applications'},{l:'Client Briefs',v:bc,u:bc>0,s:'admin-briefs'},{l:'Network Members',v:'—',u:false,s:'admin-applications'},{l:'Blog Posts Live',v:ST.blogPosts.length||'—',u:false,s:'admin-applications'}].map(s=>`<div class="alert-card${s.u?' urgent':''}" onclick="goto('${s.s}')"><div class="alert-val${s.u?' gold':''}">${s.v}</div><div class="alert-lbl">${s.l}</div></div>`).join('');
+    if(!apps||!apps.length){$('admin-apps').innerHTML='<p style="font-size:13px;color:var(--muted)">No pending applications</p>';return;}
+    $('admin-apps').innerHTML=(apps||[]).slice(0,5).map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${(a.real_name||a.username||'?').charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${a.real_name||a.username}</div><div style="font-size:12px;color:var(--muted)">${a.domain||''} · ${a.city||''}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:10px;color:var(--gold);white-space:nowrap">Review →</div></div>`;}).join('');
+  }catch(e){}
+}
+
+let allAdmApps=[];
+async function loadAdmApps(){
+  try{
+    allAdmApps=await api('users','?status=eq.pending&select=*&order=created_at.desc')||[];
+    $('adm-app-cnt').textContent=allAdmApps.length+' pending';filterAdmApps();
+  }catch(e){}
+}
+
+function filterAdmApps(){
+  const q=($('adm-app-search')?.value||'').toLowerCase();
+  const f=allAdmApps.filter(a=>!q||(a.real_name||'').toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q)||(a.domain||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q));
+  $('adm-apps-list').innerHTML=f.length?f.map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${(a.real_name||a.username||'?').charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${a.real_name||a.username||'Unknown'}</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:2px">${a.email||''}</div><div style="font-size:12px;color:var(--muted)">${a.domain||''} · ${a.city||''}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:10px;color:var(--gold)">Review →</div></div>`;}).join(''):'<div class="empty-state"><div class="empty-text">No pending applications</div></div>';
+}
+
+function reviewApp(a){
+  $('adm-review-content').innerHTML=`
+    <div style="background:rgba(201,148,58,0.06);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between">
+      <span style="font-size:10px;color:var(--gold);font-family:var(--mono);letter-spacing:1px">${a.submission_id||'N/A'}</span>
+      <span style="font-size:10px;color:rgba(255,255,255,0.28)">${new Date(a.created_at).toLocaleDateString('en-IN')}</span>
+    </div>
+    <div class="section-title">Personal Details</div>
+    <div class="card">${[['Full Name',a.real_name],['Email',a.email],['Phone',a.phone],['City',a.city+(a.state?', '+a.state:'')],['LinkedIn',a.linkedin]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${l}</div><div class="info-value">${v}</div></div>`:'').join('')}</div>
+    <div class="section-title" style="margin-top:16px">Professional Details</div>
+    <div class="card">${[['Domain',a.domain],['Domain Group',a.domain_group],['Role',a.role],['Experience',a.experience],['Qualification',a.qualification],['Organisation',a.organisation]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${l}</div><div class="info-value">${v}</div></div>`:'').join('')}</div>
+    ${a.about?`<div class="section-title" style="margin-top:16px">About</div><div class="card"><p style="font-size:14px;color:var(--muted);font-weight:300;line-height:1.75">${a.about}</p></div>`:''}
+    <div class="section-title" style="margin-top:16px">Admin Notes</div>
+    <textarea id="rev-notes" style="width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;font-size:14px;color:var(--white);font-family:var(--sans);min-height:80px;resize:none;outline:none;margin-bottom:14px" placeholder="Add notes (required for rejection)..."></textarea>
+    <div style="display:flex;gap:10px">
+      <button class="btn" style="flex:1;border:1px solid rgba(224,85,85,0.3);color:var(--red);background:rgba(224,85,85,0.06)" onclick="rejectApp('${a.id}')">Reject</button>
+      <button class="btn btn-gold" style="flex:2" onclick="approveApp('${a.id}')">✓ Approve Member</button>
+    </div>`;
+  goto('admin-review');
+}
+
+async function approveApp(id){
+  if(!confirm('Approve this application?'))return;
+  try{await api('users','?id=eq.'+id,'PATCH',{status:'active',role:'member',approved_at:new Date().toISOString()});toast('Approved','success');goto('admin-applications');await loadAdmApps();}
+  catch(e){toast('Error','error');}
+}
+
+async function rejectApp(id){
+  const n=$('rev-notes').value.trim();if(!n){toast('Please add a note','error');return;}
+  if(!confirm('Reject this application?'))return;
+  try{await api('users','?id=eq.'+id,'PATCH',{status:'rejected',admin_notes:n});toast('Rejected','success');goto('admin-applications');await loadAdmApps();}
+  catch(e){toast('Error','error');}
+}
+
+let curBriefTab='pending';
+async function loadAdmBriefs(tab){
+  curBriefTab=tab||curBriefTab;
+  try{
+    const d=await api('client_briefs',`?status=eq.${curBriefTab}&select=*&order=created_at.desc`);
+    const el=$('adm-briefs-list');
+    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-text">No '+curBriefTab+' briefs</div></div>';return;}
+    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:4px;padding:2px 8px;font-size:9px;font-weight:600;text-transform:uppercase">${b.urgency}</div><div style="border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase">🔒 ${b.confidentiality}</div></div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">${b.domain_needed}</div><div style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${b.description}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(255,255,255,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px"><button onclick="updBrief('${b.id}','reviewing')" style="background:none;border:1px solid var(--border2);border-radius:4px;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Review</button><button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button></div></div></div>`).join('');
+  }catch(e){}
+}
+
+async function updBrief(id,s){try{await api('client_briefs','?id=eq.'+id,'PATCH',{status:s});await loadAdmBriefs();toast('Updated','success');}catch(e){toast('Error','error');}}
+
+function switchBriefTab(t){curBriefTab=t;['pending','reviewing','assigned','completed'].forEach(x=>$('bt-'+x)?.classList.toggle('active',x===t));loadAdmBriefs(t);}
+
+init();
+</script>
+</body>
+</html>
