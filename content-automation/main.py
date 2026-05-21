@@ -65,8 +65,8 @@ def run():
 
 if __name__ == "__main__":
     missing = []
-    if not os.getenv("GEMINI_API_KEY"):
-        missing.append("GEMINI_API_KEY")
+    if not os.getenv("GROQ_API_KEY"):
+        missing.append("GROQ_API_KEY")
     if missing:
         print(f"ERROR: Missing env vars: {', '.join(missing)}")
         print("Copy .env.example to .env and fill in your keys.")

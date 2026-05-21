@@ -1,12 +1,11 @@
 import json
 import re
-import google.generativeai as genai
-from config import GEMINI_API_KEY, CHANNEL_NAME
+from groq import Groq
+from config import GROQ_API_KEY, CHANNEL_NAME
 
 
 def generate_script(topic: dict) -> dict:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    client = Groq(api_key=GROQ_API_KEY)
 
     prompt = f"""You are the scriptwriter for "{CHANNEL_NAME}", a popular Indian personal finance YouTube channel.
 
@@ -21,6 +20,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation. Exact form
 
 {{
   "title": "Catchy YouTube title in Hinglish, max 70 chars. Use numbers or questions. Must make people click.",
+  "hook": "One shocking fact or question to open the video, max 20 words.",
   "script": "Full voiceover script. Conversational Hinglish tone. Start with a strong hook (question or shocking fact). Use real Indian examples with rupee amounts. Cover the topic in 5-7 clear points. End with a CTA to subscribe.",
   "key_points": ["Point 1 max 12 words", "Point 2 max 12 words", "Point 3 max 12 words", "Point 4 max 12 words", "Point 5 max 12 words", "Point 6 max 12 words"],
   "description": "YouTube video description. 200 words. Include what the video covers, timestamps for key points, relevant hashtags like #PersonalFinance #PaisaGyaan #MoneyTips. End with subscribe CTA.",
@@ -35,10 +35,16 @@ Script tone rules:
 - Include at least one surprising fact or shocking statistic
 - Keep it practical: viewers should be able to act on the advice today"""
 
-    response = model.generate_content(prompt)
-    text = response.text.strip()
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
+        max_tokens=2048,
+    )
 
-    # Strip markdown code fences if Gemini adds them
+    text = response.choices[0].message.content.strip()
+
+    # Strip markdown code fences if the model adds them
     text = re.sub(r"^```json?\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
 

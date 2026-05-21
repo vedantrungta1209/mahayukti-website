@@ -1,0 +1,17 @@
+# Secrets — never commit these
+.env
+client_secret.json
+youtube_token.json
+
+# Generated output
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+*.egg-info/
+dist/
+build/

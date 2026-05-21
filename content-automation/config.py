@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 CHANNEL_NAME = os.getenv("CHANNEL_NAME", "Paisa Gyaan")
 
 VIDEO_WIDTH = 1920

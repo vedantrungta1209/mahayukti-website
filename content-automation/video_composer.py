@@ -1,5 +1,5 @@
 from pathlib import Path
-from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
+from moviepy import ImageClip, AudioFileClip, concatenate_videoclips
 from frame_generator import (
     create_title_frame, create_point_frame, create_hook_frame, create_outro_frame,
 )
@@ -47,14 +47,14 @@ def compose_video(audio_path: str, script_data: dict, output_path: str) -> str:
     slides.append((outro_path, OUTRO_DURATION))
 
     # Build video clips
-    clips = [ImageClip(path).set_duration(dur) for path, dur in slides]
-    video = concatenate_videoclips(clips, method="compose")
+    clips = [ImageClip(path).with_duration(dur) for path, dur in slides]
+    video = concatenate_videoclips(clips)
 
     # Trim to match audio exactly
     if video.duration > total:
-        video = video.subclip(0, total)
+        video = video.subclipped(0, total)
 
-    final = video.set_audio(audio)
+    final = video.with_audio(audio)
     final.write_videofile(
         output_path,
         fps=FPS,
