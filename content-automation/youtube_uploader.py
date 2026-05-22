@@ -6,6 +6,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 from config import TOKEN_FILE, CLIENT_SECRET_FILE, SCOPES
@@ -90,12 +91,15 @@ def upload_video(
     video_id = response["id"]
     print(f"  Video live: https://youtube.com/watch?v={video_id}")
 
-    # Set custom thumbnail
+    # Set custom thumbnail (requires verified channel with custom thumbnails enabled)
     if Path(thumbnail_path).exists():
-        yt.thumbnails().set(
-            videoId=video_id,
-            media_body=MediaFileUpload(thumbnail_path, mimetype="image/jpeg"),
-        ).execute()
-        print("  Thumbnail set.")
+        try:
+            yt.thumbnails().set(
+                videoId=video_id,
+                media_body=MediaFileUpload(thumbnail_path, mimetype="image/jpeg"),
+            ).execute()
+            print("  Thumbnail set.")
+        except HttpError as e:
+            print(f"  Thumbnail skipped: {e.reason}")
 
     return video_id

@@ -1,4 +1,4 @@
-from datetime import date
+from pathlib import Path
 
 # 15 categories × 16 angles = 240 unique topics before cycling
 CATEGORIES = [
@@ -320,11 +320,18 @@ CATEGORIES = [
 ]
 
 
+COUNTER_FILE = Path(__file__).parent / "output" / "topic_counter.txt"
+
+
 def get_todays_topic() -> dict:
     all_angles = [
         {"category": cat["name"], "angle": angle}
         for cat in CATEGORIES
         for angle in cat["angles"]
     ]
-    idx = date.today().timetuple().tm_yday % len(all_angles)
-    return all_angles[idx]
+
+    COUNTER_FILE.parent.mkdir(exist_ok=True)
+    count = int(COUNTER_FILE.read_text().strip()) if COUNTER_FILE.exists() else 0
+    COUNTER_FILE.write_text(str(count + 1))
+
+    return all_angles[count % len(all_angles)]
