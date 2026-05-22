@@ -344,7 +344,7 @@ def generate_image(content, width, height, filepath):
     rb = draw.textbbox((0,0), right_text, font=font_small)
     draw.text((width - 55 - (rb[2]-rb[0]), footer_y), right_text, fill=LIGHT, font=font_small)
 
-    img.save(filepath, quality=95)
+    img.save(filepath, "JPEG", quality=95)
     print(f"✅ Image: {filepath}")
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -448,7 +448,7 @@ def main():
     land_url  = upload_image(land_path, land_name)
 
     # Square image (Instagram)
-    sq_name   = f"post-{POST_ID}-sq.png"
+    sq_name   = f"post-{POST_ID}-sq.jpg"
     sq_path   = f"/tmp/{sq_name}"
     generate_image(content, 1080, 1080, sq_path)
     sq_url    = upload_image(sq_path, sq_name)
