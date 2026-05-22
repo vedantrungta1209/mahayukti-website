@@ -236,7 +236,7 @@ Return this exact JSON:
             "content-type": "application/json"
         },
         json={
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-sonnet-4-6",
             "max_tokens": 2500,
             "system": system,
             "messages": [{"role": "user", "content": prompt}]
