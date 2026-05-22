@@ -320,7 +320,7 @@ CATEGORIES = [
 ]
 
 
-COUNTER_FILE = Path(__file__).parent / "output" / "topic_counter.txt"
+COUNTER_FILE = Path(__file__).parent / "topic_counter.txt"
 
 
 def get_todays_topic() -> dict:
