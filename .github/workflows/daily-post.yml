@@ -2,9 +2,18 @@ name: MahaYukti Daily Marketing Automation
 
 on:
   schedule:
-    # 8:00 AM IST = 2:30 AM UTC
-    - cron: '30 2 * * *'
-  workflow_dispatch:  # Allow manual trigger from GitHub UI
+    - cron: '30 2 * * *'   # 8:00 AM IST (morning — clients)
+    - cron: '30 12 * * *'  # 6:00 PM IST (evening — members)
+  workflow_dispatch:
+    inputs:
+      post_type:
+        description: 'Post type to run'
+        required: true
+        default: 'morning'
+        type: choice
+        options:
+          - morning
+          - evening
 
 jobs:
   daily-post:
@@ -23,16 +32,29 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install requests Pillow
+        run: pip install requests Pillow
 
-      - name: Run daily automation
+      - name: Determine post type
+        id: post_type
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "POST_TYPE=${{ github.event.inputs.post_type }}" >> $GITHUB_ENV
+          else
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" = "02" ]; then
+              echo "POST_TYPE=morning" >> $GITHUB_ENV
+            else
+              echo "POST_TYPE=evening" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Run automation
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           MAKE_WEBHOOK_URL:  ${{ secrets.MAKE_WEBHOOK_URL }}
           GH_TOKEN:          ${{ secrets.GH_TOKEN }}
-        run: |
-          python scripts/generate_and_post.py
+          POST_TYPE:         ${{ env.POST_TYPE }}
+        run: python scripts/generate_and_post.py
 
-      - name: Confirm completion
-        run: echo "✅ MahaYukti daily post complete — $(date)"
+      - name: Done
+        run: echo "✅ ${{ env.POST_TYPE }} post complete — $(date)"
