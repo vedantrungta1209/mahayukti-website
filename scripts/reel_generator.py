@@ -9,9 +9,10 @@ import numpy as np
 import requests
 import edge_tts
 from gradio_client import Client, handle_file
-from moviepy.editor import (
-    VideoFileClip, AudioFileClip, CompositeVideoClip, ColorClip, ImageClip,
-)
+try:
+    from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, ColorClip, ImageClip
+except ImportError:
+    from moviepy import VideoFileClip, AudioFileClip, CompositeVideoClip, ColorClip, ImageClip
 from PIL import Image, ImageDraw, ImageFont
 
 # ── Brand ──────────────────────────────────────────────────────────────────

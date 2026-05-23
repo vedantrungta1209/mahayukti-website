@@ -35,7 +35,7 @@ jobs:
         run: sudo apt-get install -y ffmpeg
 
       - name: Install dependencies
-        run: pip install requests Pillow edge-tts moviepy gradio_client numpy
+        run: pip install requests Pillow edge-tts "moviepy==1.0.3" gradio_client numpy
 
       - name: Determine post type
         id: post_type
