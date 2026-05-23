@@ -44,13 +44,15 @@ def generate_voice(text: str, path: str):
 def _copy_result(result, out_path: str):
     video_file = result[0] if isinstance(result, (list, tuple)) else result
     if isinstance(video_file, dict):
-        video_file = video_file.get("video", {}).get("path") or video_file.get("path")
-    shutil.copy(video_file, out_path)
+        v = video_file.get("video") or video_file.get("path")
+        video_file = v.get("path") if isinstance(v, dict) else v
+    shutil.copy(str(video_file), out_path)
 
 def _try_kevinwang_sadtalker(audio_path: str, out_path: str) -> bool:
     try:
         print("  Trying kevinwang676/SadTalker...")
-        client = Client("kevinwang676/SadTalker", verbose=False)
+        client = Client("kevinwang676/SadTalker", verbose=False,
+                        httpx_kwargs={"verify": False})
         result = client.predict(
             handle_file(AVATAR),  # source image
             handle_file(audio_path),  # driven audio
