@@ -454,6 +454,12 @@ def main():
     sq_url    = upload_image(sq_path, sq_name)
 
     update_blog(content, land_name)
+
+    # Wait for Cloudflare to deploy the uploaded images before Instagram fetches them
+    import time
+    print("⏳ Waiting 90s for Cloudflare deployment...")
+    time.sleep(90)
+
     post_to_socials(content, land_url, sq_url)
 
     print(f"\n✅ Done! '{content['title']}'")
