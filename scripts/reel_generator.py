@@ -41,35 +41,59 @@ def generate_voice(text: str, path: str):
 
 # ── 2. Talking head via SadTalker (HuggingFace, free) ─────────────────────
 
-SADTALKER_SPACES = [
-    "vinthony/SadTalker",
-    "fffiloni/SadTalker",
-]
+def _try_sadtalker(space: str, audio_path: str, out_path: str) -> bool:
+    try:
+        print(f"  Trying SadTalker: {space}")
+        client = Client(space, verbose=False)
+        result = client.predict(
+            source_image=handle_file(AVATAR),
+            driven_audio=handle_file(audio_path),
+            preprocess="crop",
+            still_mode=True,
+            use_enhancer=False,
+            batch_size=1,
+            size=256,
+            pose_style=0,
+            exp_scale=1.0,
+            api_name="/test",
+        )
+        video_file = result[0] if isinstance(result, (list, tuple)) else result
+        shutil.copy(video_file, out_path)
+        print("  Talking head saved:", out_path)
+        return True
+    except Exception as e:
+        print(f"  {space} failed: {e}")
+        return False
+
+def _try_wav2lip(space: str, audio_path: str, out_path: str) -> bool:
+    try:
+        print(f"  Trying Wav2Lip: {space}")
+        client = Client(space, verbose=False)
+        result = client.predict(
+            face=handle_file(AVATAR),
+            audio=handle_file(audio_path),
+            api_name="/predict",
+        )
+        video_file = result[0] if isinstance(result, (list, tuple)) else result
+        shutil.copy(video_file, out_path)
+        print("  Talking head saved:", out_path)
+        return True
+    except Exception as e:
+        print(f"  {space} failed: {e}")
+        return False
 
 def generate_talking_head(audio_path: str, out_path: str):
-    for space in SADTALKER_SPACES:
-        try:
-            print(f"  Trying SadTalker space: {space}")
-            client = Client(space, verbose=False)
-            result = client.predict(
-                source_image=handle_file(AVATAR),
-                driven_audio=handle_file(audio_path),
-                preprocess="crop",
-                still_mode=True,
-                use_enhancer=False,
-                batch_size=1,
-                size=256,
-                pose_style=0,
-                exp_scale=1.0,
-                api_name="/test",
-            )
-            video_file = result[0] if isinstance(result, (list, tuple)) else result
-            shutil.copy(video_file, out_path)
-            print("  Talking head saved:", out_path)
+    # Try SadTalker spaces first
+    for space in ["kevinwang676/SadTalker", "Aiavatar/sadtalker1_0"]:
+        if _try_sadtalker(space, audio_path, out_path):
             return
-        except Exception as e:
-            print(f"  Space {space} failed: {e}")
-    raise RuntimeError("All SadTalker spaces failed. Add avatar.jpg and retry.")
+
+    # Fall back to Wav2Lip spaces
+    for space in ["manavisrani07/gradio-lipsync-wav2lip", "pragnakalp/Wav2lip-ZeroGPU"]:
+        if _try_wav2lip(space, audio_path, out_path):
+            return
+
+    raise RuntimeError("All talking-head spaces failed.")
 
 # ── 3. Overlay helpers ─────────────────────────────────────────────────────
 
