@@ -414,7 +414,7 @@ def update_blog(content, image_filename):
 # ══════════════════════════════════════════════════════════════════════════
 # STEP 5 — Post to socials via Make.com
 # ══════════════════════════════════════════════════════════════════════════
-def post_to_socials(content, image_url, ig_image_url):
+def post_to_socials(content, image_url, ig_image_url, reel_url=None):
     payload = {
         "post_type":          POST_TYPE,
         "audience":           "clients" if POST_TYPE == "morning" else "members",
@@ -425,11 +425,13 @@ def post_to_socials(content, image_url, ig_image_url):
         "image_url":          image_url,
         "ig_image_url":       ig_image_url,
         "title":              content["title"],
-        "link":               "https://mahayukti.com"
+        "link":               "https://mahayukti.com",
+        "reel_url":           reel_url,
     }
     r = requests.post(MAKE_WEBHOOK_URL, json=payload, timeout=30)
     r.raise_for_status()
-    print("✅ Sent to Make.com → Facebook + Instagram + LinkedIn")
+    suffix = " + Reels" if reel_url else ""
+    print(f"✅ Sent to Make.com → Facebook + Instagram + LinkedIn{suffix}")
 
 # ══════════════════════════════════════════════════════════════════════════
 # MAIN
@@ -455,12 +457,22 @@ def main():
 
     update_blog(content, land_name)
 
+    # Generate talking-head reel (non-fatal — posts still go out if reel fails)
+    reel_url = None
+    try:
+        from reel_generator import generate_reel
+        reel_url = generate_reel(content, POST_ID, GH_TOKEN)
+    except FileNotFoundError as e:
+        print(f"⚠️  Reel skipped: {e}")
+    except Exception as e:
+        print(f"⚠️  Reel failed (continuing without it): {e}")
+
     # Wait for Cloudflare to deploy the uploaded images before Instagram fetches them
     import time
     print("⏳ Waiting 90s for Cloudflare deployment...")
     time.sleep(90)
 
-    post_to_socials(content, land_url, sq_url)
+    post_to_socials(content, land_url, sq_url, reel_url)
 
     print(f"\n✅ Done! '{content['title']}'")
 
