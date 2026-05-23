@@ -9,6 +9,12 @@ import numpy as np
 import requests
 import edge_tts
 from gradio_client import Client, handle_file
+
+# Pillow 10+ removed ANTIALIAS — patch before moviepy imports it
+import PIL.Image
+if not hasattr(PIL.Image, 'ANTIALIAS'):
+    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
+
 try:
     from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, ColorClip, ImageClip
 except ImportError:
@@ -51,8 +57,7 @@ def _copy_result(result, out_path: str):
 def _try_kevinwang_sadtalker(audio_path: str, out_path: str) -> bool:
     try:
         print("  Trying kevinwang676/SadTalker...")
-        client = Client("kevinwang676/SadTalker", verbose=False,
-                        httpx_kwargs={"verify": False})
+        client = Client("kevinwang676/SadTalker", verbose=False)
         result = client.predict(
             handle_file(AVATAR),  # source image
             handle_file(audio_path),  # driven audio
