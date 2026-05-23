@@ -41,58 +41,55 @@ def generate_voice(text: str, path: str):
 
 # ── 2. Talking head via SadTalker (HuggingFace, free) ─────────────────────
 
-def _try_sadtalker(space: str, audio_path: str, out_path: str) -> bool:
+def _copy_result(result, out_path: str):
+    video_file = result[0] if isinstance(result, (list, tuple)) else result
+    if isinstance(video_file, dict):
+        video_file = video_file.get("video", {}).get("path") or video_file.get("path")
+    shutil.copy(video_file, out_path)
+
+def _try_kevinwang_sadtalker(audio_path: str, out_path: str) -> bool:
     try:
-        print(f"  Trying SadTalker: {space}")
-        client = Client(space, verbose=False)
+        print("  Trying kevinwang676/SadTalker...")
+        client = Client("kevinwang676/SadTalker", verbose=False)
         result = client.predict(
-            source_image=handle_file(AVATAR),
-            driven_audio=handle_file(audio_path),
-            preprocess="crop",
-            still_mode=True,
-            use_enhancer=False,
-            batch_size=1,
-            size=256,
-            pose_style=0,
-            exp_scale=1.0,
-            api_name="/test",
+            handle_file(AVATAR),  # source image
+            handle_file(audio_path),  # driven audio
+            "crop",               # preprocess
+            True,                 # still mode
+            False,                # GFPGAN enhancer
+            2,                    # batch size
+            "256",                # face model resolution
+            0,                    # pose style
+            fn_index=0,
         )
-        video_file = result[0] if isinstance(result, (list, tuple)) else result
-        shutil.copy(video_file, out_path)
+        _copy_result(result, out_path)
         print("  Talking head saved:", out_path)
         return True
     except Exception as e:
-        print(f"  {space} failed: {e}")
+        print(f"  kevinwang676/SadTalker failed: {e}")
         return False
 
-def _try_wav2lip(space: str, audio_path: str, out_path: str) -> bool:
+def _try_pragnakalp_wav2lip(audio_path: str, out_path: str) -> bool:
     try:
-        print(f"  Trying Wav2Lip: {space}")
-        client = Client(space, verbose=False)
+        print("  Trying pragnakalp/Wav2lip-ZeroGPU...")
+        client = Client("pragnakalp/Wav2lip-ZeroGPU", verbose=False)
         result = client.predict(
-            face=handle_file(AVATAR),
-            audio=handle_file(audio_path),
-            api_name="/predict",
+            input_image=handle_file(AVATAR),
+            input_audio=handle_file(audio_path),
+            api_name="/run_infrence",
         )
-        video_file = result[0] if isinstance(result, (list, tuple)) else result
-        shutil.copy(video_file, out_path)
+        _copy_result(result, out_path)
         print("  Talking head saved:", out_path)
         return True
     except Exception as e:
-        print(f"  {space} failed: {e}")
+        print(f"  pragnakalp/Wav2lip-ZeroGPU failed: {e}")
         return False
 
 def generate_talking_head(audio_path: str, out_path: str):
-    # Try SadTalker spaces first
-    for space in ["kevinwang676/SadTalker", "Aiavatar/sadtalker1_0"]:
-        if _try_sadtalker(space, audio_path, out_path):
-            return
-
-    # Fall back to Wav2Lip spaces
-    for space in ["manavisrani07/gradio-lipsync-wav2lip", "pragnakalp/Wav2lip-ZeroGPU"]:
-        if _try_wav2lip(space, audio_path, out_path):
-            return
-
+    if _try_kevinwang_sadtalker(audio_path, out_path):
+        return
+    if _try_pragnakalp_wav2lip(audio_path, out_path):
+        return
     raise RuntimeError("All talking-head spaces failed.")
 
 # ── 3. Overlay helpers ─────────────────────────────────────────────────────
