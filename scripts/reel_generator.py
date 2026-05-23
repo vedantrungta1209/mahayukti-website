@@ -164,32 +164,24 @@ def compose_reel(th_path: str, audio_path: str, headline: str, out_path: str):
 # ── 5. Upload reel to GitHub Releases (free public CDN) ───────────────────
 
 def upload_reel(reel_path: str, post_id: str, gh_token: str) -> str:
+    import time
     repo    = "vedantrungta1209/mahayukti-website"
     headers = {
         "Authorization": f"token {gh_token}",
         "Accept": "application/vnd.github.v3+json",
     }
-    tag = f"reels-{post_id}"
+    # Include timestamp to ensure unique tag per run
+    tag      = f"reels-{post_id}-{int(time.time())}"
+    filename = f"reel-{post_id}.mp4"
 
-    # Create release
     rel = requests.post(
         f"https://api.github.com/repos/{repo}/releases",
         headers=headers,
         json={"tag_name": tag, "name": tag, "body": "Auto-generated reel", "draft": False},
     )
-    if rel.status_code not in (200, 201, 422):
-        rel.raise_for_status()
-
-    # Get upload URL (handle existing release)
-    if rel.status_code == 422:
-        rel = requests.get(
-            f"https://api.github.com/repos/{repo}/releases/tags/{tag}",
-            headers=headers,
-        )
-        rel.raise_for_status()
+    rel.raise_for_status()
     upload_url = rel.json()["upload_url"].replace("{?name,label}", "")
 
-    filename = f"reel-{post_id}.mp4"
     with open(reel_path, "rb") as f:
         up = requests.post(
             f"{upload_url}?name={filename}",
