@@ -3,50 +3,77 @@ import re
 from groq import Groq
 from config import GROQ_API_KEY, CHANNEL_NAME, CHANNEL_HANDLE
 
+_PAISA_GYAAN_PATTERNS = [
+    (re.compile(r"[Pp]aisa\s+[Gg]yaan", re.IGNORECASE), "Mahayukti Finance"),
+    (re.compile(r"#PaisaGyaan", re.IGNORECASE), "#MahayuktiFinance"),
+    (re.compile(r"paisa_gyaan", re.IGNORECASE), "mahayukti_finance"),
+    (re.compile(r"@paisagyaan", re.IGNORECASE), "@mahayuktifinance"),
+]
+
+
+def _scrub(text: str) -> str:
+    for pattern, replacement in _PAISA_GYAAN_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+def _sanitize(data: dict) -> dict:
+    """Hard-remove any stray Paisa Gyaan references from all generated fields."""
+    for key in ("title", "hook", "script", "description", "thumbnail_text"):
+        if isinstance(data.get(key), str):
+            data[key] = _scrub(data[key])
+    if isinstance(data.get("tags"), list):
+        data["tags"] = [_scrub(t) if isinstance(t, str) else t for t in data["tags"]]
+    if isinstance(data.get("key_points"), list):
+        data["key_points"] = [_scrub(p) if isinstance(p, str) else p for p in data["key_points"]]
+    return data
+
 
 def generate_script(topic: dict) -> dict:
     client = Groq(api_key=GROQ_API_KEY)
 
-    prompt = f"""You are the scriptwriter for "{CHANNEL_NAME}" ({CHANNEL_HANDLE}), a popular Indian personal finance YouTube channel.
+    prompt = f"""You are a senior financial analyst and head scriptwriter for "{CHANNEL_NAME}" ({CHANNEL_HANDLE}), a professional Indian personal finance YouTube channel that helps urban Indians make informed, data-driven financial decisions.
 
 Topic: "{topic['angle']}"
 Category: {topic['category']}
 
-Write a complete video package in HINGLISH (natural Hindi-English mix in Roman script).
-Target audience: Indians aged 18-35 who want to grow their wealth.
-Script length: ~750-850 words (5-6 minutes when spoken at normal pace).
+⚠️  ABSOLUTE RULE: This channel is MAHAYUKTI FINANCE. The old channel name "Paisa Gyaan" must NEVER appear anywhere — not in the script, description, tags, or any field. Every CTA must say "Mahayukti Finance ko subscribe karein." Violation of this rule is not acceptable.
 
-Return ONLY valid JSON — no markdown, no backticks, no explanation. Exact format:
+Write a complete, professional video package in HINGLISH (sophisticated Hindi-English mix in Roman script).
+Target audience: Urban Indians aged 22-40 who are serious about building long-term wealth.
+Script length: ~850-950 words (6-7 minutes at a measured, authoritative pace).
+
+Return ONLY valid JSON — no markdown, no backticks, no explanation:
 
 {{
-  "title": "Catchy YouTube title in Hinglish, max 70 chars. Use numbers or questions. Must make people click.",
-  "hook": "One shocking fact or question to open the video, max 20 words.",
-  "script": "Full voiceover script. Conversational Hinglish tone. Start with a strong hook (question or shocking fact). Use real Indian examples with rupee amounts. Cover the topic in 5-7 clear points. End with a CTA to subscribe to Mahayukti Finance.",
-  "key_points": ["Point 1 max 12 words", "Point 2 max 12 words", "Point 3 max 12 words", "Point 4 max 12 words", "Point 5 max 12 words", "Point 6 max 12 words"],
-  "description": "YouTube video description. 200 words. Include what the video covers, timestamps for key points, relevant hashtags like #PersonalFinance #MahayuktiFinance #PaisaSamjho #MoneyTips. End with subscribe CTA mentioning Mahayukti Finance.",
-  "tags": ["MahayuktiFinance", "mahayukti", "PaisaSamjho", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10", "tag11", "tag12", "tag13", "tag14", "tag15"],
-  "thumbnail_text": "Short punchy ALL CAPS text for thumbnail image, max 5 words"
+  "title": "Professional YouTube title in Hinglish, max 70 chars. Lead with a specific number or insight. Compelling but never sensationalist.",
+  "hook": "One authoritative opening statement with a real data point, max 20 words. No hyperbole.",
+  "script": "Full voiceover script. Authoritative Hinglish tone — like a SEBI-registered financial advisor who speaks plainly. Open with a concrete real-world statistic. Structure: strong data-led opening → clear problem or concept → 5-7 well-explained actionable points with specific Indian rupee examples → honest trade-off or risk disclaimer → professional CTA: 'Mahayukti Finance ko subscribe karein aur notification bell on karein — financial clarity ke liye.'",
+  "key_points": ["Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words"],
+  "description": "YouTube description, 200 words. Professional tone. Summarise the video, list key takeaways, add timestamps for each section, include relevant hashtags: #MahayuktiFinance #PaisaSamjho #PersonalFinance #MoneyTips #FinancialPlanning. End with: 'Subscribe to Mahayukti Finance for expert personal finance guidance.'",
+  "tags": ["MahayuktiFinance", "mahayukti", "PaisaSamjho", "PersonalFinance", "FinancialPlanning", "MoneyTips", "IndianFinance", "WealthBuilding", "tag9", "tag10", "tag11", "tag12", "tag13", "tag14", "tag15"],
+  "thumbnail_text": "Short punchy ALL CAPS text for thumbnail, max 5 words, no channel names"
 }}
 
-Script tone rules:
-- Sound like a knowledgeable friend, not a formal textbook
-- Mix Hindi and English naturally: "10,000 rupay ki SIP se 30 saal mein 3.5 crore ban sakte hain"
-- Use real numbers, real examples, real Indian context
-- Include at least one surprising fact or shocking statistic
-- Keep it practical: viewers should be able to act on the advice today
-- Never reference Paisa Gyaan in scripts, tags, or descriptions"""
+Script quality standards:
+- Authoritative, not sensationalist — no "crorepati ban jao", "secret trick", "guaranteed returns"
+- Real data: cite actual figures — "Nifty 50 ka 20-year CAGR 14.5% raha hai", "RBI ne repo rate 6.5% rakha hai"
+- Nuanced: acknowledge risks and trade-offs honestly — viewers should trust you, not just like you
+- Structured: clear transitions between each point, professional signposting
+- Practical: every video should leave viewers with 2-3 things they can do this week
+- Culturally authentic: real Indian examples — LIC, PPF, Zerodha, NSE, Indian tax slabs
+- Mix Hindi and English naturally for educated Indian professionals"""
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.7,
-        max_tokens=2048,
+        temperature=0.65,
+        max_tokens=2500,
     )
 
     text = response.choices[0].message.content.strip()
-
-    # Strip markdown code fences if the model adds them
     text = re.sub(r"^```json?\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
 
-    return json.loads(text)
+    data = json.loads(text)
+    return _sanitize(data)

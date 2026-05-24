@@ -11,7 +11,7 @@ async def _generate_async(text: str, path: str, voice: str) -> None:
 def generate_audio(
     text: str,
     output_path: str,
-    voice: str = "en-IN-NeerjaNeural",  # Indian English female — handles Hinglish naturally
+    voice: str = "hi-IN-MadhurNeural",  # Hindi male — professional, authoritative for finance
 ) -> str:
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     asyncio.run(_generate_async(text, output_path, voice))
