@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-CHANNEL_NAME = os.getenv("CHANNEL_NAME", "Mahayukti Finance")
-CHANNEL_HANDLE = os.getenv("CHANNEL_HANDLE", "@mahayuktifinance")
+CHANNEL_NAME = os.getenv("CHANNEL_NAME", "Mahayukti")
+CHANNEL_HANDLE = os.getenv("CHANNEL_HANDLE", "@WeAreMahayukti")
 CHANNEL_TAGLINE = "Paisa Samjho. Zindagi Badlo."
 
 VIDEO_WIDTH = 1080
