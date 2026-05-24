@@ -80,8 +80,21 @@ r = requests.get("https://graph.facebook.com/v19.0/oauth/access_token", params={
 r.raise_for_status()
 long_user_token = r.json()["access_token"]
 
+# Debug: check token permissions
+me_resp = requests.get("https://graph.facebook.com/v19.0/me", params={
+    "fields": "id,name",
+    "access_token": long_user_token,
+}, timeout=30)
+print("Me:", me_resp.json())
+
+perms_resp = requests.get("https://graph.facebook.com/v19.0/me/permissions", params={
+    "access_token": long_user_token,
+}, timeout=30)
+print("Permissions:", perms_resp.json())
+
 # List pages
 pages_resp = requests.get("https://graph.facebook.com/v19.0/me/accounts", params={
+    "fields": "id,name,access_token",
     "access_token": long_user_token,
 }, timeout=30)
 pages_resp.raise_for_status()
