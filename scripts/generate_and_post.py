@@ -10,10 +10,17 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 # ── Credentials ────────────────────────────────────────────────────────────
-ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
-MAKE_WEBHOOK_URL  = os.environ["MAKE_WEBHOOK_URL"]
-GH_TOKEN          = os.environ["GH_TOKEN"]
-POST_TYPE         = os.environ.get("POST_TYPE", "morning")  # "morning" or "evening"
+ANTHROPIC_API_KEY     = os.environ["ANTHROPIC_API_KEY"]
+GH_TOKEN              = os.environ["GH_TOKEN"]
+POST_TYPE             = os.environ.get("POST_TYPE", "morning")  # "morning" or "evening"
+
+# Social platform credentials (set as GitHub Actions secrets)
+LINKEDIN_ACCESS_TOKEN = os.environ.get("LINKEDIN_ACCESS_TOKEN", "")
+LINKEDIN_AUTHOR_URN   = os.environ.get("LINKEDIN_AUTHOR_URN", "")    # urn:li:organization:XXX
+FB_PAGE_ACCESS_TOKEN  = os.environ.get("FB_PAGE_ACCESS_TOKEN", "")
+FB_PAGE_ID            = os.environ.get("FB_PAGE_ID", "")
+IG_USER_ID            = os.environ.get("IG_USER_ID", "")
+YOUTUBE_TOKEN_JSON    = os.environ.get("YOUTUBE_TOKEN_JSON", "")
 
 # ── Brand ──────────────────────────────────────────────────────────────────
 NAVY  = (11, 27, 58)
@@ -489,67 +496,261 @@ def update_blog(content, image_filename):
     print("✅ Blog updated → Cloudflare deploying...")
 
 # ══════════════════════════════════════════════════════════════════════════
-# STEP 5 — Post to socials via Make.com
+# STEP 5 — Direct social posting (no Make.com)
 # ══════════════════════════════════════════════════════════════════════════
-def post_to_socials(content, image_url, ig_image_url, reel_url=None):
-    payload = {
-        "post_type":          POST_TYPE,
-        "audience":           "clients" if POST_TYPE == "morning" else "members",
-        "domain":             domain,
-        "linkedin_text":      content["linkedin_text"],
-        "instagram_caption":  content["instagram_caption"],
-        "facebook_text":      content["facebook_text"],
-        "image_url":          image_url,
-        "ig_image_url":       ig_image_url,
-        "title":              content["title"],
-        "link":               "https://mahayukti.com",
-        "reel_url":           reel_url,
-    }
-    r = requests.post(MAKE_WEBHOOK_URL, json=payload, timeout=30)
+
+_LI_HEADERS = lambda: {
+    "Authorization":            f"Bearer {LINKEDIN_ACCESS_TOKEN}",
+    "LinkedIn-Version":         "202310",
+    "X-Restli-Protocol-Version":"2.0.0",
+    "Content-Type":             "application/json",
+}
+
+def post_to_linkedin(content, sq_path):
+    if not LINKEDIN_ACCESS_TOKEN or not LINKEDIN_AUTHOR_URN:
+        print("⚠️  LinkedIn credentials missing — skipping")
+        return
+
+    # 1. Initialize image upload
+    init = requests.post(
+        "https://api.linkedin.com/rest/images?action=initializeUpload",
+        headers=_LI_HEADERS(),
+        json={"initializeUploadRequest": {"owner": LINKEDIN_AUTHOR_URN}},
+    )
+    init.raise_for_status()
+    val        = init.json()["value"]
+    upload_url = val["uploadUrl"]
+    image_urn  = val["image"]
+
+    # 2. Upload image binary
+    with open(sq_path, "rb") as f:
+        up = requests.put(
+            upload_url,
+            data=f,
+            headers={"Authorization": f"Bearer {LINKEDIN_ACCESS_TOKEN}",
+                     "Content-Type": "application/octet-stream"},
+        )
+        up.raise_for_status()
+
+    # 3. Publish post
+    requests.post(
+        "https://api.linkedin.com/rest/posts",
+        headers=_LI_HEADERS(),
+        json={
+            "author":         LINKEDIN_AUTHOR_URN,
+            "commentary":     content["linkedin_text"],
+            "visibility":     "PUBLIC",
+            "distribution":   {"feedDistribution": "MAIN_FEED",
+                               "targetEntities": [],
+                               "thirdPartyDistributionChannels": []},
+            "content":        {"media": {"title": content["title"], "id": image_urn}},
+            "lifecycleState": "PUBLISHED",
+            "isReshareDisabledByAuthor": False,
+        },
+    ).raise_for_status()
+    print("✅ LinkedIn posted")
+
+
+def post_to_facebook(content, sq_url):
+    if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
+        print("⚠️  Facebook credentials missing — skipping")
+        return
+    r = requests.post(
+        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos",
+        data={
+            "url":          sq_url,
+            "caption":      content["facebook_text"],
+            "access_token": FB_PAGE_ACCESS_TOKEN,
+        },
+    )
     r.raise_for_status()
-    suffix = " + Reels" if reel_url else ""
-    print(f"✅ Sent to Make.com → Facebook + Instagram + LinkedIn{suffix}")
+    print("✅ Facebook photo posted")
+
+
+def post_to_facebook_reel(content, reel_url):
+    if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
+        print("⚠️  Facebook credentials missing — skipping reel")
+        return
+    r = requests.post(
+        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/videos",
+        data={
+            "file_url":       reel_url,
+            "description":    content["facebook_text"],
+            "published":      "true",
+            "access_token":   FB_PAGE_ACCESS_TOKEN,
+        },
+    )
+    r.raise_for_status()
+    print("✅ Facebook Reel posted")
+
+
+def _ig_wait_for_container(container_id, max_polls=20, sleep_s=15):
+    import time as _t
+    for _ in range(max_polls):
+        resp = requests.get(
+            f"https://graph.facebook.com/v19.0/{container_id}",
+            params={"fields": "status_code", "access_token": FB_PAGE_ACCESS_TOKEN},
+        )
+        status = resp.json().get("status_code", "")
+        if status == "FINISHED":
+            return
+        if status == "ERROR":
+            raise RuntimeError(f"Instagram container error: {resp.json()}")
+        _t.sleep(sleep_s)
+    raise TimeoutError("Instagram container did not finish in time")
+
+
+def post_to_instagram_image(content, sq_url):
+    if not FB_PAGE_ACCESS_TOKEN or not IG_USER_ID:
+        print("⚠️  Instagram credentials missing — skipping")
+        return
+    r = requests.post(
+        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media",
+        data={
+            "image_url":    sq_url,
+            "caption":      content["instagram_caption"],
+            "access_token": FB_PAGE_ACCESS_TOKEN,
+        },
+    )
+    r.raise_for_status()
+    cid = r.json()["id"]
+    _ig_wait_for_container(cid)
+    requests.post(
+        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
+        data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
+    ).raise_for_status()
+    print("✅ Instagram image posted")
+
+
+def post_to_instagram_reel(content, reel_url):
+    if not FB_PAGE_ACCESS_TOKEN or not IG_USER_ID:
+        print("⚠️  Instagram credentials missing — skipping reel")
+        return
+    r = requests.post(
+        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media",
+        data={
+            "media_type":   "REELS",
+            "video_url":    reel_url,
+            "caption":      content["instagram_caption"],
+            "access_token": FB_PAGE_ACCESS_TOKEN,
+        },
+    )
+    r.raise_for_status()
+    cid = r.json()["id"]
+    _ig_wait_for_container(cid, max_polls=24, sleep_s=15)  # up to 6 min
+    requests.post(
+        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
+        data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
+    ).raise_for_status()
+    print("✅ Instagram Reel posted")
+
+
+def upload_to_youtube(content, reel_path):
+    if not YOUTUBE_TOKEN_JSON:
+        print("⚠️  YouTube token missing — skipping")
+        return
+    try:
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+    except ImportError:
+        print("⚠️  google-api-python-client not installed — skipping YouTube")
+        return
+
+    creds = Credentials.from_authorized_user_info(
+        json.loads(YOUTUBE_TOKEN_JSON),
+        ["https://www.googleapis.com/auth/youtube.upload"],
+    )
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+
+    yt = build("youtube", "v3", credentials=creds)
+    body = {
+        "snippet": {
+            "title":       content["title"][:100],
+            "description": content["blog_content"][:5000],
+            "tags":        [domain, subdomain, "MahaYukti", "India", "professionals",
+                            "expert network", "Indian business"],
+            "categoryId":  "27",
+        },
+        "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False},
+    }
+    media   = MediaFileUpload(reel_path, mimetype="video/mp4", resumable=True,
+                              chunksize=8 * 1024 * 1024)
+    request = yt.videos().insert(part=",".join(body.keys()), body=body, media_body=media)
+    response = None
+    while response is None:
+        _, response = request.next_chunk()
+    print(f"✅ YouTube uploaded: https://youtube.com/watch?v={response['id']}")
+
 
 # ══════════════════════════════════════════════════════════════════════════
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════
 def main():
+    import time
     print(f"\n{'🌅' if POST_TYPE=='morning' else '🌆'} MahaYukti {POST_TYPE.upper()} Post — {DATE_STR}")
     print(f"🎯 Audience: {'Potential Clients' if POST_TYPE=='morning' else 'Member Enrolment'}")
     print(f"📌 Domain: {domain} → {subdomain}\n")
 
     content = generate_content()
 
-    # Landscape image (LinkedIn + Facebook)
+    # Landscape image — kept for blog thumbnail
     land_name = f"post-{POST_ID}-land.png"
     land_path = f"/tmp/{land_name}"
     generate_image(content, 1200, 627, land_path)
-    land_url  = upload_image(land_path, land_name)
+    upload_image(land_path, land_name)
 
-    # Square image (Instagram)
-    sq_name   = f"post-{POST_ID}-sq.jpg"
-    sq_path   = f"/tmp/{sq_name}"
+    # Square JPEG — used for all social platforms
+    sq_name = f"post-{POST_ID}-sq.jpg"
+    sq_path = f"/tmp/{sq_name}"
     generate_image(content, 1080, 1080, sq_path)
-    sq_url    = upload_image(sq_path, sq_name)
+    sq_url  = upload_image(sq_path, sq_name)
 
     update_blog(content, land_name)
 
-    # Generate talking-head reel (non-fatal — posts still go out if reel fails)
-    reel_url = None
+    # Generate reel (non-fatal — text posts still go out if reel fails)
+    reel_path, reel_url = None, None
     try:
         from reel_generator import generate_reel
-        reel_url = generate_reel(content, POST_ID, GH_TOKEN)
-    except FileNotFoundError as e:
-        print(f"⚠️  Reel skipped: {e}")
+        print("\n🎬 Generating reel...")
+        reel_path, reel_url = generate_reel(content, POST_ID, GH_TOKEN)
+        print(f"   Reel ready: {reel_url}")
     except Exception as e:
         print(f"⚠️  Reel failed (continuing without it): {e}")
 
-    # Wait for Cloudflare to deploy the uploaded images before Instagram fetches them
-    import time
-    print("⏳ Waiting 90s for Cloudflare deployment...")
+    # Upload reel to YouTube immediately (uses local file)
+    if reel_path and os.path.exists(reel_path):
+        try:
+            print("\n📺 Uploading to YouTube...")
+            upload_to_youtube(content, reel_path)
+        except Exception as e:
+            print(f"⚠️  YouTube upload failed: {e}")
+
+    # Wait for Cloudflare to serve the uploaded images
+    print("\n⏳ Waiting 90s for Cloudflare deployment...")
     time.sleep(90)
 
-    post_to_socials(content, land_url, sq_url, reel_url)
+    print("\n📣 Posting to social platforms...")
+    for name, fn, args in [
+        ("LinkedIn",          post_to_linkedin,        (content, sq_path)),
+        ("Facebook photo",    post_to_facebook,        (content, sq_url)),
+        ("Facebook Reel",     post_to_facebook_reel,   (content, reel_url) if reel_url else None),
+        ("Instagram image",   post_to_instagram_image, (content, sq_url)),
+        ("Instagram Reel",    post_to_instagram_reel,  (content, reel_url) if reel_url else None),
+    ]:
+        if args is None:
+            print(f"   {name}: skipped (no reel)")
+            continue
+        try:
+            fn(*args)
+        except Exception as e:
+            print(f"⚠️  {name} failed: {e}")
+
+    # Clean up reel temp file
+    if reel_path and os.path.exists(reel_path):
+        os.remove(reel_path)
 
     print(f"\n✅ Done! '{content['title']}'")
 
