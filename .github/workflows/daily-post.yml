@@ -74,7 +74,8 @@ jobs:
           FB_PAGE_ACCESS_TOKEN:   ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
           FB_PAGE_ID:             ${{ secrets.FB_PAGE_ID }}
           IG_USER_ID:             ${{ secrets.IG_USER_ID }}
-          YOUTUBE_TOKEN_JSON:     ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          YOUTUBE_TOKEN_JSON:              ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          MAHAYUKTI_YOUTUBE_TOKEN_JSON:   ${{ secrets.MAHAYUKTI_YOUTUBE_TOKEN_JSON }}
         run: python scripts/generate_and_post.py
 
       - name: Commit topic counter

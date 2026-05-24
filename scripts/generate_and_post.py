@@ -23,7 +23,8 @@ LINKEDIN_AUTHOR_URN   = os.environ.get("LINKEDIN_AUTHOR_URN", "")    # urn:li:or
 FB_PAGE_ACCESS_TOKEN  = os.environ.get("FB_PAGE_ACCESS_TOKEN", "")
 FB_PAGE_ID            = os.environ.get("FB_PAGE_ID", "")
 IG_USER_ID            = os.environ.get("IG_USER_ID", "")
-YOUTUBE_TOKEN_JSON    = os.environ.get("YOUTUBE_TOKEN_JSON", "")
+YOUTUBE_TOKEN_JSON           = os.environ.get("YOUTUBE_TOKEN_JSON", "")
+MAHAYUKTI_YOUTUBE_TOKEN_JSON = os.environ.get("MAHAYUKTI_YOUTUBE_TOKEN_JSON", "")
 
 # ── Brand ──────────────────────────────────────────────────────────────────
 NAVY  = (11, 27, 58)
@@ -583,21 +584,25 @@ def post_to_facebook(content, sq_url):
     print("✅ Facebook post with image published")
 
 
-def post_to_facebook_reel(content, reel_url):
+def post_to_facebook_reel(content, reel_path):
     if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
         print("⚠️  Facebook credentials missing — skipping reel")
         return
-    r = requests.post(
-        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/videos",
-        data={
-            "file_url":     reel_url,
-            "description":  content["facebook_text"],
-            "published":    "true",
-            "access_token": FB_PAGE_ACCESS_TOKEN,
-        },
-    )
+    if not reel_path or not os.path.exists(reel_path):
+        print("⚠️  No reel file — skipping Facebook Reel")
+        return
+    with open(reel_path, "rb") as f:
+        r = requests.post(
+            f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/videos",
+            files={"source": ("reel.mp4", f, "video/mp4")},
+            data={
+                "description":  content["facebook_text"],
+                "published":    "true",
+                "access_token": FB_PAGE_ACCESS_TOKEN,
+            },
+        )
     r.raise_for_status()
-    print("✅ Facebook video posted")
+    print("✅ Facebook Reel posted")
 
 
 def _ig_publish(cid, wait_s=60, retries=5):
@@ -668,12 +673,14 @@ def post_to_instagram_reel(content, reel_url):
     if not cid:
         print(f"⚠️  Instagram reel container failed: {r.json()}")
         return
-    _ig_publish(cid, wait_s=120)  # reels need longer to process
+    _ig_publish(cid, wait_s=300)  # reels need longer to process (5 min)
     print("✅ Instagram Reel posted")
 
 
 def upload_to_youtube(content, reel_path):
-    if not YOUTUBE_TOKEN_JSON:
+    # Prefer MahaYukti-specific channel token; fall back to generic YOUTUBE_TOKEN_JSON
+    token_json = MAHAYUKTI_YOUTUBE_TOKEN_JSON or YOUTUBE_TOKEN_JSON
+    if not token_json:
         print("⚠️  YouTube token missing — skipping")
         return
     try:
@@ -686,7 +693,7 @@ def upload_to_youtube(content, reel_path):
         return
 
     creds = Credentials.from_authorized_user_info(
-        json.loads(YOUTUBE_TOKEN_JSON),
+        json.loads(token_json),
         ["https://www.googleapis.com/auth/youtube.upload"],
     )
     if creds.expired and creds.refresh_token:
@@ -774,7 +781,7 @@ def main():
     for name, fn, args in [
         ("LinkedIn",          post_to_linkedin,        (content, sq_path)),
         ("Facebook photo",    post_to_facebook,        (content, sq_url)),
-        ("Facebook Reel",     post_to_facebook_reel,   (content, direct_reel_url) if direct_reel_url else None),
+        ("Facebook Reel",     post_to_facebook_reel,   (content, reel_path) if reel_path else None),
         ("Instagram image",   post_to_instagram_image, (content, sq_url)),
         ("Instagram Reel",    post_to_instagram_reel,  (content, direct_reel_url) if direct_reel_url else None),
     ]:
