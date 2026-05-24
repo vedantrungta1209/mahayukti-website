@@ -36,18 +36,26 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
+          CHANNEL_NAME: Mahayukti Finance
+          CHANNEL_HANDLE: "@mahayuktifinance"
           YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
         run: python main.py
 
       - name: Refresh YouTube token secret
+        if: always()
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          TOKEN=$(cat content-automation/youtube_token.json)
-          echo "$TOKEN" | gh secret set YOUTUBE_TOKEN_JSON --repo ${{ github.repository }}
+          if [ -f content-automation/youtube_token.json ]; then
+            TOKEN=$(cat content-automation/youtube_token.json)
+            echo "$TOKEN" | gh secret set YOUTUBE_TOKEN_JSON --repo ${{ github.repository }}
+            echo "YouTube token secret refreshed."
+          else
+            echo "Token file not found — secret unchanged."
+          fi
 
       - name: Persist topic counter
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

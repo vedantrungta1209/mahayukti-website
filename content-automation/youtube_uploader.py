@@ -24,19 +24,18 @@ def _get_credentials() -> Credentials:
     elif Path(TOKEN_FILE).exists():
         creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
 
-    # Refresh expired token
+    # Refresh if expired
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        with open(TOKEN_FILE, "w") as f:
-            f.write(creds.to_json())
-        return creds
 
     # First-time local auth (opens browser)
     if not creds or not creds.valid:
         flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
         creds = flow.run_local_server(port=0)
-        with open(TOKEN_FILE, "w") as f:
-            f.write(creds.to_json())
+
+    # Always persist so the CI token-refresh step can read it back
+    with open(TOKEN_FILE, "w") as f:
+        f.write(creds.to_json())
 
     return creds
 
