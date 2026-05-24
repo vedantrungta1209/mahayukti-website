@@ -559,16 +559,28 @@ def post_to_facebook(content, sq_url):
     if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
         print("⚠️  Facebook credentials missing — skipping")
         return
-    r = requests.post(
+    # Upload image as unpublished photo to get media ID
+    photo = requests.post(
         f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos",
         data={
             "url":          sq_url,
-            "caption":      content["facebook_text"],
+            "published":    "false",
             "access_token": FB_PAGE_ACCESS_TOKEN,
         },
     )
-    r.raise_for_status()
-    print("✅ Facebook photo posted")
+    photo.raise_for_status()
+    photo_id = photo.json()["id"]
+    # Create proper feed post with image attached
+    post = requests.post(
+        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/feed",
+        data={
+            "message":        content["facebook_text"],
+            "attached_media": json.dumps([{"media_fbid": photo_id}]),
+            "access_token":   FB_PAGE_ACCESS_TOKEN,
+        },
+    )
+    post.raise_for_status()
+    print("✅ Facebook post with image published")
 
 
 def post_to_facebook_reel(content, reel_url):
