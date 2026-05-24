@@ -2,9 +2,9 @@
 """
 Run ONCE locally to get Facebook/Instagram tokens for direct posting.
 
-Usage: python scripts/setup_meta_auth.py
+Usage: python3 scripts/setup_meta_auth.py
 """
-import http.server, threading, urllib.parse, webbrowser, requests, sys
+import urllib.parse, requests, sys
 
 APP_ID     = input("Meta App ID: ").strip()
 APP_SECRET = input("Meta App Secret: ").strip()
@@ -26,31 +26,28 @@ auth_url = (
     })
 )
 
-code_holder: dict = {}
+print("\n" + "=" * 60)
+print("STEP 1: Open this URL in your browser:")
+print("=" * 60)
+print(auth_url)
+print("\nAfter you authorize, your browser will redirect to a URL")
+print("starting with: http://localhost:8766/callback?code=...")
+print("The page may show an error — that's fine.")
+print("\nSTEP 2: Copy the FULL URL from your browser's address bar")
+print("and paste it here.")
+print("=" * 60)
 
+redirect_url = input("\nPaste the full redirect URL here: ").strip()
 
-class _Handler(http.server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-        code_holder["code"] = qs.get("code", [""])[0]
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"<h2>Authorization complete. Close this tab.</h2>")
-    def log_message(self, *args): pass
+parsed = urllib.parse.urlparse(redirect_url)
+qs     = urllib.parse.parse_qs(parsed.query)
+code   = qs.get("code", [""])[0]
 
-
-server = http.server.HTTPServer(("localhost", 8766), _Handler)
-t = threading.Thread(target=server.handle_request)
-t.start()
-
-print("\nOpening browser for Meta authorization...")
-webbrowser.open(auth_url)
-t.join(timeout=120)
-
-code = code_holder.get("code", "")
 if not code:
-    print("No authorization code received.")
+    print("No code found in URL. Make sure you copied the full URL after authorizing.")
     raise SystemExit(1)
+
+print("Got authorization code. Exchanging for token...")
 
 # Exchange for short-lived user token
 r = requests.get("https://graph.facebook.com/v19.0/oauth/access_token", params={
@@ -71,6 +68,7 @@ r = requests.get("https://graph.facebook.com/v19.0/oauth/access_token", params={
 }, timeout=30)
 r.raise_for_status()
 long_user_token = r.json()["access_token"]
+print("Got long-lived user token.")
 
 # Try me/accounts first (direct page admin)
 pages_resp = requests.get("https://graph.facebook.com/v19.0/me/accounts", params={
@@ -81,13 +79,12 @@ pages = pages_resp.json().get("data", [])
 
 # Fallback: list pages via Business Manager
 if not pages:
-    print("me/accounts empty — trying Business Manager...")
+    print("Trying Business Manager API...")
     biz_resp = requests.get("https://graph.facebook.com/v19.0/me/businesses", params={
         "fields": "id,name",
         "access_token": long_user_token,
     }, timeout=30)
     businesses = biz_resp.json().get("data", [])
-    print("Businesses found:", [(b["name"], b["id"]) for b in businesses])
     for biz in businesses:
         owned = requests.get(
             f"https://graph.facebook.com/v19.0/{biz['id']}/owned_pages",
@@ -103,8 +100,7 @@ if not pages:
         pages.extend(client.json().get("data", []))
 
 if not pages:
-    print("\nNo Facebook Pages found via any method.")
-    print("Make sure you are an admin of the MahaYukti Facebook Page.")
+    print("\nNo Facebook Pages found. Make sure you are an admin of the MahaYukti Facebook Page.")
     raise SystemExit(1)
 
 print("\nYour Facebook Pages:")
