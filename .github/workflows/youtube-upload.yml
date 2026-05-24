@@ -3,7 +3,6 @@ name: YouTube Auto Upload
 on:
   schedule:
     - cron: '30 0 * * *'   # 6:00 AM IST
-    - cron: '0 13 * * *'   # 6:30 PM IST
   workflow_dispatch:
 
 jobs:

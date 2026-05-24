@@ -1,9 +1,8 @@
-name: Mahayukti AI — Shorts (2x daily)
+name: Mahayukti AI — Shorts (daily)
 
 on:
   schedule:
-    - cron: '0 2 * * *'    # 7:30 AM IST
-    - cron: '0 8 * * *'    # 1:30 PM IST
+    - cron: '0 3 * * *'    # 8:30 AM IST
   workflow_dispatch:
 
 jobs:
