@@ -21,7 +21,7 @@ GH_REPO    = "vedantrungta1209/mahayukti-website"
 REDIRECT_URI = "http://localhost:8766/callback"
 SCOPES = (
     "pages_manage_posts,pages_show_list,pages_read_engagement,"
-    "instagram_basic,instagram_content_publishing"
+    "instagram_basic,instagram_content_publish"
 )
 
 auth_url = (
