@@ -33,15 +33,16 @@ def run():
     script_data = generate_script(topic)
     print(f"      Title: {script_data['title']}")
 
-    # 3. Generate voiceover via edge-tts (free, no API key)
-    print("\n[3/6] Generating voiceover (edge-tts)...")
+    # 3. Generate voiceover + subtitles via edge-tts
+    print("\n[3/6] Generating voiceover + subtitles (edge-tts)...")
     audio_path = f"{OUTPUT_DIR}/audio.mp3"
-    generate_audio(script_data["script"], audio_path)
+    srt_path = f"{OUTPUT_DIR}/subtitles.srt"
+    generate_audio(script_data["script"], audio_path, srt_path)
 
-    # 4. Generate video frames + compose final video
+    # 4. Generate video frames + compose final video with Ken Burns + burned-in subs
     print("\n[4/6] Composing video...")
     video_path = f"{OUTPUT_DIR}/video.mp4"
-    compose_video(audio_path, script_data, video_path)
+    compose_video(audio_path, script_data, video_path, srt_path)
 
     # 5. Generate thumbnail
     print("\n[5/6] Generating thumbnail...")
