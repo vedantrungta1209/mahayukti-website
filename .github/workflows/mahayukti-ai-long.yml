@@ -2,9 +2,9 @@ name: Mahayukti AI — Long-form (Mon/Wed/Fri)
 
 on:
   schedule:
-    - cron: '0 4 * * 1'    # Monday    9:30 AM IST
-    - cron: '0 4 * * 3'    # Wednesday 9:30 AM IST
-    - cron: '0 4 * * 5'    # Friday    9:30 AM IST
+    - cron: '30 14 * * 1'  # Monday    8:00 PM IST — tech audience prime time
+    - cron: '30 14 * * 3'  # Wednesday 8:00 PM IST
+    - cron: '30 14 * * 5'  # Friday    8:00 PM IST
   workflow_dispatch:
 
 jobs:

@@ -2,7 +2,7 @@ name: Mahayukti AI — Shorts (daily)
 
 on:
   schedule:
-    - cron: '0 3 * * *'    # 8:30 AM IST
+    - cron: '0 8 * * *'    # 1:30 PM IST — 1hr after quota reset, lunch scrollers
   workflow_dispatch:
 
 jobs:
