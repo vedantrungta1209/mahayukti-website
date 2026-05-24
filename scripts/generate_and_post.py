@@ -511,7 +511,7 @@ def post_to_linkedin(content, sq_path):
         print("⚠️  LinkedIn credentials missing — skipping")
         return
 
-    # 1. Initialize image upload
+    # 1. Initialize image upload (owner = person or org URN, both work)
     init = requests.post(
         "https://api.linkedin.com/rest/images?action=initializeUpload",
         headers=_LI_HEADERS(),
