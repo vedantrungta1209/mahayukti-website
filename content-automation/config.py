@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-CHANNEL_NAME = os.getenv("CHANNEL_NAME", "Paisa Gyaan")
+CHANNEL_NAME = os.getenv("CHANNEL_NAME", "Mahayukti Finance")
+CHANNEL_HANDLE = os.getenv("CHANNEL_HANDLE", "@mahayuktifinance")
+CHANNEL_TAGLINE = "Paisa Samjho. Zindagi Badlo."
 
 VIDEO_WIDTH = 1920
 VIDEO_HEIGHT = 1080
@@ -14,9 +16,14 @@ FPS = 24
 BG_COLOR = (13, 17, 23)
 BG_COLOR_2 = (20, 27, 45)
 PRIMARY_COLOR = (0, 211, 149)   # emerald green
-ACCENT_COLOR = (255, 107, 53)   # orange
+ACCENT_COLOR = (255, 180, 0)    # gold
 TEXT_COLOR = (255, 255, 255)
 SUBTLE_COLOR = (100, 116, 139)
+
+# Brand aliases
+BRAND_GREEN = PRIMARY_COLOR
+BRAND_GOLD = ACCENT_COLOR
+BRAND_DARK = BG_COLOR
 
 # Font search paths (Ubuntu / GitHub Actions)
 BOLD_FONT_PATHS = [

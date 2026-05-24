@@ -7,7 +7,7 @@ import os
 import sys
 from pathlib import Path
 
-from config import OUTPUT_DIR
+from config import OUTPUT_DIR, CHANNEL_HANDLE
 from topics import get_todays_topic
 from script_generator import generate_script
 from audio_generator import generate_audio
@@ -20,7 +20,7 @@ def run():
     Path(OUTPUT_DIR).mkdir(exist_ok=True)
 
     print("=" * 50)
-    print("  Vee Content Automation Pipeline")
+    print("  Mahayukti Finance — Content Pipeline")
     print("=" * 50)
 
     # 1. Pick today's topic
@@ -60,6 +60,7 @@ def run():
 
     print("\n" + "=" * 50)
     print(f"  Done! https://youtube.com/watch?v={video_id}")
+    print(f"  Channel: https://youtube.com/{CHANNEL_HANDLE}")
     print("=" * 50)
 
 
