@@ -3,7 +3,7 @@ from moviepy import ImageClip, AudioFileClip, concatenate_videoclips
 from frame_generator import (
     create_title_frame, create_point_frame, create_hook_frame, create_outro_frame,
 )
-from config import OUTPUT_DIR, CHANNEL_NAME, FPS
+from config import OUTPUT_DIR, CHANNEL_NAME, CHANNEL_HANDLE, FPS
 
 
 TITLE_DURATION = 8     # seconds for title card
@@ -43,7 +43,7 @@ def compose_video(audio_path: str, script_data: dict, output_path: str) -> str:
 
     # Outro slide
     outro_path = f"{OUTPUT_DIR}/slide_outro.png"
-    create_outro_frame(CHANNEL_NAME, outro_path)
+    create_outro_frame(CHANNEL_NAME, CHANNEL_HANDLE, outro_path)
     slides.append((outro_path, OUTRO_DURATION))
 
     # Build video clips

@@ -3,7 +3,7 @@ from PIL import Image, ImageDraw, ImageFont
 from config import (
     VIDEO_WIDTH, VIDEO_HEIGHT,
     BG_COLOR, BG_COLOR_2, PRIMARY_COLOR, ACCENT_COLOR, TEXT_COLOR, SUBTLE_COLOR,
-    BOLD_FONT_PATHS, REGULAR_FONT_PATHS, CHANNEL_NAME,
+    BOLD_FONT_PATHS, REGULAR_FONT_PATHS, CHANNEL_NAME, CHANNEL_HANDLE,
 )
 
 
@@ -164,7 +164,7 @@ def create_hook_frame(hook_text: str, channel: str, output_path: str) -> str:
     return output_path
 
 
-def create_outro_frame(channel: str, output_path: str) -> str:
+def create_outro_frame(channel: str, channel_handle: str, output_path: str) -> str:
     img, draw = _new_frame()
 
     # "Thank You!" large
@@ -181,12 +181,11 @@ def create_outro_frame(channel: str, output_path: str) -> str:
     x = (VIDEO_WIDTH - (bbox[2] - bbox[0])) // 2
     draw.text((x, VIDEO_HEIGHT // 2 - 40), sub, font=sub_font, fill=TEXT_COLOR)
 
-    # Channel handle
+    # Channel handle in gold
     handle_font = _get_font(46, bold=False)
-    handle = f"@{channel.lower().replace(' ', '')}"
-    bbox = draw.textbbox((0, 0), handle, font=handle_font)
+    bbox = draw.textbbox((0, 0), channel_handle, font=handle_font)
     x = (VIDEO_WIDTH - (bbox[2] - bbox[0])) // 2
-    draw.text((x, VIDEO_HEIGHT // 2 + 50), handle, font=handle_font, fill=ACCENT_COLOR)
+    draw.text((x, VIDEO_HEIGHT // 2 + 50), channel_handle, font=handle_font, fill=ACCENT_COLOR)
 
     # Bell reminder
     bell_font = _get_font(36, bold=False)

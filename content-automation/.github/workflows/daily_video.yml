@@ -35,5 +35,6 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
-          CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
+          CHANNEL_NAME: Mahayukti Finance
+          CHANNEL_HANDLE: "@mahayuktifinance"
         run: python main.py
