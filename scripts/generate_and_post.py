@@ -137,7 +137,7 @@ MEMBER_DOMAINS = {
 }
 
 # ── Rotating schedules ─────────────────────────────────────────────────────
-# Morning posts rotate through client domains (7 day cycle)
+# Morning posts — client-facing, relatable real-world scenarios (14-day cycle)
 MORNING_ROTATION = [
     ("Legal & Judiciary",        "Contract Disputes"),
     ("Finance & Banking",        "Debt Restructuring"),
@@ -146,62 +146,98 @@ MORNING_ROTATION = [
     ("Technology",               "Digital Transformation"),
     ("Medicine & Healthcare",    "Healthcare M&A"),
     ("Intelligence & Research",  "Geopolitical Risk"),
+    ("Legal & Judiciary",        "Startup Legal Advisory"),
+    ("Finance & Banking",        "IPO Advisory"),
+    ("Cybersecurity",            "Data Breach Response"),
+    ("Crisis Management",        "Startup Funding Collapse"),
+    ("Technology",               "AI & Machine Learning"),
+    ("Medicine & Healthcare",    "Clinical Research"),
+    ("Legal & Judiciary",        "Family & Succession Law"),
 ]
 
-# Evening posts rotate through member domains (6 day cycle)
+# Evening posts — member/consultant facing (8-day cycle)
 EVENING_ROTATION = [
-    ("Senior Lawyers & Advocates",          "Supreme Court Advocates"),
-    ("Finance & Banking Professionals",     "Fintech Founders"),
-    ("Cybersecurity Experts",               "CISOs"),
-    ("Technology Leaders",                  "Tech Founders & Co-founders"),
-    ("Medical & Healthcare Professionals",  "Senior Consultants & Specialists"),
+    ("Senior Lawyers & Advocates",           "Supreme Court Advocates"),
+    ("Finance & Banking Professionals",      "Fintech Founders"),
+    ("Cybersecurity Experts",                "CISOs"),
+    ("Technology Leaders",                   "Tech Founders & Co-founders"),
+    ("Medical & Healthcare Professionals",   "Senior Consultants & Specialists"),
     ("Intelligence & Research Professionals","Geopolitical Analysts"),
+    ("Finance & Banking Professionals",      "Chartered Accountants"),
+    ("Technology Leaders",                   "AI/ML Researchers"),
 ]
 
-# ── Content angles (5 rotating frames — one per post) ─────────────────────
+# ── Content angles (7 rotating frames) ────────────────────────────────────
 CONTENT_ANGLES = [
     {
         "name": "gap_story",
         "description": (
             "Open with a real, specific scenario where a professional let a client down because of a "
             "knowledge gap — not incompetence, but depth. Show the exact moment they needed a "
-            "specialist, not a generalist. Ground it in a named role or city. Then show how "
-            "MahaYukti bridges that gap."
+            "specialist, not a generalist. Ground it in a named role and Indian city. Then show how "
+            "Mahayukti bridges that gap. End by explaining: describe your problem at mahayukti.com, "
+            "get matched to the verified specialist, get the outcome you actually needed."
         ),
     },
     {
         "name": "india_problem",
         "description": (
-            "Frame this around the India-specific discovery problem: millions of capable professionals "
-            "exist, but finding the right one for a niche need is broken. No directory, no referral, "
-            "no Google search reliably surfaces the expert you actually need. MahaYukti is the fix."
+            "Frame this around the India-specific expert discovery problem: crores of capable "
+            "professionals exist, but finding the RIGHT one for a niche need is completely broken. "
+            "No directory, no referral, no Google search reliably surfaces the exact expert you need. "
+            "Mahayukti is the fix — a vetted network where clients describe their problem and get "
+            "introduced to the one professional in India best suited for it. Be specific and concrete."
+        ),
+    },
+    {
+        "name": "how_it_works",
+        "description": (
+            "Dedicate this post to clearly explaining what Mahayukti actually is and how it works — "
+            "because most people don't know and are confused. "
+            "FOR CLIENTS: You describe your problem → Mahayukti matches you → You work directly with a verified specialist. "
+            "FOR EXPERTS: You apply → You get vetted → You get introduced to clients who need exactly your expertise. "
+            "Make it feel simple, human, and obvious. Use a specific example from the domain/subdomain."
         ),
     },
     {
         "name": "community_angle",
         "description": (
-            "Show what it feels like to be inside MahaYukti versus searching for help alone — the "
-            "contrast between cold outreach, dead referrals, and generic consultants versus a "
-            "community where the right expert is already vetted, trusted, and reachable. Make it "
-            "feel like joining something real, not signing up for a platform."
+            "Show the contrast: cold outreach, dead referrals, generic consultants, and random Google "
+            "results — versus Mahayukti, where every professional is vetted, trusted, and reachable. "
+            "Make it feel like joining something real — not an app, not a marketplace. A community of "
+            "India's best professionals, with genuine accountability. Show what belonging looks like "
+            "from both sides: a client who got the exact expert, a professional who found the exact case."
         ),
     },
     {
         "name": "founder_journey",
         "description": (
-            "Tell a specific founder or business owner story. Give them a concrete role and city "
-            "(e.g. 'a Pune-based manufacturer', 'a Chennai hospital CFO'). Name the exact problem. "
-            "Show the journey — what they tried first, why it failed, how MahaYukti changed the "
-            "outcome. The story should feel lived-in, not hypothetical."
+            "Tell a specific, lived-in story of a founder or business owner. Give them a concrete "
+            "role and city (e.g. 'a Surat textile exporter', 'a Bengaluru SaaS founder'). Name the "
+            "exact problem. Show what they tried first, why it failed (generic advice, wrong referral, "
+            "LinkedIn cold message with no reply), and how Mahayukti gave them the exact specialist. "
+            "The resolution should feel specific — not 'they got help' but 'the IP lawyer in Mumbai "
+            "who had handled exactly this kind of trademark dispute.'"
         ),
     },
     {
         "name": "counterintuitive",
         "description": (
-            "Challenge a belief the reader probably holds. Examples: 'Your CA is not your business "
-            "advisor', 'Having a lawyer on retainer is not the same as having the right lawyer', "
-            "'The expert you need probably isn't on LinkedIn'. Use the counterintuitive insight to "
-            "reframe why MahaYukti's depth and specificity matter."
+            "Challenge a belief the reader holds. Examples: 'Your CA is not your business advisor — "
+            "they are your compliance officer', 'Having a lawyer on retainer is not the same as "
+            "having the RIGHT lawyer', 'The expert you need has probably never posted on LinkedIn'. "
+            "Use the counterintuitive insight to reframe why Mahayukti's depth and specificity matter. "
+            "Then explain clearly: Mahayukti is where you find that exact expert — vetted, reachable, accountable."
+        ),
+    },
+    {
+        "name": "two_sided_value",
+        "description": (
+            "Write a post that speaks to BOTH sides of Mahayukti in one piece — clients who need "
+            "expert help, and professionals who want their expertise to reach the right people. "
+            "Show how the network works because both sides are in it together. Make it clear that "
+            "Mahayukti is not a tool — it is a community with real humans on both sides, and signing "
+            "up (whether as a client or as a professional) is how you enter that community."
         ),
     },
 ]
@@ -233,26 +269,48 @@ def generate_content():
     print(f"Generating {POST_TYPE} post | Domain: {domain} | Subdomain: {subdomain} | Angle: {content_angle['name']}")
 
     system = """\
-MahaYukti is a vetted professional network — not a firm, a marketplace, or a consultancy.
-The insight it was built on: everyone already has a CA, a lawyer, a tech friend — but none of \
-them have full depth. Your CA formed your company but doesn't know export licensing. Your lawyer \
-doesn't know the tailored documentation. Your tech cousin can't do full-stack. MahaYukti connects \
-you to the exact verified specialist for your exact need — under one roof, in one community, \
-with full accountability.
+WHAT MAHAYUKTI IS — say this clearly in every post:
+Mahayukti is India's vetted professional advisory network.
+When you have a complex problem that needs deep, specific expertise — legal, financial, tech, \
+cybersecurity, medical, or intelligence — Mahayukti connects you to the exact verified specialist \
+for that need. Not a generalist. Not a Google result. The one professional in India who has \
+done this exact thing before.
 
-Structure: Participants → Members → Advisory Group → Founding Members → Admin.
-Not a service. A community of the best professionals in India, accessible to anyone with a real need.
+THE FOUNDING INSIGHT:
+Everyone already has a CA, a lawyer, a tech friend — but none of them have full depth. Your CA \
+formed your company but doesn't know export compliance. Your lawyer handles contracts but not IP \
+litigation. Your tech cousin can't do full-stack architecture. Mahayukti exists because the expert \
+you actually need is out there — you just can't find them reliably. We fix that.
 
-Brand voice: Authentic. Specific. Grounded. Human. Never generic, never salesy.
-Colors: Deep navy #0B1B3A and gold #C9943A.
-Website: mahayukti.com
+TWO SIDES, TWO CLEAR VALUE PROPOSITIONS:
 
-Hard rules — never break these:
-- Never use the phrase "Who do you call" or any variation of it.
-- Never open with "Imagine this:" — it is banned entirely.
-- Titles must be specific to the domain and scenario — never a fill-in-the-blank template.
-- LinkedIn copy must sound like a real person wrote it, not a brand account or PR agency.
-- Never describe MahaYukti as a "marketplace", "platform", or "firm".
+FOR CLIENTS (people who need expert help):
+1. Describe your problem at mahayukti.com
+2. Mahayukti matches you with the verified specialist for your exact need
+3. Work directly with that expert — with full accountability
+→ CTA: "Describe your problem at mahayukti.com"
+
+FOR MEMBERS / CONSULTANTS (experts who join):
+1. Apply at mahayukti.com with your domain and credentials
+2. Get vetted by the Mahayukti team
+3. Get introduced to clients who need exactly your expertise — and earn from it
+→ CTA: "Apply to join at mahayukti.com"
+
+NETWORK STRUCTURE: Participants → Members → Advisory Group → Founding Members → Admin
+Not a service. Not an app. A community of India's best professionals, open to anyone with a real need.
+
+BRAND VOICE: Specific. Human. Grounded. Direct. Never vague, never corporate, never salesy.
+WEBSITE: mahayukti.com
+COLORS: Deep navy #0B1B3A, Gold #C9943A
+
+HARD RULES — never break:
+- Every post must make it clear what Mahayukti actually does — do not assume the reader knows.
+- Every post must have a concrete, actionable CTA that drives sign-up or application.
+- Never open with "Imagine this:" — banned.
+- Never use "Who do you call" or any variation — banned.
+- Never describe Mahayukti as a "marketplace", "platform", "app", or "firm".
+- Titles must be specific to the scenario — never a template.
+- LinkedIn must sound like a real person wrote it, not a PR agency.
 
 Respond ONLY with a valid JSON object. No markdown. No preamble. No backticks.\
 """
@@ -264,49 +322,75 @@ Respond ONLY with a valid JSON object. No markdown. No preamble. No backticks.\
     )
 
     if POST_TYPE == "morning":
-        prompt = f"""Create a CLIENT-FACING morning post.
+        prompt = f"""Create a CLIENT-FACING morning post for Mahayukti.
 
-Target: Businesses, founders, executives, and organisations who need expert help in:
+Target audience: Indian business owners, founders, executives, and individuals who are dealing with a \
+complex problem in the following domain and need the RIGHT expert — not a generic one.
+
 Domain: {domain}
 Subdomain: {subdomain}
 {angle_instruction}
-The post should make them feel: "MahaYukti connects me to the exact specialist I need."
-Tone: Problem-aware, specific, human. Speak to their pain point first.
+
+GOAL: The reader must finish this post knowing exactly what Mahayukti is, why it exists, and \
+how to get help right now. They should feel: "This is exactly the solution I've been looking for."
+
+MANDATORY in every post:
+1. A clear, one-sentence explanation of what Mahayukti does (work it naturally into the content)
+2. A concrete example specific to {subdomain} showing the gap Mahayukti fills
+3. A 3-step explainer of how it works for a client (describe problem → get matched → work with expert)
+4. A direct CTA: "Describe your problem at mahayukti.com — get matched to the exact specialist you need."
+
+Tone: Specific, honest, human. Speak to a real pain point, not a hypothetical. Set it in India — \
+use Indian cities, roles, and contexts. No corporate language.
 
 Return this exact JSON:
 {{
-  "title": "Blog post title — specific to this domain and scenario, not a template (8-12 words)",
-  "excerpt": "One sentence that hits the pain point (max 25 words)",
-  "blog_content": "Full blog post (800-1000 words). Open using the content angle above. Explain why finding the right expert is hard in India. Position MahaYukti as the solution using its founding insight. Include 2-3 specific use cases in {domain}/{subdomain}. Close with CTA to mahayukti.com. Paragraph breaks only — no bullet points.",
-  "linkedin_text": "LinkedIn post (150-200 words). Written by a real person, not a brand account. Use the content angle to open. Build to why MahaYukti exists for this exact problem. End with mahayukti.com",
-  "instagram_caption": "Instagram caption (80-100 words). Punchy, visual language. 8-10 relevant hashtags at end.",
-  "facebook_text": "Facebook post (100-150 words). Conversational, relatable scenario. CTA at end.",
-  "image_headline": "Bold image headline (max 7 words, uppercase impact)",
-  "image_subtext": "Supporting image line (max 10 words)",
+  "title": "Blog post title — specific to {subdomain} scenario, not a template (8-12 words)",
+  "excerpt": "One sentence that hits the exact pain point for {subdomain} clients (max 25 words)",
+  "blog_content": "Full blog post (900-1100 words). Use the content angle to open. Explain the specific problem in {domain}/{subdomain}. Show why finding the right expert in India is broken. Introduce Mahayukti clearly — what it is, how it works for a client, why it is different. Give 2 specific use cases in {subdomain}. End with direct CTA to mahayukti.com. Paragraph breaks only — no bullet points.",
+  "linkedin_text": "LinkedIn post (180-220 words). Open with the specific pain point. Explain what Mahayukti is in plain language. Show how it works in 3 steps. End with: 'Describe your problem at mahayukti.com'. Sound like a real person — not a brand account.",
+  "instagram_caption": "Instagram caption (90-110 words). Hook in first line. Explain Mahayukti in 2 sentences. Specific scenario. CTA: mahayukti.com. 8-10 relevant hashtags at end.",
+  "facebook_text": "Facebook post (120-160 words). Conversational and relatable. Specific Indian scenario. Explain what Mahayukti does. Clear CTA at end.",
+  "image_headline": "Bold image headline (max 7 words, specific to the problem — not generic)",
+  "image_subtext": "One supporting line (max 10 words, includes mahayukti.com)",
   "post_type": "client",
   "domain": "{domain}",
   "subdomain": "{subdomain}"
 }}"""
     else:
-        prompt = f"""Create a MEMBER ENROLMENT evening post.
+        prompt = f"""Create a CONSULTANT / MEMBER RECRUITMENT evening post for Mahayukti.
 
-Target: Senior professionals who should JOIN MahaYukti as members/participants:
+Target audience: Senior Indian professionals with deep expertise in the following domain who should \
+JOIN Mahayukti as Members or Participants — and start getting matched with clients who need their skills.
+
 Domain: {domain}
 Subdomain: {subdomain}
 {angle_instruction}
-The post should make them feel: "This community was built for professionals like me."
-Tone: Collegial, specific, identity-affirming. Speak to their professional reality, not a vague aspiration.
+
+GOAL: The reader must finish this post understanding what Mahayukti is, why joining it is a clear \
+professional and financial opportunity, and exactly how to apply. They should feel: \
+"This community was built for people like me — and I need to be in it."
+
+MANDATORY in every post:
+1. A clear explanation of what Mahayukti is (one sentence, worked into the content naturally)
+2. A specific, honest picture of what being a Mahayukti Member looks like for a {subdomain} professional
+3. The 3-step join process (apply → get vetted → get matched with clients)
+4. What they gain: client introductions, peer network, reputation, earnings
+5. Direct CTA: "Apply to join at mahayukti.com"
+
+Tone: Collegial, direct, identity-affirming. Speak to their professional reality — the gap between \
+their expertise and the clients who can't find them. No vague aspiration. No corporate language.
 
 Return this exact JSON:
 {{
-  "title": "Blog post title — specific to this domain and audience, not a template (8-12 words)",
-  "excerpt": "One sentence that speaks to their professional ambition (max 25 words)",
-  "blog_content": "Full blog post (800-1000 words). Open using the content angle above. Paint a picture of what cross-domain intelligence looks like from inside MahaYukti. Address why India's best {subdomain} professionals need this community now. Include specific scenarios for {subdomain}. Close with CTA to apply at mahayukti.com.",
-  "linkedin_text": "LinkedIn post (150-200 words). Speak directly to {subdomain} — make them feel seen and understood. Sound like a real person, not a brand account. End with mahayukti.com",
-  "instagram_caption": "Instagram caption (80-100 words). Aspirational, identity-affirming. 8-10 relevant hashtags.",
-  "facebook_text": "Facebook post (100-150 words). Community feel, belonging, exclusive opportunity.",
-  "image_headline": "Bold image headline (max 7 words, identity-affirming)",
-  "image_subtext": "Supporting image line (max 10 words)",
+  "title": "Blog post title — specific to {subdomain} professionals, not a template (8-12 words)",
+  "excerpt": "One sentence speaking to the professional opportunity for {subdomain} experts (max 25 words)",
+  "blog_content": "Full blog post (900-1100 words). Use the content angle to open — speak directly to a {subdomain} professional's reality. Show the gap: their expertise exists but clients can't reach them. Introduce Mahayukti clearly — what it is, how it works for a Member. Paint a specific picture of what being in the network looks like. Explain the join process. Close with direct CTA to apply at mahayukti.com. Paragraph breaks only — no bullet points.",
+  "linkedin_text": "LinkedIn post (180-220 words). Speak directly to {subdomain} professionals. Open with a truth they recognise about their work. Explain Mahayukti in plain language. Show what joining means in 3 steps. End with: 'Apply to join at mahayukti.com'. Sound like a real colleague — not a recruitment ad.",
+  "instagram_caption": "Instagram caption (90-110 words). Identity-affirming hook. 2-sentence Mahayukti explanation. What they gain. CTA: mahayukti.com. 8-10 hashtags.",
+  "facebook_text": "Facebook post (120-160 words). Community feel — belonging and opportunity. Specific to {subdomain}. Explain Mahayukti clearly. CTA to apply.",
+  "image_headline": "Bold image headline (max 7 words, speaks to the professional — identity-affirming)",
+  "image_subtext": "One supporting line (max 10 words, includes mahayukti.com)",
   "post_type": "member",
   "domain": "{domain}",
   "subdomain": "{subdomain}"
