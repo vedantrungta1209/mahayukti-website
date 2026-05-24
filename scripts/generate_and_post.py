@@ -600,22 +600,25 @@ def post_to_facebook_reel(content, reel_url):
     print("✅ Facebook video posted")
 
 
-def _ig_wait_for_container(container_id, max_polls=24, sleep_s=15):
+def _ig_publish(cid, wait_s=60, retries=5):
     import time as _t
-    for i in range(max_polls):
-        resp = requests.get(
-            f"https://graph.facebook.com/v19.0/{container_id}",
-            params={"fields": "status_code,status", "access_token": FB_PAGE_ACCESS_TOKEN},
+    print(f"    Waiting {wait_s}s for IG container...")
+    _t.sleep(wait_s)
+    for attempt in range(retries):
+        pub = requests.post(
+            f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
+            data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
         )
-        data   = resp.json()
-        status = data.get("status_code", "")
-        print(f"    IG container poll {i+1}: {data}")
-        if status == "FINISHED":
+        data = pub.json()
+        print(f"    IG publish attempt {attempt+1}: {data}")
+        if "error" not in data:
             return
-        if status == "ERROR" or "error" in data:
-            raise RuntimeError(f"Instagram container error: {data}")
-        _t.sleep(sleep_s)
-    raise TimeoutError("Instagram container did not finish in time")
+        err_msg = data.get("error", {}).get("message", "").lower()
+        if "not finished" in err_msg or "in progress" in err_msg or "not ready" in err_msg:
+            _t.sleep(30)
+        else:
+            raise RuntimeError(f"Instagram publish error: {data}")
+    raise RuntimeError("Instagram container never became publishable")
 
 
 def _resolve_url(url: str) -> str:
@@ -637,13 +640,12 @@ def post_to_instagram_image(content, sq_url):
         },
     )
     r.raise_for_status()
-    print(f"    IG image container created: {r.json()}")
-    cid = r.json()["id"]
-    _ig_wait_for_container(cid)
-    requests.post(
-        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
-        data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
-    ).raise_for_status()
+    print(f"    IG image container: {r.json()}")
+    cid = r.json().get("id")
+    if not cid:
+        print(f"⚠️  Instagram image container failed: {r.json()}")
+        return
+    _ig_publish(cid, wait_s=30)
     print("✅ Instagram image posted")
 
 
@@ -661,12 +663,12 @@ def post_to_instagram_reel(content, reel_url):
         },
     )
     r.raise_for_status()
-    cid = r.json()["id"]
-    _ig_wait_for_container(cid, max_polls=24, sleep_s=15)  # up to 6 min
-    requests.post(
-        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
-        data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
-    ).raise_for_status()
+    print(f"    IG reel container: {r.json()}")
+    cid = r.json().get("id")
+    if not cid:
+        print(f"⚠️  Instagram reel container failed: {r.json()}")
+        return
+    _ig_publish(cid, wait_s=120)  # reels need longer to process
     print("✅ Instagram Reel posted")
 
 
