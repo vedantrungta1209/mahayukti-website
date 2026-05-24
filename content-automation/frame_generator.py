@@ -43,7 +43,7 @@ def _chrome_accents(draw: ImageDraw.ImageDraw, w: int, h: int) -> None:
 
 
 def _channel_tag(draw: ImageDraw.ImageDraw, channel: str) -> None:
-    font = _get_font(30, bold=False)
+    font = _get_font(22, bold=False)
     draw.text((30, 30), channel.upper(), font=font, fill=PRIMARY_COLOR)
 
 
@@ -94,28 +94,28 @@ def create_title_frame(title: str, channel: str, output_path: str) -> str:
     _channel_tag(draw, channel)
 
     # "PERSONAL FINANCE" label
-    label_font = _get_font(34, bold=False)
-    draw.text((30, 70), "PERSONAL FINANCE  |  HINDI", font=label_font, fill=SUBTLE_COLOR)
+    label_font = _get_font(24, bold=False)
+    draw.text((30, 62), "PERSONAL FINANCE  |  HINDI", font=label_font, fill=SUBTLE_COLOR)
 
     # Main title
-    title_font = _get_font(76, bold=True)
-    lines = _wrap(title, title_font, VIDEO_WIDTH - 120, draw)
-    _center_text_block(draw, lines, title_font, VIDEO_HEIGHT // 2 - 40, 96, TEXT_COLOR)
+    title_font = _get_font(58, bold=True)
+    lines = _wrap(title, title_font, VIDEO_WIDTH - 80, draw)
+    _center_text_block(draw, lines, title_font, VIDEO_HEIGHT // 2 - 40, 74, TEXT_COLOR)
 
     # Divider under title
-    total_h = len(lines) * 96
-    bar_y = VIDEO_HEIGHT // 2 - 40 - total_h // 2 + total_h + 28
+    total_h = len(lines) * 74
+    bar_y = VIDEO_HEIGHT // 2 - 40 - total_h // 2 + total_h + 22
     draw.rectangle(
-        [VIDEO_WIDTH // 2 - 90, bar_y, VIDEO_WIDTH // 2 + 90, bar_y + 5],
+        [VIDEO_WIDTH // 2 - 70, bar_y, VIDEO_WIDTH // 2 + 70, bar_y + 4],
         fill=ACCENT_COLOR,
     )
 
     # Bottom subscribe line
-    sub_font = _get_font(32, bold=False)
+    sub_font = _get_font(22, bold=False)
     sub = "Subscribe for daily money tips  |  Like & Share"
     bbox = draw.textbbox((0, 0), sub, font=sub_font)
     x = (VIDEO_WIDTH - (bbox[2] - bbox[0])) // 2
-    draw.text((x, VIDEO_HEIGHT - 70), sub, font=sub_font, fill=SUBTLE_COLOR)
+    draw.text((x, VIDEO_HEIGHT - 60), sub, font=sub_font, fill=SUBTLE_COLOR)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
@@ -128,19 +128,19 @@ def create_point_frame(number: int, point: str, channel: str, output_path: str) 
 
     # Large background number (decorative)
     num_str = f"0{number}" if number < 10 else str(number)
-    big_font = _get_font(260, bold=True)
-    draw.text((30, VIDEO_HEIGHT // 2 - 200), num_str, font=big_font, fill=PRIMARY_COLOR)
+    big_font = _get_font(180, bold=True)
+    draw.text((30, VIDEO_HEIGHT // 2 - 160), num_str, font=big_font, fill=PRIMARY_COLOR)
 
     # Horizontal accent line separating number from text
-    draw.rectangle([30, VIDEO_HEIGHT // 2 + 80, VIDEO_WIDTH - 30, VIDEO_HEIGHT // 2 + 85], fill=ACCENT_COLOR)
+    draw.rectangle([30, VIDEO_HEIGHT // 2 + 60, VIDEO_WIDTH - 30, VIDEO_HEIGHT // 2 + 65], fill=ACCENT_COLOR)
 
     # Point text below the line
-    point_font = _get_font(62, bold=True)
-    lines = _wrap(point, point_font, VIDEO_WIDTH - 100, draw)
-    y = VIDEO_HEIGHT // 2 + 110
+    point_font = _get_font(46, bold=True)
+    lines = _wrap(point, point_font, VIDEO_WIDTH - 80, draw)
+    y = VIDEO_HEIGHT // 2 + 85
     for line in lines:
-        draw.text((40, y), line, font=point_font, fill=TEXT_COLOR)
-        y += 80
+        draw.text((30, y), line, font=point_font, fill=TEXT_COLOR)
+        y += 62
 
     img.save(output_path)
     return output_path
@@ -151,14 +151,14 @@ def create_hook_frame(hook_text: str, channel: str, output_path: str) -> str:
     _channel_tag(draw, channel)
 
     # "DID YOU KNOW?" badge
-    badge_font = _get_font(28, bold=True)
-    draw.rectangle([30, 70, 240, 108], fill=ACCENT_COLOR)
-    draw.text((44, 78), "DID YOU KNOW?", font=badge_font, fill=TEXT_COLOR)
+    badge_font = _get_font(22, bold=True)
+    draw.rectangle([30, 62, 210, 96], fill=ACCENT_COLOR)
+    draw.text((42, 68), "DID YOU KNOW?", font=badge_font, fill=TEXT_COLOR)
 
     # Hook text centered
-    hook_font = _get_font(58, bold=True)
-    lines = _wrap(hook_text, hook_font, VIDEO_WIDTH - 120, draw)
-    _center_text_block(draw, lines, hook_font, VIDEO_HEIGHT // 2, 76, TEXT_COLOR)
+    hook_font = _get_font(46, bold=True)
+    lines = _wrap(hook_text, hook_font, VIDEO_WIDTH - 80, draw)
+    _center_text_block(draw, lines, hook_font, VIDEO_HEIGHT // 2, 62, TEXT_COLOR)
 
     img.save(output_path)
     return output_path
@@ -168,31 +168,31 @@ def create_outro_frame(channel: str, channel_handle: str, output_path: str) -> s
     img, draw = _new_frame()
 
     # "Thank You!" large
-    ty_font = _get_font(100, bold=True)
+    ty_font = _get_font(76, bold=True)
     ty = "Thank You!"
     bbox = draw.textbbox((0, 0), ty, font=ty_font)
     x = (VIDEO_WIDTH - (bbox[2] - bbox[0])) // 2
-    draw.text((x, VIDEO_HEIGHT // 2 - 180), ty, font=ty_font, fill=PRIMARY_COLOR)
+    draw.text((x, VIDEO_HEIGHT // 2 - 160), ty, font=ty_font, fill=PRIMARY_COLOR)
 
     # Subscribe line
-    sub_font = _get_font(52, bold=True)
+    sub_font = _get_font(38, bold=True)
     sub = "Subscribe for daily finance tips"
     bbox = draw.textbbox((0, 0), sub, font=sub_font)
     x = (VIDEO_WIDTH - (bbox[2] - bbox[0])) // 2
-    draw.text((x, VIDEO_HEIGHT // 2 - 40), sub, font=sub_font, fill=TEXT_COLOR)
+    draw.text((x, VIDEO_HEIGHT // 2 - 50), sub, font=sub_font, fill=TEXT_COLOR)
 
     # Channel handle in gold
-    handle_font = _get_font(46, bold=False)
+    handle_font = _get_font(34, bold=False)
     bbox = draw.textbbox((0, 0), channel_handle, font=handle_font)
     x = (VIDEO_WIDTH - (bbox[2] - bbox[0])) // 2
-    draw.text((x, VIDEO_HEIGHT // 2 + 50), channel_handle, font=handle_font, fill=ACCENT_COLOR)
+    draw.text((x, VIDEO_HEIGHT // 2 + 30), channel_handle, font=handle_font, fill=ACCENT_COLOR)
 
     # Bell reminder
-    bell_font = _get_font(36, bold=False)
+    bell_font = _get_font(26, bold=False)
     bell = "Notification bell ON karo — kal phir milenge!"
     bbox = draw.textbbox((0, 0), bell, font=bell_font)
     x = (VIDEO_WIDTH - (bbox[2] - bbox[0])) // 2
-    draw.text((x, VIDEO_HEIGHT // 2 + 130), bell, font=bell_font, fill=SUBTLE_COLOR)
+    draw.text((x, VIDEO_HEIGHT // 2 + 100), bell, font=bell_font, fill=SUBTLE_COLOR)
 
     img.save(output_path)
     return output_path

@@ -8,8 +8,8 @@ CHANNEL_NAME = os.getenv("CHANNEL_NAME", "Mahayukti Finance")
 CHANNEL_HANDLE = os.getenv("CHANNEL_HANDLE", "@mahayuktifinance")
 CHANNEL_TAGLINE = "Paisa Samjho. Zindagi Badlo."
 
-VIDEO_WIDTH = 1920
-VIDEO_HEIGHT = 1080
+VIDEO_WIDTH = 1080
+VIDEO_HEIGHT = 1920
 FPS = 24
 
 # Color palette — dark finance theme
