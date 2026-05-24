@@ -453,9 +453,10 @@ def upload_image(filepath, filename):
 
     r = requests.put(api_url, headers=headers, json=payload)
     r.raise_for_status()
-    url = f"https://mahayukti.com/images/{filename}"
-    print(f"✅ Uploaded: {url}")
-    return url
+    # raw.githubusercontent.com is available immediately — no Cloudflare deploy wait needed
+    raw_url = f"https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/images/{filename}"
+    print(f"✅ Uploaded: {raw_url}")
+    return raw_url
 
 # ══════════════════════════════════════════════════════════════════════════
 # STEP 4 — Update blog-data.json
@@ -574,49 +575,41 @@ def post_to_facebook_reel(content, reel_url):
     if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
         print("⚠️  Facebook credentials missing — skipping reel")
         return
-    # Step 1: initialize Reel upload
-    init = requests.post(
-        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/video_reels",
+    r = requests.post(
+        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/videos",
         data={
-            "upload_phase":  "start",
-            "access_token":  FB_PAGE_ACCESS_TOKEN,
+            "file_url":     reel_url,
+            "description":  content["facebook_text"],
+            "published":    "true",
+            "access_token": FB_PAGE_ACCESS_TOKEN,
         },
     )
-    init.raise_for_status()
-    video_id = init.json().get("video_id")
-    if not video_id:
-        print(f"⚠️  Facebook Reel init failed: {init.json()}")
-        return
-    # Step 2: finish upload with video URL
-    fin = requests.post(
-        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/video_reels",
-        data={
-            "upload_phase":   "finish",
-            "video_id":       video_id,
-            "video_url":      reel_url,
-            "description":    content["facebook_text"],
-            "published":      "true",
-            "access_token":   FB_PAGE_ACCESS_TOKEN,
-        },
-    )
-    fin.raise_for_status()
-    print("✅ Facebook Reel posted")
+    r.raise_for_status()
+    print("✅ Facebook video posted")
 
 
-def _ig_wait_for_container(container_id, max_polls=20, sleep_s=15):
+def _ig_wait_for_container(container_id, max_polls=24, sleep_s=15):
     import time as _t
-    for _ in range(max_polls):
+    for i in range(max_polls):
         resp = requests.get(
             f"https://graph.facebook.com/v19.0/{container_id}",
-            params={"fields": "status_code", "access_token": FB_PAGE_ACCESS_TOKEN},
+            params={"fields": "status_code,status", "access_token": FB_PAGE_ACCESS_TOKEN},
         )
-        status = resp.json().get("status_code", "")
+        data   = resp.json()
+        status = data.get("status_code", "")
+        print(f"    IG container poll {i+1}: {status} {data.get('status','')}")
         if status == "FINISHED":
             return
         if status == "ERROR":
-            raise RuntimeError(f"Instagram container error: {resp.json()}")
+            raise RuntimeError(f"Instagram container error: {data}")
         _t.sleep(sleep_s)
     raise TimeoutError("Instagram container did not finish in time")
+
+
+def _resolve_url(url: str) -> str:
+    """Follow redirects to get final CDN URL (needed for Instagram/Facebook)."""
+    r = requests.head(url, allow_redirects=True, timeout=15)
+    return r.url
 
 
 def post_to_instagram_image(content, sq_url):
@@ -747,17 +740,28 @@ def main():
         except Exception as e:
             print(f"⚠️  YouTube upload failed: {e}")
 
-    # Wait for Cloudflare to serve the uploaded images
-    print("\n⏳ Waiting 90s for Cloudflare deployment...")
-    time.sleep(90)
+    # Resolve reel redirect URL once (GitHub Releases redirects; IG/FB need direct URL)
+    direct_reel_url = None
+    if reel_url:
+        try:
+            direct_reel_url = _resolve_url(reel_url)
+            print(f"   Reel CDN URL: {direct_reel_url}")
+        except Exception as e:
+            print(f"⚠️  Could not resolve reel URL: {e}")
+            direct_reel_url = reel_url
+
+    # Images now use raw.githubusercontent.com — no Cloudflare wait needed
+    # Keep a short wait to let GitHub propagate the file
+    print("\n⏳ Waiting 15s for GitHub raw CDN...")
+    time.sleep(15)
 
     print("\n📣 Posting to social platforms...")
     for name, fn, args in [
         ("LinkedIn",          post_to_linkedin,        (content, sq_path)),
         ("Facebook photo",    post_to_facebook,        (content, sq_url)),
-        ("Facebook Reel",     post_to_facebook_reel,   (content, reel_url) if reel_url else None),
+        ("Facebook Reel",     post_to_facebook_reel,   (content, direct_reel_url) if direct_reel_url else None),
         ("Instagram image",   post_to_instagram_image, (content, sq_url)),
-        ("Instagram Reel",    post_to_instagram_reel,  (content, reel_url) if reel_url else None),
+        ("Instagram Reel",    post_to_instagram_reel,  (content, direct_reel_url) if direct_reel_url else None),
     ]:
         if args is None:
             print(f"   {name}: skipped (no reel)")
