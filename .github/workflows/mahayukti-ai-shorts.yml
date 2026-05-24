@@ -1,0 +1,51 @@
+name: Mahayukti AI — Shorts (2x daily)
+
+on:
+  schedule:
+    - cron: '0 2 * * *'    # 7:30 AM IST
+    - cron: '0 8 * * *'    # 1:30 PM IST
+  workflow_dispatch:
+
+jobs:
+  short:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: sudo apt-get install -y ffmpeg fonts-liberation fonts-dejavu-core
+
+      - name: Install Python dependencies
+        run: pip install -r MahayuktiAI/requirements.txt
+
+      - name: Generate and upload Short
+        working-directory: MahayuktiAI
+        env:
+          GROQ_API_KEY:           ${{ secrets.GROQ_API_KEY }}
+          ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
+          YOUTUBE_AI_TOKEN_JSON:  ${{ secrets.YOUTUBE_AI_TOKEN_JSON }}
+          GH_TOKEN:               ${{ secrets.GH_TOKEN }}
+        run: python main.py --mode short
+
+      - name: Persist tool counter
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add MahayuktiAI/tool_counter_short.txt
+          git diff --staged --quiet || git commit -m "chore: update AI short tool counter [skip ci]"
+          git pull --rebase origin main
+          git push
+
+      - name: Done
+        run: echo "✅ Mahayukti AI Short uploaded — $(date)"
