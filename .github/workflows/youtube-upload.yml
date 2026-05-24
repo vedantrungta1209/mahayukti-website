@@ -36,8 +36,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          CHANNEL_NAME: Mahayukti
-          CHANNEL_HANDLE: "@WeAreMahayukti"
+          CHANNEL_NAME: Mahayukti Finance
+          CHANNEL_HANDLE: "@MahayuktiFinance"
           YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
         run: python main.py
 
