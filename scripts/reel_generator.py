@@ -114,9 +114,9 @@ def _make_slide(headline: str, body: str = "", tag: str = "") -> np.ndarray:
 # ── 3. Compose reel from 4 slides ─────────────────────────────────────────
 
 def compose_reel(audio_path: str, content: dict, out_path: str):
-    audio    = AudioFileClip(audio_path)
-    duration = audio.duration
-    per_slide = max(duration / 4, 6.0)  # minimum 6s per slide
+    audio     = AudioFileClip(audio_path)
+    duration  = audio.duration
+    per_slide = duration / 4  # divide audio evenly across 4 slides
 
     domain   = content.get("domain", "")
     headline = content.get("image_headline", "")
@@ -136,9 +136,7 @@ def compose_reel(audio_path: str, content: dict, out_path: str):
     ]
 
     clips = [ImageClip(_make_slide(h, b, t)).set_duration(per_slide) for h, b, t in slides]
-    final = concatenate_videoclips(clips, method="compose").set_audio(
-        audio.set_duration(per_slide * 4)
-    )
+    final = concatenate_videoclips(clips, method="compose").set_audio(audio)
     final.write_videofile(
         out_path, fps=25, codec="libx264", audio_codec="aac",
         preset="ultrafast", logger=None,
