@@ -1,7 +1,7 @@
 requests
 Pillow
 edge-tts
-moviepy==1.0.3
+moviepy>=2.0.0
 numpy
 google-auth
 google-auth-httplib2
