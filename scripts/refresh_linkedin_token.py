@@ -9,12 +9,13 @@ import os, time, subprocess, sys, requests
 REFRESH_TOKEN = os.environ.get("LINKEDIN_REFRESH_TOKEN", "")
 CLIENT_ID     = os.environ.get("LINKEDIN_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("LINKEDIN_CLIENT_SECRET", "")
-ISSUED_AT     = int(os.environ.get("LINKEDIN_TOKEN_ISSUED_AT", "0"))
 GH_REPO       = "vedantrungta1209/mahayukti-website"
 
 if not REFRESH_TOKEN or not CLIENT_ID or not CLIENT_SECRET:
     print("LinkedIn refresh credentials not configured — skipping refresh.")
     sys.exit(0)
+
+ISSUED_AT = int(os.environ.get("LINKEDIN_TOKEN_ISSUED_AT") or "0")
 
 age_days = (time.time() - ISSUED_AT) / 86400
 print(f"LinkedIn token age: {age_days:.0f} days")
