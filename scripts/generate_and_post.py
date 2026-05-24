@@ -9,6 +9,9 @@ import os, json, datetime, requests, sys, base64, textwrap
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
+# Ensure scripts/ is on path so reel_generator imports correctly in CI
+sys.path.insert(0, str(Path(__file__).parent))
+
 # ── Credentials ────────────────────────────────────────────────────────────
 ANTHROPIC_API_KEY     = os.environ["ANTHROPIC_API_KEY"]
 GH_TOKEN              = os.environ["GH_TOKEN"]
@@ -571,16 +574,32 @@ def post_to_facebook_reel(content, reel_url):
     if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
         print("⚠️  Facebook credentials missing — skipping reel")
         return
-    r = requests.post(
-        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/videos",
+    # Step 1: initialize Reel upload
+    init = requests.post(
+        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/video_reels",
         data={
-            "file_url":       reel_url,
+            "upload_phase":  "start",
+            "access_token":  FB_PAGE_ACCESS_TOKEN,
+        },
+    )
+    init.raise_for_status()
+    video_id = init.json().get("video_id")
+    if not video_id:
+        print(f"⚠️  Facebook Reel init failed: {init.json()}")
+        return
+    # Step 2: finish upload with video URL
+    fin = requests.post(
+        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/video_reels",
+        data={
+            "upload_phase":   "finish",
+            "video_id":       video_id,
+            "video_url":      reel_url,
             "description":    content["facebook_text"],
             "published":      "true",
             "access_token":   FB_PAGE_ACCESS_TOKEN,
         },
     )
-    r.raise_for_status()
+    fin.raise_for_status()
     print("✅ Facebook Reel posted")
 
 
