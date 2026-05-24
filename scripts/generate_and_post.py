@@ -609,10 +609,10 @@ def _ig_wait_for_container(container_id, max_polls=24, sleep_s=15):
         )
         data   = resp.json()
         status = data.get("status_code", "")
-        print(f"    IG container poll {i+1}: {status} {data.get('status','')}")
+        print(f"    IG container poll {i+1}: {data}")
         if status == "FINISHED":
             return
-        if status == "ERROR":
+        if status == "ERROR" or "error" in data:
             raise RuntimeError(f"Instagram container error: {data}")
         _t.sleep(sleep_s)
     raise TimeoutError("Instagram container did not finish in time")
@@ -637,6 +637,7 @@ def post_to_instagram_image(content, sq_url):
         },
     )
     r.raise_for_status()
+    print(f"    IG image container created: {r.json()}")
     cid = r.json()["id"]
     _ig_wait_for_container(cid)
     requests.post(
