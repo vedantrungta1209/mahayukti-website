@@ -105,8 +105,11 @@ def _make_slide(headline: str, body: str = "", tag: str = "") -> np.ndarray:
     draw.rectangle([(0, 1780), (REEL_W, 1912)], fill=(8, 20, 45))
     draw.rectangle([(0, 1780), (REEL_W, 1784)], fill=GOLD)
     cta = "mahayukti.com"
-    bbox = draw.textbbox((0, 0), cta, font=_font(FONT_BOLD, 52))
-    draw.text(((REEL_W - (bbox[2] - bbox[0])) // 2, 1836), cta, fill=GOLD, font=_font(FONT_BOLD, 52))
+    bbox = draw.textbbox((0, 0), cta, font=_font(FONT_BOLD, 48))
+    draw.text(((REEL_W - (bbox[2] - bbox[0])) // 2, 1808), cta, fill=GOLD, font=_font(FONT_BOLD, 48))
+    handle = "@WeAreMahayukti"
+    bbox = draw.textbbox((0, 0), handle, font=_font(FONT_REG, 34))
+    draw.text(((REEL_W - (bbox[2] - bbox[0])) // 2, 1868), handle, fill=LIGHT, font=_font(FONT_REG, 34))
 
     return np.array(img)
 
