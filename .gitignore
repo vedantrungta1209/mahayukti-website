@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+*.egg-info/
+
+# Secrets & OAuth tokens — never commit these
+*client_secret*.json
+*token*.json
+.env
+*.env
+
+# Output artifacts
+content-automation/output/
+output/
+*.mp4
+*.mp3
+*.srt
+*.png
+
+# macOS
+.DS_Store
