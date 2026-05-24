@@ -85,6 +85,7 @@ pages_resp = requests.get("https://graph.facebook.com/v19.0/me/accounts", params
     "access_token": long_user_token,
 }, timeout=30)
 pages_resp.raise_for_status()
+print("Raw pages response:", pages_resp.json())
 pages = pages_resp.json().get("data", [])
 
 if not pages:
