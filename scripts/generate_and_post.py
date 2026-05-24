@@ -6,6 +6,7 @@ POST 2 (6:00 PM IST): Member-facing — targets professionals for enrolment
 """
 
 import os, json, datetime, requests, sys, base64, textwrap
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 # ── Credentials ────────────────────────────────────────────────────────────
@@ -24,7 +25,6 @@ DARK  = (6, 15, 35)
 TODAY    = datetime.date.today()
 DATE_STR = TODAY.strftime("%Y-%m-%d")
 POST_ID  = TODAY.strftime("%Y%m%d") + f"_{POST_TYPE}"
-DAY      = TODAY.weekday()  # 0=Mon … 6=Sun
 
 # ══════════════════════════════════════════════════════════════════════════
 # DOMAIN & SUBDOMAIN UNIVERSE
@@ -151,31 +151,110 @@ EVENING_ROTATION = [
     ("Intelligence & Research Professionals","Geopolitical Analysts"),
 ]
 
-if POST_TYPE == "morning":
-    domain, subdomain = MORNING_ROTATION[DAY % len(MORNING_ROTATION)]
-    # Pick a random crisis subdomain 2x per week (Wed + Sat)
-    if DAY in [2, 5]:
-        domain, subdomain = "Crisis Management", MORNING_ROTATION[DAY % len(MORNING_ROTATION)][1]
-else:
-    domain, subdomain = EVENING_ROTATION[DAY % len(EVENING_ROTATION)]
+# ── Content angles (5 rotating frames — one per post) ─────────────────────
+CONTENT_ANGLES = [
+    {
+        "name": "gap_story",
+        "description": (
+            "Open with a real, specific scenario where a professional let a client down because of a "
+            "knowledge gap — not incompetence, but depth. Show the exact moment they needed a "
+            "specialist, not a generalist. Ground it in a named role or city. Then show how "
+            "MahaYukti bridges that gap."
+        ),
+    },
+    {
+        "name": "india_problem",
+        "description": (
+            "Frame this around the India-specific discovery problem: millions of capable professionals "
+            "exist, but finding the right one for a niche need is broken. No directory, no referral, "
+            "no Google search reliably surfaces the expert you actually need. MahaYukti is the fix."
+        ),
+    },
+    {
+        "name": "community_angle",
+        "description": (
+            "Show what it feels like to be inside MahaYukti versus searching for help alone — the "
+            "contrast between cold outreach, dead referrals, and generic consultants versus a "
+            "community where the right expert is already vetted, trusted, and reachable. Make it "
+            "feel like joining something real, not signing up for a platform."
+        ),
+    },
+    {
+        "name": "founder_journey",
+        "description": (
+            "Tell a specific founder or business owner story. Give them a concrete role and city "
+            "(e.g. 'a Pune-based manufacturer', 'a Chennai hospital CFO'). Name the exact problem. "
+            "Show the journey — what they tried first, why it failed, how MahaYukti changed the "
+            "outcome. The story should feel lived-in, not hypothetical."
+        ),
+    },
+    {
+        "name": "counterintuitive",
+        "description": (
+            "Challenge a belief the reader probably holds. Examples: 'Your CA is not your business "
+            "advisor', 'Having a lawyer on retainer is not the same as having the right lawyer', "
+            "'The expert you need probably isn't on LinkedIn'. Use the counterintuitive insight to "
+            "reframe why MahaYukti's depth and specificity matter."
+        ),
+    },
+]
+
+# ── Persistent counter — separate files for morning and evening ─────────────
+_SCRIPTS_DIR    = Path(__file__).parent
+MORNING_COUNTER = _SCRIPTS_DIR / "topic_counter_morning.txt"
+EVENING_COUNTER = _SCRIPTS_DIR / "topic_counter_evening.txt"
+
+
+def _get_topic_and_angle():
+    counter_file = MORNING_COUNTER if POST_TYPE == "morning" else EVENING_COUNTER
+    rotation     = MORNING_ROTATION if POST_TYPE == "morning" else EVENING_ROTATION
+
+    count = int(counter_file.read_text().strip()) if counter_file.exists() else 0
+    counter_file.write_text(str(count + 1))
+
+    d, s  = rotation[count % len(rotation)]
+    angle = CONTENT_ANGLES[count % len(CONTENT_ANGLES)]
+    return d, s, angle
+
+
+domain, subdomain, content_angle = _get_topic_and_angle()
 
 # ══════════════════════════════════════════════════════════════════════════
 # STEP 1 — Generate content via Claude
 # ══════════════════════════════════════════════════════════════════════════
 def generate_content():
-    print(f"Generating {POST_TYPE} post | Domain: {domain} | Subdomain: {subdomain}")
+    print(f"Generating {POST_TYPE} post | Domain: {domain} | Subdomain: {subdomain} | Angle: {content_angle['name']}")
 
-    system = """You are the content strategist for MahaYukti — India's first private, 
-multi-domain professional network connecting elite lawyers, bankers, fintech founders, 
-cybersecurity experts, doctors, intelligence professionals and researchers.
+    system = """\
+MahaYukti is a vetted professional network — not a firm, a marketplace, or a consultancy.
+The insight it was built on: everyone already has a CA, a lawyer, a tech friend — but none of \
+them have full depth. Your CA formed your company but doesn't know export licensing. Your lawyer \
+doesn't know the tailored documentation. Your tech cousin can't do full-stack. MahaYukti connects \
+you to the exact verified specialist for your exact need — under one roof, in one community, \
+with full accountability.
 
-Brand voice: Authoritative. Premium. Exclusive. Ambitious. Trustworthy.
-Never generic, never salesy. Every post must feel like it came from 
-the most respected professional network in India.
+Structure: Participants → Members → Advisory Group → Founding Members → Admin.
+Not a service. A community of the best professionals in India, accessible to anyone with a real need.
+
+Brand voice: Authentic. Specific. Grounded. Human. Never generic, never salesy.
 Colors: Deep navy #0B1B3A and gold #C9943A.
 Website: mahayukti.com
 
-Respond ONLY with a valid JSON object. No markdown. No preamble. No backticks."""
+Hard rules — never break these:
+- Never use the phrase "Who do you call" or any variation of it.
+- Never open with "Imagine this:" — it is banned entirely.
+- Titles must be specific to the domain and scenario — never a fill-in-the-blank template.
+- LinkedIn copy must sound like a real person wrote it, not a brand account or PR agency.
+- Never describe MahaYukti as a "marketplace", "platform", or "firm".
+
+Respond ONLY with a valid JSON object. No markdown. No preamble. No backticks.\
+"""
+
+    angle_instruction = (
+        f'\nContent angle for this post ("{content_angle["name"]}"):\n'
+        f'{content_angle["description"]}\n'
+        "Use this angle to shape the opening, structure, and tone of blog_content and linkedin_text.\n"
+    )
 
     if POST_TYPE == "morning":
         prompt = f"""Create a CLIENT-FACING morning post.
@@ -183,18 +262,17 @@ Respond ONLY with a valid JSON object. No markdown. No preamble. No backticks.""
 Target: Businesses, founders, executives, and organisations who need expert help in:
 Domain: {domain}
 Subdomain: {subdomain}
-
-The post should make them feel: "MahaYukti connects me to the exact expert I need right now."
-Tone: Problem-aware, solution-oriented, premium. Speak to their pain point first.
-Include crisis urgency where relevant.
+{angle_instruction}
+The post should make them feel: "MahaYukti connects me to the exact specialist I need."
+Tone: Problem-aware, specific, human. Speak to their pain point first.
 
 Return this exact JSON:
 {{
-  "title": "Blog post title (compelling, problem-aware, 8-12 words)",
+  "title": "Blog post title — specific to this domain and scenario, not a template (8-12 words)",
   "excerpt": "One sentence that hits the pain point (max 25 words)",
-  "blog_content": "Full blog post (800-1000 words). Open with a real-world scenario/pain point. Explain why finding the right expert is hard. Position MahaYukti as the solution. Include 2-3 specific use cases in {domain}. Close with CTA to reach out at mahayukti.com. Use paragraph breaks, no bullet points.",
-  "linkedin_text": "LinkedIn post (150-200 words). Open with a bold statement or stat. Build to why MahaYukti exists for this exact problem. End: mahayukti.com",
-  "instagram_caption": "Instagram caption (80-100 words). Punchy, visual language. 8-10 hashtags at end.",
+  "blog_content": "Full blog post (800-1000 words). Open using the content angle above. Explain why finding the right expert is hard in India. Position MahaYukti as the solution using its founding insight. Include 2-3 specific use cases in {domain}/{subdomain}. Close with CTA to mahayukti.com. Paragraph breaks only — no bullet points.",
+  "linkedin_text": "LinkedIn post (150-200 words). Written by a real person, not a brand account. Use the content angle to open. Build to why MahaYukti exists for this exact problem. End with mahayukti.com",
+  "instagram_caption": "Instagram caption (80-100 words). Punchy, visual language. 8-10 relevant hashtags at end.",
   "facebook_text": "Facebook post (100-150 words). Conversational, relatable scenario. CTA at end.",
   "image_headline": "Bold image headline (max 7 words, uppercase impact)",
   "image_subtext": "Supporting image line (max 10 words)",
@@ -208,18 +286,17 @@ Return this exact JSON:
 Target: Senior professionals who should JOIN MahaYukti as members/participants:
 Domain: {domain}
 Subdomain: {subdomain}
-
-The post should make them feel: "This network was built for people like me."
-Tone: Aspirational, exclusive, collegial. Speak to their professional identity and ambition.
-Emphasise: exclusive access, peer network, cross-domain intelligence, founding member opportunity.
+{angle_instruction}
+The post should make them feel: "This community was built for professionals like me."
+Tone: Collegial, specific, identity-affirming. Speak to their professional reality, not a vague aspiration.
 
 Return this exact JSON:
 {{
-  "title": "Blog post title (identity-driven, aspirational, 8-12 words)",
+  "title": "Blog post title — specific to this domain and audience, not a template (8-12 words)",
   "excerpt": "One sentence that speaks to their professional ambition (max 25 words)",
-  "blog_content": "Full blog post (800-1000 words). Open by painting a picture of what their professional life looks like inside MahaYukti. Describe the cross-domain connections, the intelligence, the exclusive access. Address why India's best professionals need this NOW. Include specific scenarios for {subdomain} professionals. Close with CTA to apply at mahayukti.com.",
-  "linkedin_text": "LinkedIn post (150-200 words). Speak directly to {subdomain} professionals. Make them feel seen and valued. End with apply link: mahayukti.com",
-  "instagram_caption": "Instagram caption (80-100 words). Aspirational, identity-affirming. 8-10 hashtags.",
+  "blog_content": "Full blog post (800-1000 words). Open using the content angle above. Paint a picture of what cross-domain intelligence looks like from inside MahaYukti. Address why India's best {subdomain} professionals need this community now. Include specific scenarios for {subdomain}. Close with CTA to apply at mahayukti.com.",
+  "linkedin_text": "LinkedIn post (150-200 words). Speak directly to {subdomain} — make them feel seen and understood. Sound like a real person, not a brand account. End with mahayukti.com",
+  "instagram_caption": "Instagram caption (80-100 words). Aspirational, identity-affirming. 8-10 relevant hashtags.",
   "facebook_text": "Facebook post (100-150 words). Community feel, belonging, exclusive opportunity.",
   "image_headline": "Bold image headline (max 7 words, identity-affirming)",
   "image_subtext": "Supporting image line (max 10 words)",
