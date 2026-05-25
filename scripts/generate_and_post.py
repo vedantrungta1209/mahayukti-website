@@ -541,7 +541,7 @@ def upload_image(filepath, filename):
 
     r = requests.put(api_url, headers=headers, json=payload)
     r.raise_for_status()
-    url = f"https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/images/{filename}"
+    url = f"https://mahayukti.com/images/{filename}"
     print(f"✅ Uploaded: {url}")
     return url
 

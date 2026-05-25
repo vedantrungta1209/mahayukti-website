@@ -331,31 +331,26 @@ def compose_reel(audio_path: str, content: dict, out_path: str):
 # ── 4. Upload to GitHub Releases (free public CDN) ────────────────────────
 
 def upload_reel(reel_path: str, post_id: str, gh_token: str) -> str:
-    repo    = "vedantrungta1209/mahayukti-website"
-    headers = {
-        "Authorization": f"token {gh_token}",
-        "Accept": "application/vnd.github.v3+json",
-    }
-    tag      = f"reels-{post_id}-{int(time.time())}"
+    import base64
+    repo     = "vedantrungta1209/mahayukti-website"
     filename = f"reel-{post_id}.mp4"
-
-    rel = requests.post(
-        f"https://api.github.com/repos/{repo}/releases",
-        headers=headers,
-        json={"tag_name": tag, "name": tag, "body": "Auto-generated reel", "draft": False},
-    )
-    rel.raise_for_status()
-    upload_url = rel.json()["upload_url"].replace("{?name,label}", "")
+    api_url  = f"https://api.github.com/repos/{repo}/contents/images/{filename}"
+    headers  = {"Authorization": f"token {gh_token}", "Accept": "application/vnd.github.v3+json"}
 
     with open(reel_path, "rb") as f:
-        up = requests.post(
-            f"{upload_url}?name={filename}",
-            headers={**headers, "Content-Type": "video/mp4"},
-            data=f,
-        )
-        up.raise_for_status()
+        encoded = base64.b64encode(f.read()).decode()
 
-    public_url = up.json()["browser_download_url"]
+    check = requests.get(api_url, headers=headers)
+    sha   = check.json().get("sha") if check.status_code == 200 else None
+
+    payload = {"message": f"Reel: {filename}", "content": encoded, "branch": "main"}
+    if sha:
+        payload["sha"] = sha
+
+    r = requests.put(api_url, headers=headers, json=payload)
+    r.raise_for_status()
+
+    public_url = f"https://mahayukti.com/images/{filename}"
     print(f"  Reel uploaded: {public_url}")
     return public_url
 
