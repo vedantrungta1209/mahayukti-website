@@ -680,11 +680,12 @@ def _ig_wait_for_container(container_id, max_polls=45, sleep_s=20):
     for i in range(max_polls):
         resp = requests.get(
             f"https://graph.facebook.com/v19.0/{container_id}",
-            params={"fields": "status_code,status", "access_token": FB_PAGE_ACCESS_TOKEN},
+            params={"fields": "status_code", "access_token": FB_PAGE_ACCESS_TOKEN},
         )
         data   = resp.json()
+        if resp.status_code != 200:
+            raise RuntimeError(f"Instagram container status check failed: {data}")
         status = data.get("status_code", "")
-        print(f"   [poll {i+1}] HTTP {resp.status_code} | status_code={status!r} | raw={data}")
         if status == "FINISHED":
             return
         if status in ("ERROR", "EXPIRED"):
@@ -705,10 +706,9 @@ def post_to_instagram_image(content, sq_url):
             "access_token": FB_PAGE_ACCESS_TOKEN,
         },
     )
-    print(f"   Container create HTTP {r.status_code}: {r.json()}")
     r.raise_for_status()
     cid = r.json()["id"]
-    _ig_wait_for_container(cid, max_polls=3, sleep_s=20)  # DEBUG: 3 polls only
+    _ig_wait_for_container(cid)
     requests.post(
         f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
         data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
@@ -720,21 +720,18 @@ def post_to_instagram_reel(content, reel_url):
     if not FB_PAGE_ACCESS_TOKEN or not IG_USER_ID:
         print("⚠️  Instagram credentials missing — skipping reel")
         return
-    resolved_url = reel_url
-    print(f"   Reel URL: {resolved_url}")
     r = requests.post(
         f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media",
         data={
             "media_type":   "REELS",
-            "video_url":    resolved_url,
+            "video_url":    reel_url,
             "caption":      content["instagram_caption"],
             "access_token": FB_PAGE_ACCESS_TOKEN,
         },
     )
-    print(f"   Container create HTTP {r.status_code}: {r.json()}")
     r.raise_for_status()
     cid = r.json()["id"]
-    _ig_wait_for_container(cid, max_polls=3, sleep_s=20)  # DEBUG: 3 polls only
+    _ig_wait_for_container(cid, max_polls=30, sleep_s=20)
     requests.post(
         f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
         data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
