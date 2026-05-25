@@ -534,7 +534,7 @@ def upload_image(filepath, filename):
 
     r = requests.put(api_url, headers=headers, json=payload)
     r.raise_for_status()
-    url = f"https://mahayukti.com/images/{filename}"
+    url = f"https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/images/{filename}"
     print(f"✅ Uploaded: {url}")
     return url
 
@@ -668,7 +668,7 @@ def post_to_facebook_reel(content, reel_url):
     print("✅ Facebook Reel posted")
 
 
-def _ig_wait_for_container(container_id, max_polls=20, sleep_s=15):
+def _ig_wait_for_container(container_id, max_polls=30, sleep_s=20):
     import time as _t
     for _ in range(max_polls):
         resp = requests.get(
@@ -710,18 +710,20 @@ def post_to_instagram_reel(content, reel_url):
     if not FB_PAGE_ACCESS_TOKEN or not IG_USER_ID:
         print("⚠️  Instagram credentials missing — skipping reel")
         return
+    # Instagram doesn't follow redirects — resolve to final CDN URL
+    resolved_url = requests.head(reel_url, allow_redirects=True).url
     r = requests.post(
         f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media",
         data={
             "media_type":   "REELS",
-            "video_url":    reel_url,
+            "video_url":    resolved_url,
             "caption":      content["instagram_caption"],
             "access_token": FB_PAGE_ACCESS_TOKEN,
         },
     )
     r.raise_for_status()
     cid = r.json()["id"]
-    _ig_wait_for_container(cid, max_polls=24, sleep_s=15)  # up to 6 min
+    _ig_wait_for_container(cid, max_polls=30, sleep_s=20)  # up to 10 min
     requests.post(
         f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
         data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
