@@ -46,13 +46,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "POST_TYPE=${{ github.event.inputs.post_type }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.schedule }}" = "30 2 * * *" ]; then
+            echo "POST_TYPE=morning" >> $GITHUB_ENV
           else
-            HOUR=$(date -u +%H)
-            if [ "$HOUR" = "02" ]; then
-              echo "POST_TYPE=morning" >> $GITHUB_ENV
-            else
-              echo "POST_TYPE=evening" >> $GITHUB_ENV
-            fi
+            echo "POST_TYPE=evening" >> $GITHUB_ENV
           fi
 
       - name: Refresh LinkedIn token (auto, if > 50 days old)
