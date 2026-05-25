@@ -674,7 +674,7 @@ def post_to_facebook_reel(content, reel_url):
     print("✅ Facebook Reel posted")
 
 
-def _ig_wait_for_container(container_id, max_polls=30, sleep_s=20):
+def _ig_wait_for_container(container_id, max_polls=45, sleep_s=20):
     import time as _t
     for _ in range(max_polls):
         resp = requests.get(
@@ -820,9 +820,9 @@ def main():
         except Exception as e:
             print(f"⚠️  YouTube upload failed: {e}")
 
-    # Wait for Cloudflare to serve the uploaded images
-    print("\n⏳ Waiting 90s for Cloudflare deployment...")
-    time.sleep(90)
+    # Wait for Cloudflare and GitHub CDN to propagate uploaded images/reels
+    print("\n⏳ Waiting 300s for CDN propagation...")
+    time.sleep(300)
 
     print("\n📣 Posting to social platforms...")
     for name, fn, args in [
