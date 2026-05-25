@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 ANTHROPIC_API_KEY     = os.environ["ANTHROPIC_API_KEY"]
 GH_TOKEN              = os.environ["GH_TOKEN"]
 POST_TYPE             = os.environ.get("POST_TYPE", "morning")  # "morning" or "evening"
+ONLY_PLATFORMS        = os.environ.get("ONLY_PLATFORMS", "")    # comma-separated: "instagram", "linkedin", etc. Empty = all
 
 # Social platform credentials (set as GitHub Actions secrets)
 LINKEDIN_ACCESS_TOKEN = os.environ.get("LINKEDIN_ACCESS_TOKEN", "")
@@ -824,7 +825,8 @@ def main():
     print("\n⏳ Waiting 300s for CDN propagation...")
     time.sleep(300)
 
-    print("\n📣 Posting to social platforms...")
+    _only = [p.strip().lower() for p in ONLY_PLATFORMS.split(",") if p.strip()]
+    print("\n📣 Posting to social platforms..." + (f" (only: {', '.join(_only)})" if _only else ""))
     for name, fn, args in [
         ("LinkedIn",          post_to_linkedin,        (content, sq_path)),
         ("Facebook photo",    post_to_facebook,        (content, sq_url)),
@@ -834,6 +836,9 @@ def main():
     ]:
         if args is None:
             print(f"   {name}: skipped (no reel)")
+            continue
+        if _only and not any(p in name.lower() for p in _only):
+            print(f"   {name}: skipped (not in ONLY_PLATFORMS)")
             continue
         try:
             fn(*args)
