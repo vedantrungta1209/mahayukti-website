@@ -675,23 +675,27 @@ def post_to_facebook_reel(content, reel_url):
     print("✅ Facebook Reel posted")
 
 
-def _ig_wait_for_container(container_id, max_polls=45, sleep_s=20):
+def _ig_publish_with_retry(container_id, initial_wait=15, max_attempts=8, retry_wait=30):
+    """Publish an IG container, retrying while it's still processing."""
     import time as _t
-    for i in range(max_polls):
-        resp = requests.get(
-            f"https://graph.facebook.com/v19.0/{container_id}",
-            params={"fields": "status_code", "access_token": FB_PAGE_ACCESS_TOKEN},
+    _t.sleep(initial_wait)
+    for attempt in range(max_attempts):
+        pub = requests.post(
+            f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
+            data={"creation_id": container_id, "access_token": FB_PAGE_ACCESS_TOKEN},
         )
-        data   = resp.json()
-        if resp.status_code != 200:
-            raise RuntimeError(f"Instagram container status check failed: {data}")
-        status = data.get("status_code", "")
-        if status == "FINISHED":
+        data = pub.json()
+        if pub.status_code == 200:
             return
-        if status in ("ERROR", "EXPIRED"):
-            raise RuntimeError(f"Instagram container {status}: {data}")
-        _t.sleep(sleep_s)
-    raise TimeoutError("Instagram container did not finish in time")
+        err     = data.get("error", {})
+        subcode = err.get("error_subcode")
+        # 2207025 / 2207006 = container still processing — retry
+        if subcode in (2207025, 2207006) and attempt < max_attempts - 1:
+            print(f"   Container still processing (attempt {attempt+1}), retrying in {retry_wait}s…")
+            _t.sleep(retry_wait)
+            continue
+        pub.raise_for_status()
+    raise RuntimeError("Instagram container never became ready for publishing")
 
 
 def post_to_instagram_image(content, sq_url):
@@ -708,11 +712,7 @@ def post_to_instagram_image(content, sq_url):
     )
     r.raise_for_status()
     cid = r.json()["id"]
-    _ig_wait_for_container(cid)
-    requests.post(
-        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
-        data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
-    ).raise_for_status()
+    _ig_publish_with_retry(cid, initial_wait=15, max_attempts=4, retry_wait=20)
     print("✅ Instagram image posted")
 
 
@@ -731,11 +731,8 @@ def post_to_instagram_reel(content, reel_url):
     )
     r.raise_for_status()
     cid = r.json()["id"]
-    _ig_wait_for_container(cid, max_polls=30, sleep_s=20)
-    requests.post(
-        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
-        data={"creation_id": cid, "access_token": FB_PAGE_ACCESS_TOKEN},
-    ).raise_for_status()
+    # Reels take longer to process — start checking after 2 min, retry every 30s up to 8 min
+    _ig_publish_with_retry(cid, initial_wait=120, max_attempts=12, retry_wait=30)
     print("✅ Instagram Reel posted")
 
 
