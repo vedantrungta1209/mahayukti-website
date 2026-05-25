@@ -405,11 +405,11 @@ Return this exact JSON:
         },
         json={
             "model": "claude-sonnet-4-6",
-            "max_tokens": 2500,
+            "max_tokens": 5000,
             "system": system,
             "messages": [{"role": "user", "content": prompt}]
         },
-        timeout=60
+        timeout=120
     )
     r.raise_for_status()
     raw = r.json()["content"][0]["text"].strip()
@@ -417,6 +417,12 @@ Return this exact JSON:
         raw = raw.split("```")[1]
         if raw.startswith("json"):
             raw = raw[4:]
+        raw = raw.rstrip("`").strip()
+    # Extract the first complete JSON object in case the model adds trailing commentary
+    import re as _re
+    m = _re.search(r'\{.*\}', raw, _re.DOTALL)
+    if m:
+        raw = m.group(0)
     content = json.loads(raw.strip())
     print("✅ Content generated")
     return content
