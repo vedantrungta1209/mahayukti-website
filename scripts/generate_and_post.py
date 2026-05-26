@@ -397,22 +397,30 @@ Return this exact JSON:
   "subdomain": "{subdomain}"
 }}"""
 
-    r = requests.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "x-api-key": ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json"
-        },
-        json={
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 5000,
-            "system": system,
-            "messages": [{"role": "user", "content": prompt}]
-        },
-        timeout=120
-    )
-    r.raise_for_status()
+    import time as _t
+    for _attempt in range(5):
+        r = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json={
+                "model": "claude-sonnet-4-6",
+                "max_tokens": 5000,
+                "system": system,
+                "messages": [{"role": "user", "content": prompt}]
+            },
+            timeout=120
+        )
+        if r.status_code in (429, 529) and _attempt < 4:
+            wait = 30 * (2 ** _attempt)  # 30s, 60s, 120s, 240s
+            print(f"   Anthropic API overloaded ({r.status_code}), retrying in {wait}s…")
+            _t.sleep(wait)
+            continue
+        r.raise_for_status()
+        break
     raw = r.json()["content"][0]["text"].strip()
     if raw.startswith("```"):
         raw = raw.split("```")[1]
