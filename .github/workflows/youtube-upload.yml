@@ -4,6 +4,19 @@ on:
   schedule:
     - cron: '30 13 * * *'  # 7:00 PM IST — post-market prime time
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force run even if already done today'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+concurrency:
+  group: youtube-upload-daily
+  cancel-in-progress: false
 
 jobs:
   upload:
@@ -14,9 +27,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 10
           token: ${{ secrets.GH_TOKEN }}
 
+      - name: Idempotency check
+        id: guard
+        run: |
+          FORCE="${{ github.event.inputs.force }}"
+          if [ "$FORCE" = "true" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          LAST_TS=$(git log -1 --format="%ct" -- "content-automation/topic_counter.txt" 2>/dev/null || echo "")
+          if [ -n "$LAST_TS" ]; then
+            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
+            if [ "$LAST_IST" = "$TODAY_IST" ]; then
+              echo "⏭️  YouTube upload already done today ($TODAY_IST). Skipping."
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          echo "skip=false" >> $GITHUB_OUTPUT
+
       - name: Set up Python
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -24,12 +59,15 @@ jobs:
           cache-dependency-path: content-automation/requirements.txt
 
       - name: Install system dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: sudo apt-get install -y ffmpeg fonts-liberation fonts-dejavu-core
 
       - name: Install Python dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: pip install -r content-automation/requirements.txt
 
       - name: Run automation
+        if: steps.guard.outputs.skip != 'true'
         working-directory: content-automation
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -41,7 +79,7 @@ jobs:
         run: python main.py
 
       - name: Refresh YouTube token secret
-        if: always()
+        if: steps.guard.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
@@ -54,7 +92,7 @@ jobs:
           fi
 
       - name: Persist topic counter
-        if: always()
+        if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

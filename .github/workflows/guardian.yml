@@ -1,0 +1,132 @@
+name: 🛡️ Post Guardian
+
+# GitHub's cron scheduler can delay runs by up to 12+ hours during high-load periods.
+# This guardian runs 7× per day at staggered times. Each run checks whether each
+# expected post has happened (by looking at git commit timestamps on counter files).
+# If a post is overdue, it triggers the appropriate workflow via workflow_dispatch.
+#
+# Combined with idempotency checks in each workflow, this ensures:
+#   • Every post happens at most once per slot per day
+#   • Missed posts are recovered within ~2 hours of the target time
+
+on:
+  schedule:
+    # ── Morning post (target 8 AM IST = 02:30 UTC) ────────────────────────────
+    # Guardian checks at 9 AM, 10:30 AM, 12 PM, 1:30 PM IST
+    - cron: '30 3 * * *'   # 9:00 AM IST
+    - cron: '0 5 * * *'    # 10:30 AM IST
+    - cron: '30 6 * * *'   # 12:00 PM IST
+    - cron: '0 8 * * *'    # 1:30 PM IST  ← last morning safety net
+
+    # ── Evening post (target 6 PM IST = 12:30 UTC) ────────────────────────────
+    # Guardian checks at 6:30 PM, 8 PM, 9:30 PM, 11 PM IST
+    - cron: '0 13 * * *'   # 6:30 PM IST
+    - cron: '30 14 * * *'  # 8:00 PM IST
+    - cron: '0 16 * * *'   # 9:30 PM IST
+    - cron: '30 17 * * *'  # 11:00 PM IST ← last evening safety net
+
+    # ── Shorts (target 1:30 PM IST = 08:00 UTC) ───────────────────────────────
+    # Covered by the 1:30 PM and 8 PM guardian windows above
+
+    # ── YouTube upload (target 7 PM IST = 13:30 UTC) ──────────────────────────
+    # Covered by the 6:30 PM and 8 PM guardian windows above
+
+  # Allow manual trigger to immediately fix a missed post
+  workflow_dispatch:
+
+jobs:
+  guard:
+    name: Check and recover missed posts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout (with recent history for counter timestamps)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 15
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Detect and trigger any overdue posts
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # ── Helpers ──────────────────────────────────────────────────────────
+
+          # Returns "true" if the given counter file was last committed today (IST)
+          was_posted_today() {
+            local COUNTER_FILE="$1"
+            local TODAY_IST
+            TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+            local LAST_TS
+            LAST_TS=$(git log -1 --format="%ct" -- "$COUNTER_FILE" 2>/dev/null || echo "")
+            if [ -z "$LAST_TS" ]; then
+              echo "false"
+              return
+            fi
+            local LAST_IST
+            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
+            [ "$LAST_IST" = "$TODAY_IST" ] && echo "true" || echo "false"
+          }
+
+          # Trigger a workflow if it has not already been triggered in the last 10 min
+          # (prevents duplicate guardian triggers on the same missed post)
+          trigger_workflow() {
+            local WORKFLOW="$1"
+            local EXTRA_ARGS="$2"
+            echo "  → Triggering $WORKFLOW $EXTRA_ARGS"
+            eval "gh workflow run $WORKFLOW --repo $REPO --ref main $EXTRA_ARGS"
+          }
+
+          # ── Context ──────────────────────────────────────────────────────────
+          IST_HOUR=$(TZ="Asia/Kolkata" date +%-H)
+          IST_TIME=$(TZ="Asia/Kolkata" date '+%Y-%m-%d %H:%M %Z')
+          echo "Guardian running at: $IST_TIME (IST hour: $IST_HOUR)"
+
+          # ── Morning social post (8 AM IST target) ────────────────────────────
+          # Check window: 9 AM – 2 PM IST (hours 9–13)
+          if [ "$IST_HOUR" -ge 9 ] && [ "$IST_HOUR" -lt 14 ]; then
+            if [ "$(was_posted_today scripts/topic_counter_morning.txt)" = "false" ]; then
+              echo "⚠️  Morning post MISSING — triggering now"
+              trigger_workflow "daily-post.yml" "-f post_type=morning"
+            else
+              echo "✅ Morning post already done today"
+            fi
+          fi
+
+          # ── AI Shorts (1:30 PM IST target) ───────────────────────────────────
+          # Check window: 1:30 PM – 7 PM IST (hours 13–18)
+          if [ "$IST_HOUR" -ge 13 ] && [ "$IST_HOUR" -lt 19 ]; then
+            if [ "$(was_posted_today MahayuktiAI/tool_counter_short.txt)" = "false" ]; then
+              echo "⚠️  AI Shorts MISSING — triggering now"
+              trigger_workflow "mahayukti-ai-shorts.yml" ""
+            else
+              echo "✅ AI Shorts already done today"
+            fi
+          fi
+
+          # ── Evening social post (6 PM IST target) ────────────────────────────
+          # Check window: 6:30 PM – 11:30 PM IST (hours 18–23)
+          if [ "$IST_HOUR" -ge 18 ] && [ "$IST_HOUR" -lt 24 ]; then
+            if [ "$(was_posted_today scripts/topic_counter_evening.txt)" = "false" ]; then
+              echo "⚠️  Evening post MISSING — triggering now"
+              trigger_workflow "daily-post.yml" "-f post_type=evening"
+            else
+              echo "✅ Evening post already done today"
+            fi
+          fi
+
+          # ── YouTube upload (7 PM IST target) ─────────────────────────────────
+          # Check window: 7 PM – 11:30 PM IST (hours 19–23)
+          if [ "$IST_HOUR" -ge 19 ] && [ "$IST_HOUR" -lt 24 ]; then
+            if [ "$(was_posted_today content-automation/topic_counter.txt)" = "false" ]; then
+              echo "⚠️  YouTube upload MISSING — triggering now"
+              trigger_workflow "youtube-upload.yml" ""
+            else
+              echo "✅ YouTube upload already done today"
+            fi
+          fi
+
+          echo ""
+          echo "Guardian check complete."

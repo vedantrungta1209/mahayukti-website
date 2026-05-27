@@ -18,6 +18,21 @@ on:
         description: 'Only post to these platforms (comma-separated: instagram, linkedin, facebook). Empty = all.'
         required: false
         default: ''
+      force:
+        description: 'Force run even if already posted today (bypass idempotency)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+# Prevent two morning (or two evening) runs from overlapping.
+# If GitHub fires the delayed original cron after the guardian already triggered a run,
+# the second run queues, sees the counter was updated today, and exits immediately.
+concurrency:
+  group: daily-post-${{ github.event.inputs.post_type || (github.event.schedule == '30 2 * * *' && 'morning' || 'evening') }}
+  cancel-in-progress: false
 
 jobs:
   daily-post:
@@ -28,35 +43,72 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 10   # enough to find recent counter commits
           token: ${{ secrets.GH_TOKEN }}
 
+      # Resolve post type before the idempotency check so we know which counter to read
+      - name: Determine post type
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            POST_TYPE="${{ github.event.inputs.post_type }}"
+          elif [ "${{ github.event.schedule }}" = "30 2 * * *" ]; then
+            POST_TYPE="morning"
+          else
+            POST_TYPE="evening"
+          fi
+          echo "POST_TYPE=$POST_TYPE" >> $GITHUB_ENV
+          echo "post_type=$POST_TYPE" >> $GITHUB_OUTPUT
+
+      # Skip all expensive work if today's post already happened.
+      # Uses the git commit timestamp of the topic counter file (IST date comparison).
+      - name: Idempotency check — skip if already posted today
+        id: guard
+        run: |
+          FORCE="${{ github.event.inputs.force }}"
+          if [ "$FORCE" = "true" ]; then
+            echo "⚡ Force flag set — skipping idempotency check."
+            echo "skip=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          COUNTER_FILE="scripts/topic_counter_${POST_TYPE}.txt"
+
+          LAST_TS=$(git log -1 --format="%ct" -- "$COUNTER_FILE" 2>/dev/null || echo "")
+          if [ -n "$LAST_TS" ]; then
+            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
+            if [ "$LAST_IST" = "$TODAY_IST" ]; then
+              echo "⏭️  $POST_TYPE post already completed today ($TODAY_IST). Skipping."
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "▶️  Last $POST_TYPE post was $LAST_IST (not today $TODAY_IST). Proceeding."
+          else
+            echo "▶️  No prior $POST_TYPE post found. Proceeding."
+          fi
+          echo "skip=false" >> $GITHUB_OUTPUT
+
       - name: Set up Python
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install system dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: sudo apt-get install -y ffmpeg
 
       - name: Install dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: |
           pip install \
             requests Pillow edge-tts "moviepy==1.0.3" numpy \
             google-auth google-auth-httplib2 google-auth-oauthlib \
             google-api-python-client
 
-      - name: Determine post type
-        id: post_type
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "POST_TYPE=${{ github.event.inputs.post_type }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.schedule }}" = "30 2 * * *" ]; then
-            echo "POST_TYPE=morning" >> $GITHUB_ENV
-          else
-            echo "POST_TYPE=evening" >> $GITHUB_ENV
-          fi
-
       - name: Refresh LinkedIn token (auto, if > 50 days old)
+        if: steps.guard.outputs.skip != 'true'
         env:
           LINKEDIN_REFRESH_TOKEN:   ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
           LINKEDIN_CLIENT_ID:       ${{ secrets.LINKEDIN_CLIENT_ID }}
@@ -66,6 +118,7 @@ jobs:
         run: python scripts/refresh_linkedin_token.py
 
       - name: Run automation
+        if: steps.guard.outputs.skip != 'true'
         env:
           ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
           GH_TOKEN:               ${{ secrets.GH_TOKEN }}
@@ -80,6 +133,7 @@ jobs:
         run: python scripts/generate_and_post.py
 
       - name: Commit topic counter
+        if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -89,4 +143,5 @@ jobs:
           git push
 
       - name: Done
+        if: steps.guard.outputs.skip != 'true'
         run: echo "✅ ${{ env.POST_TYPE }} post complete — $(date)"
