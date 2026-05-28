@@ -6,6 +6,22 @@ on:
     - cron: '30 14 * * 3'  # Wednesday 8:00 PM IST
     - cron: '30 14 * * 5'  # Friday    8:00 PM IST
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force run even if already done today'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+concurrency:
+  group: ai-long-daily
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   long:
@@ -16,20 +32,45 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 10
           token: ${{ secrets.GH_TOKEN }}
 
+      - name: Idempotency check
+        id: guard
+        run: |
+          FORCE="${{ github.event.inputs.force }}"
+          if [ "$FORCE" = "true" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          LAST_TS=$(git log -1 --format="%ct" -- "MahayuktiAI/tool_counter_long.txt" 2>/dev/null || echo "")
+          if [ -n "$LAST_TS" ]; then
+            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
+            if [ "$LAST_IST" = "$TODAY_IST" ]; then
+              echo "⏭️  AI Long-form already done today ($TODAY_IST). Skipping."
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          echo "skip=false" >> $GITHUB_OUTPUT
+
       - name: Set up Python
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install system dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: sudo apt-get install -y ffmpeg fonts-liberation fonts-dejavu-core
 
       - name: Install Python dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: pip install -r MahayuktiAI/requirements.txt
 
       - name: Generate and upload Long-form
+        if: steps.guard.outputs.skip != 'true'
         working-directory: MahayuktiAI
         env:
           GROQ_API_KEY:           ${{ secrets.GROQ_API_KEY }}
@@ -39,7 +80,7 @@ jobs:
         run: python main.py --mode long
 
       - name: Persist tool counter
-        if: always()
+        if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -49,4 +90,5 @@ jobs:
           git push
 
       - name: Done
+        if: steps.guard.outputs.skip != 'true'
         run: echo "✅ Mahayukti AI long-form uploaded — $(date)"

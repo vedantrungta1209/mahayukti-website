@@ -18,6 +18,9 @@ concurrency:
   group: youtube-upload-daily
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   upload:
     runs-on: ubuntu-latest

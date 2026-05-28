@@ -34,6 +34,9 @@ concurrency:
   group: daily-post-${{ github.event.inputs.post_type || (github.event.schedule == '30 2 * * *' && 'morning' || 'evening') }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   daily-post:
     runs-on: ubuntu-latest
