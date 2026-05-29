@@ -32,7 +32,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 10
+          fetch-depth: 50
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Idempotency check
@@ -63,7 +63,7 @@ jobs:
 
       - name: Install system dependencies
         if: steps.guard.outputs.skip != 'true'
-        run: sudo apt-get install -y ffmpeg fonts-liberation fonts-dejavu-core
+        run: sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg fonts-liberation fonts-dejavu-core
 
       - name: Install Python dependencies
         if: steps.guard.outputs.skip != 'true'
