@@ -50,28 +50,43 @@ def _ig_post_reel(video_path: str, caption: str) -> str | None:
     return _ig_post_via_transfer(video_path, caption, ig_id, fb_token)
 
 
-def _upload_to_transfer_sh(file_path: str) -> str | None:
-    """Upload file to transfer.sh and return public URL (free, no account needed)."""
+def _upload_to_host(file_path: str) -> str | None:
+    """Upload video to a public URL using multiple free hosts (tried in order)."""
     filename = os.path.basename(file_path)
+
+    # Host 1: 0x0.st — reliable, no account needed, 512MB limit
+    try:
+        with open(file_path, "rb") as f:
+            r = requests.post("https://0x0.st", files={"file": (filename, f)}, timeout=120)
+        if r.status_code == 200:
+            url = r.text.strip()
+            print(f"  Hosted (0x0.st): {url}")
+            return url
+    except Exception as e:
+        print(f"  0x0.st failed: {e}")
+
+    # Host 2: transfer.sh — fallback
     try:
         with open(file_path, "rb") as f:
             r = requests.put(
                 f"https://transfer.sh/{filename}",
                 data=f,
-                headers={"Max-Downloads": "10", "Max-Days": "1"},
+                headers={"Max-Downloads": "5", "Max-Days": "1"},
                 timeout=120,
             )
         if r.status_code == 200:
             url = r.text.strip()
-            print(f"  Hosted at: {url}")
+            print(f"  Hosted (transfer.sh): {url}")
             return url
     except Exception as e:
-        print(f"  transfer.sh upload failed: {e}")
+        print(f"  transfer.sh failed: {e}")
+
+    print("  All video hosts failed — Instagram/Facebook cross-post skipped.")
     return None
 
 
 def _ig_post_via_transfer(video_path: str, caption: str, ig_id: str, fb_token: str) -> str | None:
-    video_url = _upload_to_transfer_sh(video_path)
+    video_url = _upload_to_host(video_path)
     if not video_url:
         print("  Instagram: could not host video, skipping.")
         return None
@@ -136,7 +151,7 @@ def _fb_post_reel(video_path: str, caption: str) -> str | None:
 
     print("  Facebook: uploading reel...")
 
-    video_url = _upload_to_transfer_sh(video_path)
+    video_url = _upload_to_host(video_path)
     if not video_url:
         print("  Facebook: could not host video, skipping.")
         return None

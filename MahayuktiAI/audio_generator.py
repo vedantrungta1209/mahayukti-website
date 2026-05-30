@@ -1,28 +1,26 @@
 """
-Audio generator — TTS voice + background music from Pixabay (free, no key needed).
-Music mixed at low volume under voice for professional feel.
+Audio generator — TTS voice + ambient background music synthesised via ffmpeg.
+Music mixed at 8% volume under voice for professional feel. No external URLs needed.
 """
 import asyncio
 import json
 import os
 import subprocess
-import tempfile
 from pathlib import Path
-from urllib.parse import quote
 
-import requests
 import edge_tts
 
 SHORT_VOICE = "en-IN-NeerjaNeural"   # female, Indian English — energetic for Shorts
 LONG_VOICE  = "en-IN-PrabhatNeural"  # male, Indian English — authoritative for long-form
 
-# Royalty-free background music tracks from Pixabay (verified free, no API key needed)
-_MUSIC_TRACKS = [
-    "https://cdn.pixabay.com/audio/2024/11/06/audio_9fcb6c6ec7.mp3",  # lo-fi tech
-    "https://cdn.pixabay.com/audio/2024/10/14/audio_c7ad9b3be6.mp3",  # ambient future
-    "https://cdn.pixabay.com/audio/2024/09/23/audio_0b3a6b0f24.mp3",  # upbeat tech
-    "https://cdn.pixabay.com/audio/2024/08/12/audio_f64d84bed9.mp3",  # chill beats
-    "https://cdn.pixabay.com/audio/2024/07/29/audio_9dc9e76bfd.mp3",  # electronic
+# Ambient chord presets — layered sine waves synthesised via ffmpeg (no external dependency)
+# Each tuple is (bass_hz, mid_hz, high_hz, pulse_bpm) defining a unique mood
+_AMBIENT_PRESETS = [
+    (110.0, 146.8, 220.0, 70),   # A minor — calm tech
+    (130.8, 196.0, 261.6, 80),   # C major — upbeat positive
+    (146.8, 220.0, 293.7, 75),   # D minor — mysterious
+    (98.0,  130.8, 196.0, 65),   # G major — warm
+    (123.5, 185.0, 246.9, 72),   # B minor — cinematic
 ]
 
 
@@ -51,16 +49,34 @@ def _audio_duration(audio_path: str) -> float:
     return float(data["format"]["duration"])
 
 
-def _fetch_music(seed: int, output_path: str) -> bool:
-    track_url = _MUSIC_TRACKS[seed % len(_MUSIC_TRACKS)]
+def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> bool:
+    """Synthesise ambient background music via ffmpeg — no external dependency, always works."""
+    preset = _AMBIENT_PRESETS[seed % len(_AMBIENT_PRESETS)]
+    bass, mid, high, bpm = preset
+    # Pulse envelope: slow AM at bpm/60 Hz gives a gentle breathing effect
+    pulse = bpm / 60.0
+    expr = (
+        f"0.18*sin({bass}*2*PI*t)*sin({pulse}*2*PI*t+0.1)+"
+        f"0.14*sin({mid}*2*PI*t)*sin({pulse*1.3}*2*PI*t+0.4)+"
+        f"0.09*sin({high}*2*PI*t)*sin({pulse*0.7}*2*PI*t+0.8)+"
+        f"0.04*sin({bass*2}*2*PI*t)*sin({pulse*2}*2*PI*t)"
+    )
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-f", "lavfi",
+        "-i", f"aevalsrc={expr}:s=44100",
+        "-t", str(duration),
+        "-c:a", "aac", "-b:a", "128k",
+        output_path,
+    ]
     try:
-        r = requests.get(track_url, timeout=20)
-        if r.status_code == 200:
-            with open(output_path, "wb") as f:
-                f.write(r.content)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"  Ambient music synthesised (preset {seed % len(_AMBIENT_PRESETS)}).")
             return True
+        print(f"  Music synth warning: {result.stderr[:100]}")
     except Exception as e:
-        print(f"  Music fetch failed: {e}")
+        print(f"  Music synth error: {e}")
     return False
 
 
@@ -134,10 +150,11 @@ def generate_audio(text: str, output_path: str, srt_path: str | None = None,
     words = asyncio.run(_stream(text, raw_audio, voice))
     print(f"  Voice audio: {raw_audio}")
 
-    # Try to mix background music
-    music_path = output_path.replace(".mp3", "_music.mp3")
+    # Generate and mix ambient background music
+    music_path = output_path.replace(".mp3", "_music.aac")
     mixed = False
-    if _fetch_music(music_seed, music_path):
+    voice_duration = _audio_duration(raw_audio)
+    if _generate_ambient(music_seed, music_path, duration=voice_duration + 5.0):
         mixed = _mix_audio(raw_audio, music_path, output_path)
 
     if not mixed:

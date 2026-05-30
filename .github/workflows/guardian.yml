@@ -71,6 +71,16 @@ jobs:
             [ "$LAST_IST" = "$TODAY_IST" ] && echo "true" || echo "false"
           }
 
+          # Returns number of times a counter file was committed today (IST)
+          posts_today_count() {
+            local COUNTER_FILE="$1"
+            local MIDNIGHT_IST
+            MIDNIGHT_IST=$(TZ="Asia/Kolkata" date -d "today 00:00" -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+              || TZ="Asia/Kolkata" date -v0H -v0M -v0S -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+              || date -u +%Y-%m-%dT00:00:00Z)
+            git log --since="$MIDNIGHT_IST" --format="%H" -- "$COUNTER_FILE" 2>/dev/null | wc -l | tr -d ' '
+          }
+
           # Trigger a workflow if it has not already been triggered in the last 10 min
           # (prevents duplicate guardian triggers on the same missed post)
           trigger_workflow() {
@@ -97,14 +107,19 @@ jobs:
             fi
           fi
 
-          # ── AI Shorts (1:30 PM IST target) ───────────────────────────────────
-          if [ "$IST_HOUR" -ge 13 ]; then
-            if [ "$(was_posted_today MahayuktiAI/tool_counter_short.txt)" = "false" ]; then
-              echo "⚠️  AI Shorts MISSING — triggering now"
-              trigger_workflow "mahayukti-ai-shorts.yml" ""
-            else
-              echo "✅ AI Shorts already done today"
-            fi
+          # ── AI Shorts — 2× daily (10 AM + 6:30 PM IST targets) ─────────────────
+          SHORT_COUNT=$(posts_today_count MahayuktiAI/tool_counter_short.txt)
+          echo "AI Shorts today: $SHORT_COUNT/2"
+          # After 10 AM: need at least 1
+          if [ "$IST_HOUR" -ge 10 ] && [ "$SHORT_COUNT" -lt 1 ]; then
+            echo "⚠️  Morning AI Short MISSING — triggering now"
+            trigger_workflow "mahayukti-ai-shorts.yml" ""
+          # After 6:30 PM: need 2
+          elif [ "$IST_HOUR" -ge 18 ] && [ "$SHORT_COUNT" -lt 2 ]; then
+            echo "⚠️  Evening AI Short MISSING — triggering now"
+            trigger_workflow "mahayukti-ai-shorts.yml" ""
+          else
+            echo "✅ AI Shorts on track ($SHORT_COUNT done)"
           fi
 
           # ── Evening social post (6 PM IST target) ────────────────────────────
