@@ -1,15 +1,28 @@
+"""
+Mahayukti Finance — audio generator.
+TTS voiceover + ambient background music synthesised via ffmpeg.
+"""
 import asyncio
 import json
+import os
 import subprocess
 from pathlib import Path
+
 import edge_tts
+
+# Finance-appropriate chord presets — calm, professional, trustworthy
+_AMBIENT_PRESETS = [
+    (130.8, 196.0, 261.6, 60),   # C major — positive, stable
+    (110.0, 146.8, 220.0, 55),   # A minor — thoughtful, serious
+    (146.8, 220.0, 293.7, 65),   # D minor — focused, measured
+    (98.0,  147.0, 196.0, 58),   # G major — warm, trustworthy
+    (123.5, 185.0, 246.9, 62),   # B minor — sophisticated
+]
 
 
 async def _stream(text: str, audio_path: str, voice: str) -> list[dict]:
-    """Stream TTS, write audio, return word boundary events (may be empty)."""
     communicate = edge_tts.Communicate(text, voice)
     words: list[dict] = []
-
     with open(audio_path, "wb") as f:
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
@@ -24,20 +37,63 @@ async def _stream(text: str, audio_path: str, voice: str) -> list[dict]:
 
 
 def _audio_duration(audio_path: str) -> float:
-    """Get audio duration in seconds via ffprobe."""
     result = subprocess.run(
         ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", audio_path],
         capture_output=True, text=True,
     )
-    info = json.loads(result.stdout)
-    return float(info["format"]["duration"])
+    return float(json.loads(result.stdout)["format"]["duration"])
+
+
+def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> bool:
+    preset = _AMBIENT_PRESETS[seed % len(_AMBIENT_PRESETS)]
+    bass, mid, high, bpm = preset
+    pulse = bpm / 60.0
+    expr = (
+        f"0.16*sin({bass}*2*PI*t)*sin({pulse}*2*PI*t+0.1)+"
+        f"0.12*sin({mid}*2*PI*t)*sin({pulse*1.3}*2*PI*t+0.4)+"
+        f"0.08*sin({high}*2*PI*t)*sin({pulse*0.7}*2*PI*t+0.8)+"
+        f"0.03*sin({bass*2}*2*PI*t)*sin({pulse*2}*2*PI*t)"
+    )
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-f", "lavfi", "-i", f"aevalsrc={expr}:s=44100",
+        "-t", str(duration),
+        "-c:a", "aac", "-b:a", "128k",
+        output_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"  Ambient music synthesised (preset {seed % len(_AMBIENT_PRESETS)}).")
+            return True
+    except Exception as e:
+        print(f"  Music synth error: {e}")
+    return False
+
+
+def _mix_audio(voice_path: str, music_path: str, output_path: str, music_volume: float = 0.07) -> bool:
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-i", voice_path, "-i", music_path,
+        "-filter_complex",
+        f"[1:a]volume={music_volume},aloop=loop=-1:size=2e+09[music];[0:a][music]amix=inputs=2:duration=first:dropout_transition=3[out]",
+        "-map", "[out]",
+        "-c:a", "aac", "-b:a", "192k",
+        output_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            print("  Background music mixed in.")
+            return True
+        print(f"  Music mix warning: {result.stderr[:100]}")
+    except Exception as e:
+        print(f"  Music mix error: {e}")
+    return False
 
 
 def _write_srt(words: list[dict], srt_path: str) -> None:
-    """Group word-boundary events into subtitle lines."""
-    chunks: list[tuple[float, float, str]] = []
-    cur: list[dict] = []
-
+    chunks, cur = [], []
     for w in words:
         cur.append(w)
         if len(cur) >= 6 or (w["end"] - cur[0]["start"]) >= 4.0:
@@ -45,34 +101,26 @@ def _write_srt(words: list[dict], srt_path: str) -> None:
             cur = []
     if cur:
         chunks.append((cur[0]["start"], cur[-1]["end"], " ".join(x["text"] for x in cur)))
-
     _save_srt(chunks, srt_path)
     print(f"  Subtitles: {len(chunks)} lines (word-synced)")
 
 
 def _write_srt_fallback(text: str, audio_path: str, srt_path: str) -> None:
-    """Fallback: distribute script words evenly over audio duration."""
     total = _audio_duration(audio_path)
     words = text.split()
     n = len(words)
     if n == 0 or total == 0:
         return
-
-    words_per_sec = n / total
-    chunks: list[tuple[float, float, str]] = []
-    chunk_size = 6
-
-    for i in range(0, n, chunk_size):
-        chunk_words = words[i:i + chunk_size]
-        start = i / words_per_sec
-        end = (i + len(chunk_words)) / words_per_sec
-        chunks.append((start, end, " ".join(chunk_words)))
-
+    wps = n / total
+    chunks = []
+    for i in range(0, n, 6):
+        chunk = words[i:i + 6]
+        chunks.append((i / wps, (i + len(chunk)) / wps, " ".join(chunk)))
     _save_srt(chunks, srt_path)
-    print(f"  Subtitles: {len(chunks)} lines (time-distributed fallback)")
+    print(f"  Subtitles: {len(chunks)} lines (fallback)")
 
 
-def _save_srt(chunks: list[tuple[float, float, str]], srt_path: str) -> None:
+def _save_srt(chunks: list[tuple], srt_path: str) -> None:
     def ts(s: float) -> str:
         h, r = divmod(s, 3600)
         m, sec = divmod(r, 60)
@@ -88,23 +136,35 @@ def generate_audio(
     output_path: str,
     srt_path: str | None = None,
     voice: str = "hi-IN-MadhurNeural",
+    music_seed: int = 0,
 ) -> str:
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    words = asyncio.run(_stream(text, output_path, voice))
-    print(f"  Audio saved: {output_path}")
+
+    raw_audio = output_path.replace(".mp3", "_voice_raw.mp3")
+    words = asyncio.run(_stream(text, raw_audio, voice))
+    print(f"  Voice audio: {raw_audio}")
+
+    music_path = output_path.replace(".mp3", "_music.aac")
+    mixed = False
+    voice_duration = _audio_duration(raw_audio)
+    if _generate_ambient(music_seed, music_path, duration=voice_duration + 5.0):
+        mixed = _mix_audio(raw_audio, music_path, output_path)
+
+    if not mixed:
+        import shutil
+        shutil.copy2(raw_audio, output_path)
+
+    for p in [raw_audio, music_path]:
+        try:
+            if os.path.exists(p):
+                os.remove(p)
+        except Exception:
+            pass
 
     if srt_path:
         if words:
             _write_srt(words, srt_path)
         else:
-            # Hindi neural voices don't emit WordBoundary — distribute evenly
             _write_srt_fallback(text, output_path, srt_path)
 
     return output_path
-
-
-# Available Indian voices:
-# en-IN-NeerjaNeural   — female, Hinglish (sends WordBoundary events)
-# en-IN-PrabhatNeural  — male, Hinglish
-# hi-IN-SwaraNeural    — Hindi female
-# hi-IN-MadhurNeural   — Hindi male (professional, no WordBoundary events)

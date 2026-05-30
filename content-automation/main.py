@@ -1,6 +1,6 @@
 """
-Vee Content Automation Pipeline
-Run: python main.py
+Mahayukti Finance — Content Pipeline
+YouTube only. Runs once daily via GitHub Actions.
 """
 
 import os
@@ -23,33 +23,42 @@ def run():
     print("  Mahayukti Finance — Content Pipeline")
     print("=" * 50)
 
-    # 1. Pick today's topic
     topic = get_todays_topic()
     print(f"\n[1/6] Topic: {topic['angle']}")
     print(f"      Category: {topic['category']}")
 
-    # 2. Generate script via Gemini
-    print("\n[2/6] Generating script (Gemini Flash)...")
+    print("\n[2/6] Generating script...")
     script_data = generate_script(topic)
     print(f"      Title: {script_data['title']}")
 
-    # 3. Generate voiceover + subtitles via edge-tts
-    print("\n[3/6] Generating voiceover + subtitles (edge-tts)...")
-    audio_path = f"{OUTPUT_DIR}/audio.mp3"
-    srt_path = f"{OUTPUT_DIR}/subtitles.srt"
-    generate_audio(script_data["script"], audio_path, srt_path)
+    # Thread category + angle into script_data for frame generator
+    script_data["_category"] = topic["category"]
+    script_data["_angle"]    = topic["angle"]
 
-    # 4. Generate video frames + compose final video with Ken Burns + burned-in subs
+    print("\n[3/6] Generating voiceover + music...")
+    audio_path = f"{OUTPUT_DIR}/audio.mp3"
+    srt_path   = f"{OUTPUT_DIR}/subtitles.srt"
+    # Use counter value as music seed so each video gets a different ambient preset
+    from topics import COUNTER_FILE
+    try:
+        music_seed = int(COUNTER_FILE.read_text().strip()) if COUNTER_FILE.exists() else 0
+    except Exception:
+        music_seed = 0
+    generate_audio(script_data["script"], audio_path, srt_path, music_seed=music_seed)
+
     print("\n[4/6] Composing video...")
     video_path = f"{OUTPUT_DIR}/video.mp4"
     compose_video(audio_path, script_data, video_path, srt_path)
 
-    # 5. Generate thumbnail
     print("\n[5/6] Generating thumbnail...")
     thumb_path = f"{OUTPUT_DIR}/thumbnail.jpg"
-    generate_thumbnail(script_data["title"], script_data["thumbnail_text"], thumb_path)
+    generate_thumbnail(
+        script_data["title"],
+        script_data["thumbnail_text"],
+        thumb_path,
+        category=topic["category"],
+    )
 
-    # 6. Upload to YouTube
     print("\n[6/6] Uploading to YouTube...")
     video_id = upload_video(
         video_path=video_path,
@@ -71,6 +80,5 @@ if __name__ == "__main__":
         missing.append("GROQ_API_KEY")
     if missing:
         print(f"ERROR: Missing env vars: {', '.join(missing)}")
-        print("Copy .env.example to .env and fill in your keys.")
         sys.exit(1)
     run()

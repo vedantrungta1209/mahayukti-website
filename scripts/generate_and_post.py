@@ -439,93 +439,201 @@ Return this exact JSON:
 # ══════════════════════════════════════════════════════════════════════════
 # STEP 2 — Generate branded PNG image
 # ══════════════════════════════════════════════════════════════════════════
+_DOMAIN_PROMPTS_IMG = {
+    "Legal & Judiciary":         "supreme court india law books scales justice dark navy dramatic cinematic no text no people",
+    "Finance & Banking":         "india stock exchange financial charts dark dramatic cinematic no text no people",
+    "Technology":                "server room data center blue neon india tech futuristic dark cinematic no text no people",
+    "Cybersecurity":             "cyber security dark matrix red neon threat intelligence india cinematic no text no people",
+    "Medicine & Healthcare":     "modern hospital india medical laboratory dark cinematic no text no people",
+    "Intelligence & Research":   "intelligence analysis dark room india map geopolitical dramatic cinematic no text no people",
+    "Crisis Management":         "crisis boardroom india corporate dramatic tension dark cinematic no text no people",
+    "Senior Lawyers & Advocates": "supreme court advocate india law dark dramatic cinematic no text no people",
+    "Finance & Banking Professionals": "chartered accountant office india finance dark cinematic no text no people",
+    "Technology Leaders":        "tech leader india digital transformation dark dramatic cinematic no text no people",
+    "Cybersecurity Experts":     "ciso security expert india dark cyber operations cinematic no text no people",
+    "Medical & Healthcare Professionals": "senior doctor specialist india hospital dark cinematic no text no people",
+    "Intelligence & Research Professionals": "intelligence analyst india research dark dramatic cinematic no text no people",
+}
+_DOMAIN_ACCENT_COLORS = {
+    "Legal & Judiciary":         (212, 175, 55),
+    "Finance & Banking":         (16,  185, 129),
+    "Technology":                (56,  189, 248),
+    "Cybersecurity":             (239, 68,  68),
+    "Medicine & Healthcare":     (52,  211, 153),
+    "Intelligence & Research":   (148, 163, 184),
+    "Crisis Management":         (251, 146, 60),
+    "Senior Lawyers & Advocates":         (212, 175, 55),
+    "Finance & Banking Professionals":    (16,  185, 129),
+    "Technology Leaders":                 (56,  189, 248),
+    "Cybersecurity Experts":              (239, 68,  68),
+    "Medical & Healthcare Professionals": (52,  211, 153),
+    "Intelligence & Research Professionals": (148, 163, 184),
+}
+
+
+def _fetch_pollinations_img(domain_key: str, post_id: str, width: int, height: int):
+    import hashlib, io as _io
+    from urllib.parse import quote as _quote
+    prompt = _DOMAIN_PROMPTS_IMG.get(
+        domain_key,
+        "professional india advisory network dark dramatic cinematic no text no people",
+    )
+    orientation = "vertical portrait" if height > width else "horizontal landscape"
+    prompt = f"{prompt} {orientation}"
+    seed = int(hashlib.md5(f"{domain_key}:{post_id}".encode()).hexdigest()[:8], 16) % 1_000_000
+    url = f"https://image.pollinations.ai/prompt/{_quote(prompt)}?width={width}&height={height}&seed={seed}&nologo=true&model=flux"
+    for attempt in range(3):
+        try:
+            r = requests.get(url, timeout=50)
+            if r.status_code == 200:
+                img = Image.open(_io.BytesIO(r.content)).convert("RGB")
+                return img.resize((width, height), Image.LANCZOS)
+        except Exception as e:
+            print(f"  Pollinations img attempt {attempt+1}: {e}")
+            import time as _time
+            if attempt < 2: _time.sleep(3)
+    return None
+
+
 def generate_image(content, width, height, filepath):
-    img  = Image.new("RGB", (width, height), NAVY)
+    domain_key = content.get("domain", domain)
+    accent     = _DOMAIN_ACCENT_COLORS.get(domain_key, GOLD)
+
+    # Fetch Pollinations background
+    bg = _fetch_pollinations_img(domain_key, POST_ID, width, height)
+    if bg is None:
+        bg = Image.new("RGB", (width, height), NAVY)
+        draw_bg = ImageDraw.Draw(bg)
+        for y_px in range(height):
+            t = y_px / height
+            draw_bg.line([(0, y_px), (width, y_px)], fill=(
+                int(NAVY[0] + (DARK[0] - NAVY[0]) * t),
+                int(NAVY[1] + (DARK[1] - NAVY[1]) * t),
+                int(NAVY[2] + (DARK[2] - NAVY[2]) * t),
+            ))
+
+    # Navy gradient overlay so text stays readable
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    draw_ov = ImageDraw.Draw(overlay)
+    for y_px in range(height):
+        t = y_px / height
+        alpha = int(80 + 120 * t)
+        r_c = int(NAVY[0] * (0.3 + 0.7 * t))
+        g_c = int(NAVY[1] * (0.3 + 0.7 * t))
+        b_c = int(NAVY[2] * (0.3 + 0.7 * t))
+        draw_ov.line([(0, y_px), (width, y_px)], fill=(r_c, g_c, b_c, alpha))
+    img = bg.convert("RGBA")
+    img.alpha_composite(overlay)
+    img = img.convert("RGB")
     draw = ImageDraw.Draw(img)
 
-    # Background texture — subtle diagonal lines
-    for i in range(0, width + height, 40):
-        draw.line([(i, 0), (0, i)], fill=(15, 32, 68), width=1)
+    # Load fonts
+    font_sizes = {
+        "logo":  int(height * 0.040),
+        "big":   int(height * 0.086),
+        "med":   int(height * 0.048),
+        "small": int(height * 0.032),
+        "tag":   int(height * 0.028),
+    }
+    fonts = {}
+    for name, size in font_sizes.items():
+        bold = name in ("logo", "big", "tag")
+        paths = [
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        ]
+        fonts[name] = ImageFont.load_default()
+        for p in paths:
+            try:
+                fonts[name] = ImageFont.truetype(p, size)
+                break
+            except Exception:
+                continue
 
-    # Gold bars
-    draw.rectangle([(0, 0), (width, 7)], fill=GOLD)
-    draw.rectangle([(0, height - 7), (width, height)], fill=GOLD)
-    draw.rectangle([(0, 0), (5, height)], fill=GOLD)
+    # Brand bars
+    draw.rectangle([(0, 0), (width, 6)], fill=GOLD)
+    draw.rectangle([(0, height - 6), (width, height)], fill=GOLD)
+    draw.rectangle([(0, 0), (5, height)], fill=accent)
 
-    # Dark overlay panel for text area
-    draw.rectangle([(30, 20), (width - 30, height - 20)], fill=(8, 20, 45))
-    draw.rectangle([(30, 20), (width - 30, 22)], fill=GOLD)
+    # Header area
+    draw.rectangle([(0, 6), (width, int(height * 0.18))], fill=(6, 15, 35, 220))
+    draw.rectangle([(0, int(height * 0.18) - 3), (width, int(height * 0.18))], fill=accent)
 
-    try:
-        font_logo  = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",   int(height * 0.038))
-        font_big   = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",  int(height * 0.082))
-        font_med   = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",       int(height * 0.046))
-        font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",        int(height * 0.030))
-        font_tag   = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",   int(height * 0.026))
-    except:
-        font_logo = font_big = font_med = font_small = font_tag = ImageFont.load_default()
+    draw.text((40, int(height * 0.025)), "MAHAYUKTI", fill=GOLD, font=fonts["logo"])
+    draw.text((40, int(height * 0.080)), "India's Expert Advisory Network", fill=LIGHT, font=fonts["small"])
 
-    # Logo + tagline
-    draw.text((55, 42), "MAHAYUKTI", fill=GOLD, font=font_logo)
-    draw.text((55, 42 + int(height * 0.05)), "India's Premier Professional Network", fill=LIGHT, font=font_small)
+    # Domain pill
+    tag_text = domain_key.upper()
+    tag_bbox = draw.textbbox((0, 0), tag_text, font=fonts["tag"])
+    tw, th = tag_bbox[2] - tag_bbox[0] + 28, tag_bbox[3] - tag_bbox[1] + 14
+    tag_y = int(height * 0.22)
+    draw.rounded_rectangle([(40, tag_y), (40 + tw, tag_y + th)], radius=th // 2, fill=accent)
+    draw.text((54, tag_y + 7), tag_text, fill=(0, 0, 0), font=fonts["tag"])
 
-    # Domain tag pill
-    tag_text = f"  {content.get('domain', domain).upper()}  "
-    tag_bbox = draw.textbbox((0,0), tag_text, font=font_tag)
-    tag_w    = tag_bbox[2] - tag_bbox[0] + 20
-    tag_y    = int(height * 0.28)
-    draw.rectangle([(55, tag_y), (55 + tag_w, tag_y + int(height*0.048))], fill=GOLD)
-    draw.text((65, tag_y + 4), tag_text.strip(), fill=NAVY, font=font_tag)
-
-    # Post type badge
+    # Post-type badge
     badge = "FOR CLIENTS" if POST_TYPE == "morning" else "JOIN US"
-    badge_bbox = draw.textbbox((0,0), badge, font=font_tag)
-    badge_w    = badge_bbox[2] - badge_bbox[0] + 20
-    draw.rectangle([(width - 55 - badge_w, tag_y), (width - 55, tag_y + int(height*0.048))],
-                   outline=GOLD, width=1)
-    draw.text((width - 55 - badge_w + 10, tag_y + 4), badge, fill=GOLD, font=font_tag)
+    b_bbox = draw.textbbox((0, 0), badge, font=fonts["tag"])
+    bw = b_bbox[2] - b_bbox[0] + 28
+    bx = width - 40 - bw
+    draw.rounded_rectangle([(bx, tag_y), (bx + bw, tag_y + th)], radius=th // 2, outline=GOLD, width=2)
+    draw.text((bx + 14, tag_y + 7), badge, fill=GOLD, font=fonts["tag"])
 
-    # Main headline
-    headline = content["image_headline"].upper()
-    words    = headline.split()
-    lines    = []
-    line     = ""
+    # Headline
+    headline_text = content["image_headline"].upper()
+    h_font = fonts["big"]
+    words = headline_text.split()
+    lines, line = [], ""
     for word in words:
         test = (line + " " + word).strip()
-        bbox = draw.textbbox((0,0), test, font=font_big)
-        if bbox[2] - bbox[0] > width - 120:
-            if line: lines.append(line)
+        bbox = draw.textbbox((0, 0), test, font=h_font)
+        if bbox[2] - bbox[0] > width - 100 and line:
+            lines.append(line)
             line = word
         else:
             line = test
-    if line: lines.append(line)
+    if line:
+        lines.append(line)
 
-    y = int(height * 0.42)
-    for l in lines:
-        bbox = draw.textbbox((0,0), l, font=font_big)
-        w    = bbox[2] - bbox[0]
-        draw.text(((width - w) / 2, y), l, fill=WHITE, font=font_big)
-        y += int(height * 0.105)
+    y = int(height * 0.44)
+    for ln in lines:
+        bbox = draw.textbbox((0, 0), ln, font=h_font)
+        x = (width - (bbox[2] - bbox[0])) // 2
+        draw.text((x + 2, y + 2), ln, fill=(0, 0, 0), font=h_font)
+        draw.text((x, y), ln, fill=WHITE, font=h_font)
+        y += int(height * 0.108)
 
     # Gold rule
-    draw.rectangle([(width//2 - 50, y+8), (width//2 + 50, y+11)], fill=GOLD)
-    y += 28
+    draw.rectangle([(width // 2 - 60, y + 8), (width // 2 + 60, y + 12)], fill=GOLD)
+    y += 32
 
     # Subtext
     subtext = content["image_subtext"]
-    wrapped = textwrap.wrap(subtext, width=int(width / (height * 0.027)))
-    for line in wrapped:
-        bbox = draw.textbbox((0,0), line, font=font_med)
-        w    = bbox[2] - bbox[0]
-        draw.text(((width - w) / 2, y), line, fill=LIGHT, font=font_med)
-        y += int(height * 0.065)
+    sub_words = subtext.split()
+    sub_lines, sub_line = [], ""
+    for word in sub_words:
+        test = (sub_line + " " + word).strip()
+        bbox = draw.textbbox((0, 0), test, font=fonts["med"])
+        if bbox[2] - bbox[0] > width - 100 and sub_line:
+            sub_lines.append(sub_line)
+            sub_line = word
+        else:
+            sub_line = test
+    if sub_line:
+        sub_lines.append(sub_line)
+
+    for ln in sub_lines:
+        bbox = draw.textbbox((0, 0), ln, font=fonts["med"])
+        x = (width - (bbox[2] - bbox[0])) // 2
+        draw.text((x, y), ln, fill=LIGHT, font=fonts["med"])
+        y += int(height * 0.068)
 
     # Footer
-    footer_y = height - 48
-    draw.text((55, footer_y), "mahayukti.com", fill=GOLD, font=font_small)
-    right_text = DATE_STR
-    rb = draw.textbbox((0,0), right_text, font=font_small)
-    draw.text((width - 55 - (rb[2]-rb[0]), footer_y), right_text, fill=LIGHT, font=font_small)
+    footer_y = height - int(height * 0.06)
+    draw.text((40, footer_y), "mahayukti.com", fill=GOLD, font=fonts["small"])
+    rb = draw.textbbox((0, 0), DATE_STR, font=fonts["small"])
+    draw.text((width - 40 - (rb[2] - rb[0]), footer_y), DATE_STR, fill=LIGHT, font=fonts["small"])
 
     img.save(filepath, "JPEG", quality=95)
     print(f"✅ Image: {filepath}")
