@@ -179,12 +179,12 @@ def create_short_title_frame(tool_name: str, category: str, output_path: str) ->
     draw.rectangle([0, 0, SHORT_WIDTH, 6], fill=primary)
 
     # Channel name
-    ch_font = _font(24, bold=False)
-    draw.text((28, 20), CHANNEL_NAME.upper(), font=ch_font, fill=(*primary, 220) if len(primary) == 3 else primary)
+    ch_font = _font(28, bold=True)
+    draw.text((30, 22), CHANNEL_NAME.upper(), font=ch_font, fill=primary)
 
     # Category pill
-    cat_font = _font(22, bold=True)
-    _pill(draw, 28, 56, category.upper(), cat_font, primary, (0, 0, 0))
+    cat_font = _font(26, bold=True)
+    _pill(draw, 30, 64, category.upper(), cat_font, primary, (0, 0, 0))
 
     # Tool name — large, centered with glow effect
     name_font_size = 80 if len(tool_name) < 12 else 60 if len(tool_name) < 18 else 48
@@ -201,11 +201,12 @@ def create_short_title_frame(tool_name: str, category: str, output_path: str) ->
     bar_y = center_y + total_h // 2 + 20
     draw.rectangle([SHORT_WIDTH // 2 - 80, bar_y, SHORT_WIDTH // 2 + 80, bar_y + 4], fill=accent)
 
-    # Handle at bottom
-    handle_font = _font(30, bold=False)
+    # Handle at bottom — large and bright
+    handle_font = _font(42, bold=True)
     bbox = draw.textbbox((0, 0), CHANNEL_HANDLE, font=handle_font)
     x = (SHORT_WIDTH - (bbox[2] - bbox[0])) // 2
-    draw.text((x, SHORT_HEIGHT - 80), CHANNEL_HANDLE, font=handle_font, fill=accent)
+    draw.text((x + 2, SHORT_HEIGHT - 90), CHANNEL_HANDLE, font=handle_font, fill=(0, 0, 0))
+    draw.text((x, SHORT_HEIGHT - 92), CHANNEL_HANDLE, font=handle_font, fill=accent)
     draw.rectangle([0, SHORT_HEIGHT - 6, SHORT_WIDTH, SHORT_HEIGHT], fill=primary)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -230,7 +231,11 @@ def create_short_info_frame(label: str, text: str, category: str, tool_name: str
     lines = _wrap(text, text_font, SHORT_WIDTH - 80, draw)
     _center_block(draw, lines, text_font, SHORT_HEIGHT // 2, 72, TEXT_COLOR, SHORT_WIDTH)
 
-    draw.text((28, SHORT_HEIGHT - 75), CHANNEL_HANDLE, font=_font(28, bold=False), fill=accent)
+    handle_font2 = _font(40, bold=True)
+    hbbox = draw.textbbox((0, 0), CHANNEL_HANDLE, font=handle_font2)
+    hx = (SHORT_WIDTH - (hbbox[2] - hbbox[0])) // 2
+    draw.text((hx + 2, SHORT_HEIGHT - 88), CHANNEL_HANDLE, font=handle_font2, fill=(0, 0, 0))
+    draw.text((hx, SHORT_HEIGHT - 90), CHANNEL_HANDLE, font=handle_font2, fill=accent)
     draw.rectangle([0, SHORT_HEIGHT - 6, SHORT_WIDTH, SHORT_HEIGHT], fill=primary)
 
     img.save(output_path)
