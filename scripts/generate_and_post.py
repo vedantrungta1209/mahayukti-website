@@ -763,14 +763,16 @@ def post_to_facebook(content, sq_url):
         print("⚠️  Facebook credentials missing — skipping")
         return
     r = requests.post(
-        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/photos",
+        f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/photos",
         data={
             "url":          sq_url,
             "caption":      content["facebook_text"],
             "access_token": FB_PAGE_ACCESS_TOKEN,
         },
     )
-    r.raise_for_status()
+    if not r.ok:
+        print(f"⚠️  Facebook photo failed ({r.status_code}): {r.text[:300]}")
+        return
     print("✅ Facebook photo posted")
 
 
@@ -779,7 +781,7 @@ def post_to_facebook_reel(content, reel_url):
         print("⚠️  Facebook credentials missing — skipping reel")
         return
     r = requests.post(
-        f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/videos",
+        f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/videos",
         data={
             "file_url":       reel_url,
             "description":    content["facebook_text"],
@@ -787,7 +789,9 @@ def post_to_facebook_reel(content, reel_url):
             "access_token":   FB_PAGE_ACCESS_TOKEN,
         },
     )
-    r.raise_for_status()
+    if not r.ok:
+        print(f"⚠️  Facebook Reel failed ({r.status_code}): {r.text[:300]}")
+        return
     print("✅ Facebook Reel posted")
 
 
@@ -797,7 +801,7 @@ def _ig_publish_with_retry(container_id, initial_wait=15, max_attempts=8, retry_
     _t.sleep(initial_wait)
     for attempt in range(max_attempts):
         pub = requests.post(
-            f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media_publish",
+            f"https://graph.facebook.com/v22.0/{IG_USER_ID}/media_publish",
             data={"creation_id": container_id, "access_token": FB_PAGE_ACCESS_TOKEN},
         )
         data = pub.json()
@@ -819,7 +823,7 @@ def post_to_instagram_image(content, sq_url):
         print("⚠️  Instagram credentials missing — skipping")
         return
     r = requests.post(
-        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media",
+        f"https://graph.facebook.com/v22.0/{IG_USER_ID}/media",
         data={
             "image_url":    sq_url,
             "caption":      content["instagram_caption"],
@@ -837,7 +841,7 @@ def post_to_instagram_reel(content, reel_url):
         print("⚠️  Instagram credentials missing — skipping reel")
         return
     r = requests.post(
-        f"https://graph.facebook.com/v19.0/{IG_USER_ID}/media",
+        f"https://graph.facebook.com/v22.0/{IG_USER_ID}/media",
         data={
             "media_type":   "REELS",
             "video_url":    reel_url,
