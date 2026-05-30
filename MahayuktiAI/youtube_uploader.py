@@ -38,10 +38,11 @@ def upload_video(
     title: str,
     description: str,
     tags: list[str],
-    category_id: str = "28",   # Science & Technology
+    category_id: str = "28",
     privacy: str = "public",
     made_for_kids: bool = False,
     is_short: bool = False,
+    thumbnail_path: str | None = None,
 ) -> str:
     creds = _get_credentials()
     youtube = build("youtube", "v3", credentials=creds)
@@ -77,4 +78,14 @@ def upload_video(
     video_id = response["id"]
     video_type = "Short" if is_short else "Video"
     print(f"  {video_type} uploaded: https://youtube.com/watch?v={video_id}")
+
+    # Upload custom thumbnail for long-form videos
+    if thumbnail_path and Path(thumbnail_path).exists() and not is_short:
+        try:
+            media_thumb = MediaFileUpload(thumbnail_path, mimetype="image/jpeg")
+            youtube.thumbnails().set(videoId=video_id, media_body=media_thumb).execute()
+            print(f"  Thumbnail uploaded.")
+        except Exception as e:
+            print(f"  Thumbnail upload failed (needs verified channel): {e}")
+
     return video_id

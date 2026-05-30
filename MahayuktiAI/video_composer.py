@@ -9,11 +9,12 @@ from moviepy import AudioFileClip, VideoClip, concatenate_videoclips
 from frame_generator import (
     create_short_title_frame, create_short_info_frame, create_short_cta_frame,
     create_long_intro_frame, create_long_tool_frame, create_long_outro_frame,
+    create_thumbnail,
 )
 from config import OUTPUT_DIR, SHORT_WIDTH, SHORT_HEIGHT, LONG_WIDTH, LONG_HEIGHT, FPS
 
-ZOOM  = 0.12
-PAN   = 0.06
+ZOOM = 0.10
+PAN  = 0.05
 
 
 def _ken_burns(img_path: str, duration: float, w: int, h: int, zoom_in: bool = True) -> VideoClip:
@@ -39,15 +40,15 @@ def _burn_subtitles(video_path: str, srt_path: str) -> None:
     os.rename(video_path, tmp)
     srt_abs = str(Path(srt_path).resolve())
     style = (
-        "FontName=DejaVu Sans,FontSize=24,PrimaryColour=&H00FFFFFF,"
+        "FontName=DejaVu Sans,FontSize=26,PrimaryColour=&H00FFFFFF,"
         "BorderStyle=3,BackColour=&HAA000000,Outline=0,Shadow=0,"
-        "Alignment=2,MarginV=50"
+        "Alignment=2,MarginV=60"
     )
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-i", tmp,
         "-vf", f"subtitles={srt_abs}:force_style='{style}'",
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "22",
         "-c:a", "copy", video_path,
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -82,24 +83,26 @@ def compose_short(audio_path: str, script_data: dict, output_path: str, srt_path
     total = audio.duration
     audio.close()
 
+    tool_name = script_data.get("tool_name", "AI Tool")
+    category  = script_data.get("category", "Productivity")
+
     slides_def = script_data.get("slides", [])
     n = max(len(slides_def), 1)
     per_slide = total / n
 
     slides: list[tuple[str, float]] = []
 
-    tool_name = script_data.get("tool_name", "AI Tool")
     title_path = f"{OUTPUT_DIR}/short_slide_0.png"
-    create_short_title_frame(tool_name, script_data.get("category", "AI"), title_path)
+    create_short_title_frame(tool_name, category, title_path)
     slides.append((title_path, per_slide))
 
     for i, slide in enumerate(slides_def[1:-1], 1):
         path = f"{OUTPUT_DIR}/short_slide_{i}.png"
-        create_short_info_frame(slide.get("label", ""), slide.get("text", ""), path)
+        create_short_info_frame(slide.get("label", ""), slide.get("text", ""), category, tool_name, path)
         slides.append((path, per_slide))
 
     cta_path = f"{OUTPUT_DIR}/short_slide_cta.png"
-    create_short_cta_frame(cta_path)
+    create_short_cta_frame(category, tool_name, cta_path)
     slides.append((cta_path, per_slide))
 
     return _render(slides, audio_path, output_path, SHORT_WIDTH, SHORT_HEIGHT, srt_path)
@@ -112,46 +115,54 @@ def compose_long(audio_path: str, script_data: dict, output_path: str, srt_path:
     audio.close()
 
     tools = script_data.get("tools", [])
-    # Slides: 1 intro + 3 per tool + 1 outro
+    category = script_data.get("_first_category", "Productivity")
+
     n_slides = 1 + len(tools) * 3 + 1
     per_slide = total / n_slides
 
     slides: list[tuple[str, float]] = []
 
     intro_path = f"{OUTPUT_DIR}/long_slide_intro.png"
-    create_long_intro_frame(script_data.get("episode_title", "Top 5 AI Tools This Week"), intro_path)
+    create_long_intro_frame(script_data.get("episode_title", "Top 5 AI Tools This Week"), category, intro_path)
     slides.append((intro_path, per_slide))
 
     for i, tool in enumerate(tools):
-        # Title slide
+        tool_category = tool.get("category", category)
+        tool_name = tool.get("name", "AI Tool")
+
         title_path = f"{OUTPUT_DIR}/long_slide_{i}_title.png"
         create_long_tool_frame(
-            tool["rank"], tool["name"],
+            tool["rank"], tool_name,
             [f"#{tool['rank']} This Week", tool.get("india_verdict", "")[:60], ""],
-            tool.get("india_verdict", ""), title_path,
+            tool.get("india_verdict", ""), tool_category, title_path,
         )
         slides.append((title_path, per_slide))
 
-        # Key points slide
         pts_path = f"{OUTPUT_DIR}/long_slide_{i}_pts.png"
         create_long_tool_frame(
-            tool["rank"], tool["name"],
+            tool["rank"], tool_name,
             tool.get("key_points", [])[:3],
-            tool.get("india_verdict", ""), pts_path,
+            tool.get("india_verdict", ""), tool_category, pts_path,
         )
         slides.append((pts_path, per_slide))
 
-        # India verdict slide
         verdict_path = f"{OUTPUT_DIR}/long_slide_{i}_verdict.png"
         create_long_tool_frame(
-            tool["rank"], tool["name"],
+            tool["rank"], tool_name,
             ["India Verdict:", tool.get("india_verdict", ""), ""],
-            tool.get("india_verdict", ""), verdict_path,
+            tool.get("india_verdict", ""), tool_category, verdict_path,
         )
         slides.append((verdict_path, per_slide))
 
     outro_path = f"{OUTPUT_DIR}/long_slide_outro.png"
-    create_long_outro_frame(outro_path)
+    create_long_outro_frame(category, outro_path)
     slides.append((outro_path, per_slide))
 
     return _render(slides, audio_path, output_path, LONG_WIDTH, LONG_HEIGHT, srt_path)
+
+
+def generate_thumbnail(script_data: dict, output_path: str) -> str:
+    title = script_data.get("title", script_data.get("episode_title", "Top 5 AI Tools"))
+    tools = script_data.get("tools", [])
+    category = tools[0].get("category", "Productivity") if tools else "Productivity"
+    return create_thumbnail(title, category, output_path)

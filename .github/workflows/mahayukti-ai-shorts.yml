@@ -1,8 +1,9 @@
-name: Mahayukti AI — Shorts (daily)
+name: Mahayukti AI — Shorts (2× daily)
 
 on:
   schedule:
-    - cron: '0 8 * * *'    # 1:30 PM IST — 1hr after quota reset, lunch scrollers
+    - cron: '30 4 * * *'   # 10:00 AM IST — morning scroll peak
+    - cron: '0 13 * * *'   # 6:30 PM IST  — evening commute peak
   workflow_dispatch:
     inputs:
       force:
@@ -15,7 +16,7 @@ on:
           - 'true'
 
 concurrency:
-  group: ai-shorts-daily
+  group: ai-shorts-${{ github.event.schedule || 'manual' }}
   cancel-in-progress: false
 
 env:
@@ -24,7 +25,7 @@ env:
 jobs:
   short:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -41,17 +42,15 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
             exit 0
           fi
+          # Allow 2 runs per day — check if we've already run twice today
           TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
-          LAST_TS=$(git log -1 --format="%ct" -- "MahayuktiAI/tool_counter_short.txt" 2>/dev/null || echo "")
-          if [ -n "$LAST_TS" ]; then
-            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
-            if [ "$LAST_IST" = "$TODAY_IST" ]; then
-              echo "⏭️  AI Short already done today ($TODAY_IST). Skipping."
-              echo "skip=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
+          COUNT=$(git log --since="$(TZ='Asia/Kolkata' date -d 'today 00:00' -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT00:00:00Z)" --format="%H" -- "MahayuktiAI/tool_counter_short.txt" 2>/dev/null | wc -l || echo "0")
+          if [ "$COUNT" -ge 2 ]; then
+            echo "⏭️  2 AI Shorts already done today. Skipping."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
           fi
-          echo "skip=false" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         if: steps.guard.outputs.skip != 'true'
@@ -67,14 +66,17 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         run: pip install -r MahayuktiAI/requirements.txt
 
-      - name: Generate and upload Short
+      - name: Generate, upload and cross-post Short
         if: steps.guard.outputs.skip != 'true'
         working-directory: MahayuktiAI
         env:
-          GROQ_API_KEY:           ${{ secrets.GROQ_API_KEY }}
-          ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
-          YOUTUBE_AI_TOKEN_JSON:  ${{ secrets.YOUTUBE_AI_TOKEN_JSON }}
-          GH_TOKEN:               ${{ secrets.GH_TOKEN }}
+          GROQ_API_KEY:              ${{ secrets.GROQ_API_KEY }}
+          ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
+          YOUTUBE_AI_TOKEN_JSON:     ${{ secrets.YOUTUBE_AI_TOKEN_JSON }}
+          GH_TOKEN:                  ${{ secrets.GH_TOKEN }}
+          IG_USER_ID:                ${{ secrets.IG_USER_ID }}
+          FB_PAGE_ACCESS_TOKEN:      ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+          FB_PAGE_ID:                ${{ secrets.FB_PAGE_ID }}
         run: python main.py --mode short
 
       - name: Persist tool counter
