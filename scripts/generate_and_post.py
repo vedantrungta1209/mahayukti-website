@@ -820,41 +820,127 @@ def post_to_linkedin(content, sq_path):
     print("⚠️  LinkedIn skipped — set MAKE_LINKEDIN_WEBHOOK_URL or LINKEDIN_ACCESS_TOKEN+LINKEDIN_AUTHOR_URN")
 
 
-def post_to_facebook(content, sq_url):
+def post_to_facebook(content, sq_path_or_url):
+    """Post photo to Facebook Page. Uploads binary directly — avoids Cloudflare URL blocks."""
     if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
         print("⚠️  Facebook credentials missing — skipping")
         return
-    r = requests.post(
-        f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/photos",
-        data={
-            "url":          sq_url,
-            "caption":      content["facebook_text"],
-            "access_token": FB_PAGE_ACCESS_TOKEN,
-        },
-    )
+
+    import os as _os
+    # Try binary upload first (most reliable — bypasses any CDN/bot-protection on the URL)
+    local_path = sq_path_or_url if _os.path.exists(str(sq_path_or_url)) else None
+    if not local_path:
+        # sq_path_or_url is a CDN URL — derive the local /tmp path
+        fname = sq_path_or_url.split("/")[-1]
+        candidate = f"/tmp/{fname}"
+        local_path = candidate if _os.path.exists(candidate) else None
+
+    if local_path:
+        with open(local_path, "rb") as f:
+            r = requests.post(
+                f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/photos",
+                files={"source": (local_path, f, "image/jpeg")},
+                data={
+                    "caption":      content["facebook_text"],
+                    "access_token": FB_PAGE_ACCESS_TOKEN,
+                },
+            )
+    else:
+        # Fallback: URL-based (may fail if Cloudflare blocks Facebook's crawler)
+        r = requests.post(
+            f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/photos",
+            data={
+                "url":          sq_path_or_url,
+                "caption":      content["facebook_text"],
+                "access_token": FB_PAGE_ACCESS_TOKEN,
+            },
+        )
+
     if not r.ok:
-        print(f"⚠️  Facebook photo failed ({r.status_code}): {r.text[:300]}")
+        err = r.json().get("error", {}) if r.headers.get("content-type","").startswith("application/json") else {}
+        print(f"⚠️  Facebook photo failed ({r.status_code}): code={err.get('code')} subcode={err.get('error_subcode')} msg={err.get('message', r.text[:200])}")
         return
     print("✅ Facebook photo posted")
 
 
 def post_to_facebook_reel(content, reel_url):
+    """Post reel to Facebook Page using the video_reels endpoint (v22.0+)."""
     if not FB_PAGE_ACCESS_TOKEN or not FB_PAGE_ID:
         print("⚠️  Facebook credentials missing — skipping reel")
         return
-    r = requests.post(
-        f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/videos",
+
+    # Step 1: initialise upload session
+    init = requests.post(
+        f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/video_reels",
         data={
-            "file_url":       reel_url,
-            "description":    content["facebook_text"],
-            "published":      "true",
-            "access_token":   FB_PAGE_ACCESS_TOKEN,
+            "upload_phase":  "start",
+            "access_token":  FB_PAGE_ACCESS_TOKEN,
         },
     )
-    if not r.ok:
-        print(f"⚠️  Facebook Reel failed ({r.status_code}): {r.text[:300]}")
+    if not init.ok:
+        err = init.json().get("error", {}) if init.headers.get("content-type","").startswith("application/json") else {}
+        print(f"⚠️  Facebook Reel init failed ({init.status_code}): code={err.get('code')} msg={err.get('message', init.text[:200])}")
+        # Fallback: legacy /videos with file_url
+        r2 = requests.post(
+            f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/videos",
+            data={
+                "file_url":     reel_url,
+                "description":  content["facebook_text"],
+                "published":    "true",
+                "access_token": FB_PAGE_ACCESS_TOKEN,
+            },
+        )
+        if r2.ok:
+            print("✅ Facebook Reel posted (legacy endpoint)")
+        else:
+            err2 = r2.json().get("error", {}) if r2.headers.get("content-type","").startswith("application/json") else {}
+            print(f"⚠️  Facebook Reel fallback also failed ({r2.status_code}): code={err2.get('code')} msg={err2.get('message', r2.text[:200])}")
         return
-    print("✅ Facebook Reel posted")
+
+    video_id   = init.json().get("video_id")
+    upload_url = init.json().get("upload_url")
+
+    if not upload_url or not video_id:
+        print(f"⚠️  Facebook Reel init returned unexpected response: {init.text[:200]}")
+        return
+
+    # Step 2: upload the video bytes
+    try:
+        vid_bytes = requests.get(reel_url, timeout=120).content
+    except Exception as e:
+        print(f"⚠️  Could not download reel for Facebook upload: {e}")
+        return
+
+    up = requests.post(
+        upload_url,
+        headers={
+            "Authorization":   f"OAuth {FB_PAGE_ACCESS_TOKEN}",
+            "offset":          "0",
+            "file_size":       str(len(vid_bytes)),
+        },
+        data=vid_bytes,
+        timeout=300,
+    )
+    if not up.ok:
+        print(f"⚠️  Facebook Reel upload failed ({up.status_code}): {up.text[:200]}")
+        return
+
+    # Step 3: publish
+    pub = requests.post(
+        f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/video_reels",
+        data={
+            "video_id":     video_id,
+            "upload_phase": "finish",
+            "video_state":  "PUBLISHED",
+            "description":  content["facebook_text"],
+            "access_token": FB_PAGE_ACCESS_TOKEN,
+        },
+    )
+    if pub.ok:
+        print("✅ Facebook Reel posted")
+    else:
+        err = pub.json().get("error", {}) if pub.headers.get("content-type","").startswith("application/json") else {}
+        print(f"⚠️  Facebook Reel publish failed ({pub.status_code}): code={err.get('code')} msg={err.get('message', pub.text[:200])}")
 
 
 def _ig_publish_with_retry(container_id, initial_wait=15, max_attempts=8, retry_wait=30):
@@ -1009,7 +1095,7 @@ def main():
     print("\n📣 Posting to social platforms..." + (f" (only: {', '.join(_only)})" if _only else ""))
     for name, fn, args in [
         ("LinkedIn",          post_to_linkedin,        (content, sq_path)),
-        ("Facebook photo",    post_to_facebook,        (content, sq_url)),
+        ("Facebook photo",    post_to_facebook,        (content, sq_path)),   # binary upload — no CDN issues
         ("Facebook Reel",     post_to_facebook_reel,   (content, reel_url) if reel_url else None),
         ("Instagram image",   post_to_instagram_image, (content, sq_url)),
         ("Instagram Reel",    post_to_instagram_reel,  (content, reel_url) if reel_url else None),
