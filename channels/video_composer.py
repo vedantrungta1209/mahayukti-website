@@ -1,28 +1,39 @@
 """
-Film-quality video composer.
-Pipeline: cold open → character intro → b-roll + kinetic text → animated stats → CTA
-Uses: Pexels b-roll, ElevenLabs voice, D-ID character, cinematic grade.
+Video composer. Pipeline:
+  channel intro card → cold open → kinetic slides + b-roll → CTA
+No external APIs. Audio synced to exact TTS duration.
 """
+import json
 import os
+import re
+import shutil
 import subprocess
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from moviepy import AudioFileClip, VideoClip, concatenate_videoclips
+from moviepy import AudioFileClip, VideoClip, VideoFileClip, concatenate_videoclips
 
 from frame_generator import create_thumbnail as _fg_thumbnail
 from broll import fetch_broll_clip, get_broll_query
 from fx import (
-    make_cold_open_frames, make_counter_frames, make_kinetic_slide_frames,
-    make_cta_frames, make_lower_third_overlay, apply_cinematic_grade,
-    frames_to_video, xfade_concat, dark_overlay,
+    make_channel_intro_frames,
+    make_cold_open_frames,
+    make_counter_frames,
+    make_kinetic_slide_frames,
+    make_cta_frames,
+    make_lower_third_overlay,
+    apply_cinematic_grade,
+    frames_to_video,
+    xfade_concat,
+    dark_overlay,
+    gradient_overlay,
 )
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _audio_duration(path: str) -> float:
-    import json
     r = subprocess.run(
         ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", path],
         capture_output=True, text=True,
@@ -31,17 +42,11 @@ def _audio_duration(path: str) -> float:
 
 
 def _get_bg(category: str, topic: str, w: int, h: int, cfg) -> Image.Image | None:
-    """Fetch Pexels b-roll frame or fall back to Pollinations static image."""
+    """Pexels b-roll frame → Pollinations fallback."""
     pexels_query = get_broll_query(getattr(cfg, "CHANNEL_ID", ""), category, topic)
     clip = fetch_broll_clip(pexels_query, duration=5.0, width=w, height=h, idx=0)
     if clip:
         try:
-            r = subprocess.run(
-                ["ffprobe", "-v", "quiet", "-print_format", "json",
-                 "-show_streams", clip],
-                capture_output=True, text=True,
-            )
-            # Extract a middle frame via ffmpeg
             frame_path = clip.replace(".mp4", "_bg.jpg")
             subprocess.run(
                 ["ffmpeg", "-y", "-loglevel", "error",
@@ -49,12 +54,9 @@ def _get_bg(category: str, topic: str, w: int, h: int, cfg) -> Image.Image | Non
                 capture_output=True,
             )
             if Path(frame_path).exists():
-                img = Image.open(frame_path).convert("RGB").resize((w, h), Image.LANCZOS)
-                return img
+                return Image.open(frame_path).convert("RGB").resize((w, h), Image.LANCZOS)
         except Exception:
             pass
-
-    # Fallback: Pollinations
     from frame_generator import _get_bg as _fg_bg
     return _fg_bg(category, topic, w, h, cfg)
 
@@ -64,9 +66,9 @@ def _burn_subtitles(video_path: str, srt_path: str) -> None:
     os.rename(video_path, tmp)
     srt_abs = str(Path(srt_path).resolve())
     style = (
-        "FontName=DejaVu Sans,FontSize=28,PrimaryColour=&H00FFFFFF,"
-        "BorderStyle=3,BackColour=&HAA000000,Outline=0,Shadow=0,"
-        "Alignment=2,MarginV=70"
+        "FontName=DejaVu Sans,FontSize=30,PrimaryColour=&H00FFFFFF,"
+        "BorderStyle=3,BackColour=&H99000000,Outline=0,Shadow=0,"
+        "Alignment=2,MarginV=80"
     )
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
@@ -81,8 +83,6 @@ def _burn_subtitles(video_path: str, srt_path: str) -> None:
 
 
 def _detect_stat(script_data: dict) -> tuple[str, int, str] | None:
-    """Try to extract a ₹ stat from the script for the counter animation."""
-    import re
     text = " ".join([
         script_data.get("hook", ""),
         script_data.get("script", ""),
@@ -109,12 +109,10 @@ def _frames_clip(frames: list[np.ndarray], fps: int) -> VideoClip:
 
 def _broll_clip(query: str, duration: float, w: int, h: int,
                 idx: int = 0) -> VideoClip | None:
-    """Fetch a Pexels b-roll clip and return as MoviePy VideoClip."""
     path = fetch_broll_clip(query, duration, w, h, idx)
     if not path:
         return None
     try:
-        from moviepy import VideoFileClip
         clip = VideoFileClip(path).subclipped(0, duration)
         if clip.w != w or clip.h != h:
             clip = clip.resized((w, h))
@@ -124,25 +122,21 @@ def _broll_clip(query: str, duration: float, w: int, h: int,
         return None
 
 
-def _ken_burns_from_image(img: Image.Image, duration: float,
-                           w: int, h: int, fps: int,
-                           zoom_in: bool = True) -> VideoClip:
-    ZOOM, PAN = 0.10, 0.05
-    img_arr = np.array(img.resize(
-        (int(w * (1 + ZOOM)), int(h * (1 + ZOOM))), Image.BILINEAR
-    ))
-
-    def make_frame(t: float) -> np.ndarray:
-        progress = t / duration
-        scale = 1.0 + ZOOM * (progress if zoom_in else (1 - progress))
-        nw, nh = int(w * scale), int(h * scale)
-        arr = np.array(Image.fromarray(img_arr).resize((nw, nh), Image.BILINEAR))
-        mx, my = nw - w, nh - h
-        x0 = int(mx * PAN * (1 - progress)) if zoom_in else int(mx * (0.5 + PAN * progress))
-        y0 = int(my * PAN * (1 - progress)) if zoom_in else int(my * (0.5 + PAN * progress))
-        return arr[max(0, y0):y0 + h, max(0, x0):x0 + w]
-
-    return VideoClip(make_frame, duration=duration).with_fps(fps)
+def _mix_video_audio(raw_video: str, audio_path: str, output: str,
+                     audio_dur: float) -> None:
+    """Mix silent video with audio track. Pads video if shorter; trims to audio length."""
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-i", raw_video,
+        "-i", audio_path,
+        "-map", "0:v", "-map", "1:a",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "20",
+        "-c:a", "aac", "-b:a", "192k",
+        # Use exact audio duration (not -shortest which can cut audio early)
+        "-t", str(audio_dur),
+        output,
+    ]
+    subprocess.run(cmd, check=True, capture_output=True)
 
 
 # ── Shorts pipeline ───────────────────────────────────────────────────────────
@@ -152,39 +146,48 @@ def compose_short(audio_path: str, script_data: dict, output_path: str,
     base = Path(output_path).parent
     base.mkdir(parents=True, exist_ok=True)
 
-    audio    = AudioFileClip(audio_path)
-    total    = audio.duration
-    audio.close()
-
+    audio_dur = _audio_duration(audio_path)
     w, h, fps = cfg.SHORT_WIDTH, cfg.SHORT_HEIGHT, cfg.FPS
-    primary  = cfg.PRIMARY_COLOR
-    accent   = cfg.ACCENT_COLOR
-    category = script_data.get("category", "General")
-    topic    = script_data.get("topic_name", "")
-    slides   = script_data.get("slides", [])
+    primary   = cfg.PRIMARY_COLOR
+    accent    = cfg.ACCENT_COLOR
+    category  = script_data.get("category", "General")
+    topic     = script_data.get("topic_name", "")
+    slides    = script_data.get("slides", [])
+    handle    = cfg.CHANNEL_HANDLE
 
-    # Allocate time budget
-    cold_dur = 2.5
-    cta_dur  = 4.0
-    stat_dur = 3.0 if _detect_stat(script_data) else 0.0
-    content_dur = max(total - cold_dur - cta_dur - stat_dur, total * 0.6)
-    n_slides = max(len(slides) - 2, 1)
-    per_slide = content_dur / n_slides
+    # Time budget
+    intro_dur  = 3.5     # channel intro card
+    cold_dur   = 3.0     # cold open / hook
+    cta_dur    = 5.0     # CTA card
+    stat_dur   = 3.0 if _detect_stat(script_data) else 0.0
+    fixed_dur  = intro_dur + cold_dur + cta_dur + stat_dur
+    content_dur = max(audio_dur - fixed_dur, audio_dur * 0.55)
+    n_slides    = max(len(slides) - 2, 1)
+    per_slide   = max(content_dur / n_slides, 4.5)   # at least 4.5s per slide
 
     segment_paths = []
 
-    # 1. Cold open
+    # 1. Channel intro card (replaces D-ID — no watermark, no external API)
+    print("  [Channel intro]")
+    intro_frames = make_channel_intro_frames(
+        handle, topic, primary, accent, w, h, fps, intro_dur,
+    )
+    intro_path = str(base / "seg_intro.mp4")
+    frames_to_video(intro_frames, intro_path, fps)
+    segment_paths.append(intro_path)
+
+    # 2. Cold open
     print("  [Cold open]")
     hook = script_data.get("hook", slides[0].get("text", topic) if slides else topic)
     bg   = _get_bg(category, topic, w, h, cfg)
     cold_frames = make_cold_open_frames(
-        hook, cfg.CHANNEL_HANDLE, primary, accent, w, h, fps, cold_dur, bg_image=bg,
+        hook, handle, primary, accent, w, h, fps, cold_dur, bg_image=bg,
     )
     cold_path = str(base / "seg_cold.mp4")
     frames_to_video(cold_frames, cold_path, fps)
     segment_paths.append(cold_path)
 
-    # 2. Stats counter (if stat found)
+    # 3. Stats counter (if ₹ figure found)
     stat = _detect_stat(script_data)
     if stat and stat_dur > 0:
         print("  [Stats counter]")
@@ -198,76 +201,58 @@ def compose_short(audio_path: str, script_data: dict, output_path: str,
         frames_to_video(counter_frames, ctr_path, fps)
         segment_paths.append(ctr_path)
 
-    # 3. Content slides (kinetic text + b-roll)
+    # 4. Content slides with b-roll
     content_slides = slides[1:-1] if len(slides) > 2 else slides
     for i, slide in enumerate(content_slides):
         print(f"  [Slide {i+1}/{len(content_slides)}] {slide.get('label', '')}")
-        label    = slide.get("label", "")
-        text     = slide.get("text", "")
-        duration = per_slide
+        label = slide.get("label", "")
+        text  = slide.get("text", "")
 
-        broll_q = get_broll_query(getattr(cfg, "CHANNEL_ID", ""), label, text)
-        broll_clip = _broll_clip(broll_q, duration, w, h, idx=i)
+        broll_q    = get_broll_query(getattr(cfg, "CHANNEL_ID", ""), label, text)
+        broll_clip = _broll_clip(broll_q, per_slide, w, h, idx=i)
 
         if broll_clip:
-            # Overlay kinetic text onto b-roll
             bg_frame = Image.fromarray(broll_clip.get_frame(0).astype(np.uint8))
-            k_frames = make_kinetic_slide_frames(
-                text, label, primary, accent, w, h, fps, duration,
-                bg_image=bg_frame, is_short=True,
-            )
             broll_clip.close()
         else:
-            bg_static = _get_bg(category, text, w, h, cfg)
-            k_frames = make_kinetic_slide_frames(
-                text, label, primary, accent, w, h, fps, duration,
-                bg_image=bg_static, is_short=True,
-            )
+            bg_frame = _get_bg(category, text, w, h, cfg)
 
+        k_frames = make_kinetic_slide_frames(
+            text, label, primary, accent, w, h, fps, per_slide,
+            bg_image=bg_frame, is_short=True,
+        )
         slide_path = str(base / f"seg_slide_{i}.mp4")
         frames_to_video(k_frames, slide_path, fps)
         segment_paths.append(slide_path)
 
-    # 4. CTA
+    # 5. CTA
     print("  [CTA card]")
     bg_cta = _get_bg(category, "subscribe follow social", w, h, cfg)
     cta_frames = make_cta_frames(
-        cfg.CHANNEL_HANDLE,
-        cfg.CTA_LINE1, cfg.CTA_LINE2, cfg.CTA_SUBTEXT,
+        handle, cfg.CTA_LINE1, cfg.CTA_LINE2, cfg.CTA_SUBTEXT,
         primary, accent, w, h, fps, cta_dur, bg_image=bg_cta,
     )
     cta_path = str(base / "seg_cta.mp4")
     frames_to_video(cta_frames, cta_path, fps)
     segment_paths.append(cta_path)
 
-    # 5. Concatenate segments
+    # 6. Concatenate silent segments
     print("  [Concat segments]")
     raw_video = str(base / "short_raw.mp4")
     xfade_concat(segment_paths, raw_video)
 
-    # 6. Mix with audio
+    # 7. Mix with audio (exact duration match — no cut, no overflow)
     print("  [Mix audio]")
-    cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
-        "-i", raw_video,
-        "-i", audio_path,
-        "-map", "0:v", "-map", "1:a",
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "20",
-        "-c:a", "aac", "-b:a", "192k",
-        "-shortest",
-        output_path,
-    ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    _mix_video_audio(raw_video, audio_path, output_path, audio_dur)
     Path(raw_video).unlink(missing_ok=True)
 
-    # 7. Subtitles
+    # 8. Subtitles
     if srt_path and Path(srt_path).exists():
         _burn_subtitles(output_path, srt_path)
 
-    # 8. Cinematic grade
+    # 9. Cinematic grade
     graded = output_path.replace(".mp4", "_graded.mp4")
     if apply_cinematic_grade(output_path, graded):
-        import shutil
         shutil.move(graded, output_path)
 
     print(f"  Short: {output_path}")
@@ -281,27 +266,36 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
     base = Path(output_path).parent
     base.mkdir(parents=True, exist_ok=True)
 
-    audio    = AudioFileClip(audio_path)
-    total    = audio.duration
-    audio.close()
-
+    audio_dur = _audio_duration(audio_path)
     w, h, fps = cfg.LONG_WIDTH, cfg.LONG_HEIGHT, cfg.FPS
-    primary  = cfg.PRIMARY_COLOR
-    accent   = cfg.ACCENT_COLOR
-    category = script_data.get("_category", "General")
-    items    = script_data.get("items", script_data.get("tools", []))
-    ep_title = script_data.get("episode_title", "")
+    primary   = cfg.PRIMARY_COLOR
+    accent    = cfg.ACCENT_COLOR
+    category  = script_data.get("_category", "General")
+    items     = script_data.get("items", script_data.get("tools", []))
+    ep_title  = script_data.get("episode_title", "")
     char_name = getattr(cfg, "CHARACTER_NAME", cfg.CHANNEL_NAME)
 
     # Time budget
-    title_dur   = 4.0
-    content_dur = total - title_dur
+    intro_dur   = 3.5
+    title_dur   = 4.5
+    outro_dur   = 5.0
+    fixed_dur   = intro_dur + title_dur + outro_dur
+    content_dur = max(audio_dur - fixed_dur, audio_dur * 0.75)
     per_item    = content_dur / max(len(items), 1)
-    per_slide   = per_item / 3  # 3 slides per item
+    per_slide   = max(per_item / 3, 4.0)   # 3 slides per item, minimum 4s each
 
     segment_paths = []
 
-    # 1. Cinematic title card
+    # 1. Channel intro card
+    print("  [Channel intro]")
+    intro_frames = make_channel_intro_frames(
+        cfg.CHANNEL_HANDLE, ep_title, primary, accent, w, h, fps, intro_dur,
+    )
+    intro_path = str(base / "seg_intro.mp4")
+    frames_to_video(intro_frames, intro_path, fps)
+    segment_paths.append(intro_path)
+
+    # 2. Cinematic title card
     print("  [Title card]")
     bg = _get_bg(category, ep_title, w, h, cfg)
     title_frames = make_cold_open_frames(
@@ -312,7 +306,7 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
     frames_to_video(title_frames, title_path, fps)
     segment_paths.append(title_path)
 
-    # 2. Per-item segments (3 slides each)
+    # 3. Per-item segments (3 slides each)
     for item_idx, item in enumerate(items):
         item_name = item.get("name", "")
         item_cat  = item.get("category", category)
@@ -320,60 +314,54 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
         summary   = item.get("summary", item.get("india_verdict", ""))
         rank      = item.get("rank", item_idx + 1)
 
-        print(f"  [Item {rank}: {item_name[:30]}]")
+        print(f"  [Item {rank}: {item_name[:35]}]")
 
-        # Slide A — title/intro for this item
-        bg_a = _get_bg(item_cat, item_name, w, h, cfg)
-        intro_text = f"#{rank} — {item_name}"
+        # Shared b-roll for this item
         broll_a = _broll_clip(
             get_broll_query(getattr(cfg, "CHANNEL_ID", ""), item_cat, item_name),
             per_slide, w, h, idx=item_idx,
         )
-        bg_a_img = (
-            Image.fromarray(broll_a.get_frame(0).astype(np.uint8))
-            if broll_a else bg_a
-        )
+        bg_a = (Image.fromarray(broll_a.get_frame(0).astype(np.uint8))
+                if broll_a else _get_bg(item_cat, item_name, w, h, cfg))
         if broll_a:
             broll_a.close()
 
+        # Slide A — item title
         frames_a = make_kinetic_slide_frames(
-            intro_text, cfg.LONG_INTRO_BADGE, primary, accent,
-            w, h, fps, per_slide, bg_image=bg_a_img, is_short=False,
+            f"#{rank} — {item_name}", cfg.LONG_INTRO_BADGE, primary, accent,
+            w, h, fps, per_slide, bg_image=bg_a, is_short=False,
         )
         path_a = str(base / f"seg_{item_idx}_a.mp4")
         frames_to_video(frames_a, path_a, fps)
         segment_paths.append(path_a)
 
         # Slide B — key points
-        kpt_text = " • ".join(kpts) if kpts else summary[:120]
-        bg_b = _get_bg(item_cat, kpt_text[:40], w, h, cfg)
+        kpt_text = " • ".join(kpts) if kpts else summary[:140]
         broll_b = _broll_clip(
             get_broll_query(getattr(cfg, "CHANNEL_ID", ""), item_cat, kpt_text[:30]),
             per_slide, w, h, idx=item_idx + 1,
         )
-        bg_b_img = (
-            Image.fromarray(broll_b.get_frame(0).astype(np.uint8))
-            if broll_b else bg_b
-        )
+        bg_b = (Image.fromarray(broll_b.get_frame(0).astype(np.uint8))
+                if broll_b else _get_bg(item_cat, kpt_text[:40], w, h, cfg))
         if broll_b:
             broll_b.close()
 
         frames_b = make_kinetic_slide_frames(
             kpt_text, "KEY POINTS", primary, accent,
-            w, h, fps, per_slide, bg_image=bg_b_img, is_short=False,
+            w, h, fps, per_slide, bg_image=bg_b, is_short=False,
         )
         path_b = str(base / f"seg_{item_idx}_b.mp4")
         frames_to_video(frames_b, path_b, fps)
         segment_paths.append(path_b)
 
-        # Slide C — verdict/summary with lower third
+        # Slide C — verdict with lower-third
         frames_c_list = make_kinetic_slide_frames(
-            summary[:200] if summary else kpt_text, "KEY TAKEAWAY",
+            summary[:220] if summary else kpt_text, "KEY TAKEAWAY",
             primary, accent, w, h, fps, per_slide,
-            bg_image=bg_a_img, is_short=False,
+            bg_image=bg_a, is_short=False,
         )
 
-        # Overlay lower third (character name) on last 1.5s of each item
+        # Lower-third overlay on last 1.5s
         lt_start = max(0, len(frames_c_list) - int(1.5 * fps))
         from PIL import ImageDraw as _ID
         for fi in range(lt_start, len(frames_c_list)):
@@ -390,54 +378,41 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
         frames_to_video(frames_c_list, path_c, fps)
         segment_paths.append(path_c)
 
-    # 3. Outro
+    # 4. Outro
     print("  [Outro]")
     bg_out = _get_bg(category, "subscribe channel", w, h, cfg)
-    outro_dur = 4.0
     outro_frames = make_cta_frames(
-        cfg.CHANNEL_HANDLE,
-        cfg.OUTRO_LINE1, cfg.OUTRO_LINE2, cfg.OUTRO_BELL_TEXT,
+        cfg.CHANNEL_HANDLE, cfg.OUTRO_LINE1, cfg.OUTRO_LINE2, cfg.OUTRO_BELL_TEXT,
         primary, accent, w, h, fps, outro_dur, bg_image=bg_out,
     )
     outro_path = str(base / "seg_outro.mp4")
     frames_to_video(outro_frames, outro_path, fps)
     segment_paths.append(outro_path)
 
-    # 4. Concat
+    # 5. Concat silent segments
     print("  [Concat]")
     raw_video = str(base / "long_raw.mp4")
     xfade_concat(segment_paths, raw_video)
 
-    # 5. Mix audio
+    # 6. Mix audio (exact duration)
     print("  [Mix audio]")
-    cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
-        "-i", raw_video,
-        "-i", audio_path,
-        "-map", "0:v", "-map", "1:a",
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "20",
-        "-c:a", "aac", "-b:a", "192k",
-        "-shortest",
-        output_path,
-    ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    _mix_video_audio(raw_video, audio_path, output_path, audio_dur)
     Path(raw_video).unlink(missing_ok=True)
 
-    # 6. Subtitles
+    # 7. Subtitles
     if srt_path and Path(srt_path).exists():
         _burn_subtitles(output_path, srt_path)
 
-    # 7. Grade
+    # 8. Cinematic grade
     graded = output_path.replace(".mp4", "_graded.mp4")
     if apply_cinematic_grade(output_path, graded):
-        import shutil
         shutil.move(graded, output_path)
 
     print(f"  Long-form: {output_path}")
     return output_path
 
 
-# ── Thumbnail ──────────────────────────────────────────────────────────────────
+# ── Thumbnail ─────────────────────────────────────────────────────────────────
 
 def generate_thumbnail(script_data: dict, output_path: str, cfg) -> str:
     title    = script_data.get("title", script_data.get("episode_title", ""))

@@ -81,32 +81,75 @@ def _audio_duration(audio_path: str) -> float:
 
 
 def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> bool:
+    """
+    Cinematic ambient pad — multi-layer synthesis with warmth, soft attack,
+    reverb-style delay, and a low-pass filter to avoid harshness.
+    """
     preset = _AMBIENT_PRESETS[seed % len(_AMBIENT_PRESETS)]
     bass, mid, high, bpm = preset
-    pulse = bpm / 60.0
+    beat = bpm / 60.0
+
+    # Soft pad: harmonics with gentle amplitude modulation (tremolo) + envelope
+    # attack = 2s (sin²), release tail via amplitude shaping
+    attack = 2.0
     expr = (
-        f"0.18*sin({bass}*2*PI*t)*sin({pulse}*2*PI*t+0.1)+"
-        f"0.14*sin({mid}*2*PI*t)*sin({pulse*1.3}*2*PI*t+0.4)+"
-        f"0.09*sin({high}*2*PI*t)*sin({pulse*0.7}*2*PI*t+0.8)+"
-        f"0.04*sin({bass*2}*2*PI*t)*sin({pulse*2}*2*PI*t)"
+        # Bass pad layer — slow swell
+        f"0.15*sin({bass}*2*PI*t)*sin({beat*0.5}*2*PI*t+0.1)*min(1,t/{attack})+"
+        # Mid pad layer — slightly detuned for warmth
+        f"0.11*sin({mid*1.002}*2*PI*t)*sin({beat*0.7}*2*PI*t+0.3)*min(1,t/{attack})+"
+        # High shimmer — quiet, airy
+        f"0.06*sin({high}*2*PI*t)*sin({beat*1.3}*2*PI*t+0.6)*min(1,t/{attack})+"
+        # Sub-bass breathe
+        f"0.05*sin({bass*0.5}*2*PI*t)*min(1,t/{attack})+"
+        # Octave warmth
+        f"0.04*sin({mid*2}*2*PI*t)*sin({beat*0.3}*2*PI*t)*min(1,t/{attack})"
     )
-    cmd = [
+
+    raw_path = output_path.replace(".aac", "_raw.aac")
+    cmd_synth = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-f", "lavfi", "-i", f"aevalsrc={expr}:s=44100",
-        "-t", str(duration), "-c:a", "aac", "-b:a", "128k", output_path,
+        "-t", str(duration + 2),
+        "-c:a", "aac", "-b:a", "192k", raw_path,
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0:
+        r1 = subprocess.run(cmd_synth, capture_output=True, text=True)
+        if r1.returncode != 0:
+            print(f"  Music synth warning: {r1.stderr[:100]}")
+            return False
+
+        # Post-process: low-pass filter (removes harshness) + gentle reverb via
+        # adelay + amix + trim to exact duration
+        cmd_post = [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-i", raw_path,
+            "-af", (
+                "lowpass=f=4000,"           # cut harsh highs
+                "equalizer=f=200:t=o:w=2:g=3,"   # boost low-mids (warmth)
+                "aecho=0.8:0.6:60:0.4,"    # subtle room reverb
+                "volume=0.85,"              # pull back slightly after reverb
+                f"atrim=0:{duration},"
+                "aformat=sample_rates=44100:channel_layouts=stereo"
+            ),
+            "-c:a", "aac", "-b:a", "192k", output_path,
+        ]
+        r2 = subprocess.run(cmd_post, capture_output=True, text=True)
+        Path(raw_path).unlink(missing_ok=True)
+        if r2.returncode == 0:
             print(f"  Ambient music synthesised (preset {seed % len(_AMBIENT_PRESETS)}).")
             return True
-        print(f"  Music synth warning: {result.stderr[:100]}")
+        print(f"  Music post-process warning: {r2.stderr[:150]}")
+        # Use raw as fallback
+        import shutil
+        if Path(raw_path).exists():
+            shutil.move(raw_path, output_path)
+            return True
     except Exception as e:
         print(f"  Music synth error: {e}")
     return False
 
 
-def _mix_audio(voice_path: str, music_path: str, output_path: str, music_volume: float = 0.08) -> bool:
+def _mix_audio(voice_path: str, music_path: str, output_path: str, music_volume: float = 0.06) -> bool:
     try:
         cmd = [
             "ffmpeg", "-y", "-loglevel", "error",

@@ -56,36 +56,16 @@ def _import_shared():
     from audio_generator import generate_audio
     from video_composer import compose_short, compose_long, generate_thumbnail
     from youtube_uploader import upload_video, post_comment
-    from d_id_generator import generate_character_intro, prepend_intro
     return (generate_short_script, generate_long_script, generate_audio,
             compose_short, compose_long, generate_thumbnail, upload_video,
-            post_comment, generate_character_intro, prepend_intro)
+            post_comment)
 
 
 def _el_params(cfg) -> dict:
-    """ElevenLabs params from config, fallback to empty (uses edge-tts)."""
     return {
         "elevenlabs_voice_id": getattr(cfg, "ELEVENLABS_VOICE_ID", ""),
         "elevenlabs_key": os.environ.get("ELEVENLABS_API_KEY", ""),
     }
-
-
-def _try_d_id_intro(cfg, topic_name: str, intro_text: str, output_path: str,
-                    generate_character_intro) -> str | None:
-    """Generate D-ID character intro. Returns path on success, None otherwise."""
-    image_url = getattr(cfg, "CHARACTER_IMAGE_URL", "")
-    if not image_url or not os.environ.get("D_ID_API_KEY", ""):
-        return None
-    el = _el_params(cfg)
-    ok = generate_character_intro(
-        character_image_url=image_url,
-        intro_text=intro_text,
-        output_path=output_path,
-        elevenlabs_voice_id=el["elevenlabs_voice_id"],
-        elevenlabs_key=el["elevenlabs_key"],
-        tts_voice=getattr(cfg, "LONG_VOICE", "en-IN-PrabhatNeural"),
-    )
-    return output_path if ok else None
 
 
 def run_short(cfg) -> None:
@@ -94,7 +74,7 @@ def run_short(cfg) -> None:
     print("=" * 60)
     (generate_short_script, generate_long_script, generate_audio,
      compose_short, compose_long, generate_thumbnail, upload_video,
-     post_comment, generate_character_intro, prepend_intro) = _import_shared()
+     post_comment) = _import_shared()
 
     counter_path = _counter_path(cfg.CHANNEL_ID, "short")
     idx   = _read_counter(counter_path)
@@ -118,21 +98,7 @@ def run_short(cfg) -> None:
     )
 
     print("  Composing video...")
-    slides_video = f"{base}/short_slides.mp4"
-    compose_short(audio_path, script, slides_video, srt_path, cfg)
-
-    # D-ID character intro (optional)
-    intro_path = _try_d_id_intro(
-        cfg, topic["name"],
-        script.get("character_intro", f"Hey! Main {getattr(cfg, 'CHARACTER_NAME', cfg.CHANNEL_NAME)} hun. {topic['name']} — chalo shuru karte hain!"),
-        f"{base}/short_intro.mp4",
-        generate_character_intro,
-    )
-    if intro_path:
-        prepend_intro(intro_path, slides_video, video_path)
-    else:
-        import shutil as _sh
-        _sh.copy2(slides_video, video_path)
+    compose_short(audio_path, script, video_path, srt_path, cfg)
 
     print("  Uploading to YouTube...")
     yt_id = upload_video(
@@ -161,7 +127,7 @@ def run_long(cfg, also_short: bool = False) -> None:
     print("=" * 60)
     (generate_short_script, generate_long_script, generate_audio,
      compose_short, compose_long, generate_thumbnail, upload_video,
-     post_comment, generate_character_intro, prepend_intro) = _import_shared()
+     post_comment) = _import_shared()
 
     counter_path = _counter_path(cfg.CHANNEL_ID, "long")
     idx    = _read_counter(counter_path)
@@ -175,7 +141,6 @@ def run_long(cfg, also_short: bool = False) -> None:
     base = str(Path(__file__).parent / cfg.OUTPUT_DIR)
     audio_path     = f"{base}/long_audio.mp3"
     srt_path       = f"{base}/long_subtitles.srt"
-    slides_path    = f"{base}/long_slides.mp4"
     video_path     = f"{base}/long_video.mp4"
     thumbnail_path = f"{base}/thumbnail.jpg"
 
@@ -186,26 +151,11 @@ def run_long(cfg, also_short: bool = False) -> None:
         **_el_params(cfg),
     )
 
-    print("  Composing slides video...")
-    compose_long(audio_path, script, slides_path, srt_path, cfg)
+    print("  Composing video...")
+    compose_long(audio_path, script, video_path, srt_path, cfg)
 
     print("  Generating thumbnail...")
     generate_thumbnail(script, thumbnail_path, cfg)
-
-    # D-ID character intro
-    char_name = getattr(cfg, "CHARACTER_NAME", cfg.CHANNEL_NAME)
-    default_intro = f"Hello! I'm {char_name}. Today we're diving into: {script.get('episode_title', topic['name'])}. Stay with me — this is going to be worth your time."
-    intro_path = _try_d_id_intro(
-        cfg, topic["name"],
-        script.get("character_intro", default_intro),
-        f"{base}/long_intro.mp4",
-        generate_character_intro,
-    )
-    if intro_path:
-        prepend_intro(intro_path, slides_path, video_path)
-    else:
-        import shutil as _sh
-        _sh.copy2(slides_path, video_path)
 
     print("  Uploading to YouTube...")
     yt_id = upload_video(

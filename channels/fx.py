@@ -1,16 +1,14 @@
 """
-Motion graphics engine — animated stats, kinetic text, lower thirds,
-title cards, spotlight effects, color grading.
-All rendered via PIL + MoviePy + FFmpeg. No external services needed.
+Motion graphics engine — channel intro, kinetic text, stats, lower thirds,
+title cards, color grading. All rendered via PIL + FFmpeg. No external services.
 """
+import math
 import os
 import subprocess
-import math
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 # ── Font helpers ──────────────────────────────────────────────────────────────
 
@@ -50,12 +48,12 @@ def _wrap(text: str, font: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
             cur.append(word)
     if cur:
         lines.append(" ".join(cur))
-    return lines
+    return lines or [""]
 
 
-# ── Dark overlay + gradient ────────────────────────────────────────────────────
+# ── Compositing helpers ───────────────────────────────────────────────────────
 
-def dark_overlay(img: Image.Image, opacity: int = 140) -> Image.Image:
+def dark_overlay(img: Image.Image, opacity: int = 110) -> Image.Image:
     ov = Image.new("RGBA", img.size, (0, 0, 0, opacity))
     base = img.convert("RGBA")
     base.alpha_composite(ov)
@@ -63,8 +61,8 @@ def dark_overlay(img: Image.Image, opacity: int = 140) -> Image.Image:
 
 
 def gradient_overlay(img: Image.Image, color: tuple = (0, 0, 0),
-                     top_opacity: int = 0, bottom_opacity: int = 200) -> Image.Image:
-    h, w = img.size[1], img.size[0]
+                     top_opacity: int = 0, bottom_opacity: int = 180) -> Image.Image:
+    w, h = img.size
     grad = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(grad)
     for y in range(h):
@@ -75,7 +73,137 @@ def gradient_overlay(img: Image.Image, color: tuple = (0, 0, 0),
     return base.convert("RGB")
 
 
-# ── Animated cold-open title card ──────────────────────────────────────────────
+def _composite_card(base: Image.Image, x: int, y: int, w: int, h: int,
+                    fill_rgba: tuple = (0, 0, 0, 190),
+                    radius: int = 18) -> Image.Image:
+    """Draw a rounded semi-transparent card onto base, return composited RGB image."""
+    card = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(card)
+    d.rounded_rectangle([x, y, x + w, y + h], radius=radius, fill=fill_rgba)
+    result = base.convert("RGBA")
+    result.alpha_composite(card)
+    return result.convert("RGB")
+
+
+def _accent_bar(base: Image.Image, x: int, y: int, bar_w: int, bar_h: int,
+                color: tuple, progress: float = 1.0) -> Image.Image:
+    """Draw a colored bar that sweeps in from left based on progress (0→1)."""
+    img = base.convert("RGBA")
+    bar = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(bar)
+    end_x = x + int(bar_w * max(0.0, min(1.0, progress)))
+    if end_x > x:
+        d.rectangle([x, y, end_x, y + bar_h], fill=(*color, 255))
+    img.alpha_composite(bar)
+    return img.convert("RGB")
+
+
+# ── Channel intro card (replaces D-ID) ───────────────────────────────────────
+
+def make_channel_intro_frames(
+    channel_handle: str,
+    topic_name: str,
+    primary_color: tuple,
+    accent_color: tuple,
+    width: int,
+    height: int,
+    fps: int,
+    duration: float = 3.5,
+) -> list[np.ndarray]:
+    """
+    Animated channel branding intro — no external API, no watermark.
+    Phase 0→0.5s : dark bg fades in + accent bar sweeps left→right
+    Phase 0.5→2.5s: channel handle scales in, topic slides up
+    Phase 2.5→3.5s: smooth fade out
+    """
+    n_frames = int(duration * fps)
+    sweep_end   = int(0.45 * fps)
+    hold_end    = n_frames - int(0.5 * fps)
+    topic_start = int(0.55 * fps)
+
+    handle_size = min(108, max(56, 1300 // max(len(channel_handle), 1)))
+    h_font  = _font(handle_size, bold=True)
+    t_font  = _font(46, bold=False)
+    sub_font = _font(28, bold=False)
+
+    frames = []
+    for i in range(n_frames):
+        # Sweep progress (0→1 in first sweep_end frames)
+        if i <= sweep_end:
+            sweep = i / max(sweep_end, 1)
+        elif i <= hold_end:
+            sweep = 1.0
+        else:
+            sweep = 1.0 - (i - hold_end) / max(n_frames - hold_end, 1)
+
+        # Background: very dark with diagonal primary-colour streak
+        base = Image.new("RGB", (width, height), (7, 5, 3))
+        streak = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        sd = ImageDraw.Draw(streak)
+        # Two diagonal bands crossing near center
+        for off, alpha in [(-width // 3, 22), (0, 30), (width // 3, 18)]:
+            sd.polygon(
+                [(off, 0), (off + width // 6, 0),
+                 (off + width // 6 + height, height), (off + height, height)],
+                fill=(*primary_color, alpha),
+            )
+        base = base.convert("RGBA")
+        base.alpha_composite(streak)
+        base = base.convert("RGB")
+
+        draw = ImageDraw.Draw(base)
+
+        # Accent bar sweeping in
+        bar_y = height // 2 - int(handle_size * 0.65)
+        bar_x0 = int(width * 0.08)
+        bar_full_w = int(width * 0.84)
+        base = _accent_bar(base, bar_x0, bar_y, bar_full_w, 6, accent_color, sweep)
+        draw = ImageDraw.Draw(base)
+
+        if sweep > 0.05:
+            a = int(255 * sweep)
+
+            # Channel handle — scales from 70% to 100% during sweep-in
+            if i <= sweep_end:
+                scale = 0.70 + 0.30 * sweep
+                fs = max(20, int(handle_size * scale))
+                hf = _font(fs, bold=True)
+            else:
+                hf = h_font
+
+            hbbox = draw.textbbox((0, 0), channel_handle, font=hf)
+            hx = (width - (hbbox[2] - hbbox[0])) // 2
+            hy = height // 2 - (hbbox[3] - hbbox[1]) // 2 - 30
+
+            draw.text((hx + 4, hy + 4), channel_handle, font=hf,
+                      fill=(0, 0, 0))
+            draw.text((hx, hy), channel_handle, font=hf,
+                      fill=(a, a, a))
+
+        # Topic name — slides up from below after topic_start
+        if i >= topic_start:
+            t_prog = min(1.0, (i - topic_start) / max(int(0.5 * fps), 1)) * sweep
+            if t_prog > 0.05:
+                ta = int(255 * t_prog)
+                slide_offset = int((1 - t_prog) * 40)
+
+                t_lines = _wrap(topic_name, t_font, int(width * 0.76))
+                ty = height // 2 + int(handle_size * 0.55) + slide_offset
+                for line in t_lines:
+                    tbbox = draw.textbbox((0, 0), line, font=t_font)
+                    tx = (width - (tbbox[2] - tbbox[0])) // 2
+                    draw.text((tx, ty), line, font=t_font,
+                              fill=(int(accent_color[0] * t_prog),
+                                    int(accent_color[1] * t_prog),
+                                    int(accent_color[2] * t_prog)))
+                    ty += 54
+
+        frames.append(np.array(base))
+
+    return frames
+
+
+# ── Cold-open title card ───────────────────────────────────────────────────────
 
 def make_cold_open_frames(
     headline: str,
@@ -88,20 +216,17 @@ def make_cold_open_frames(
     duration: float,
     bg_image: Image.Image | None = None,
 ) -> list[np.ndarray]:
-    """
-    Creates a dramatic title card with animated text reveal.
-    3-phase: fade-in (0.4s) → hold → fade-out (0.3s)
-    """
-    n_frames = int(duration * fps)
-    fade_in  = int(0.4 * fps)
-    fade_out = int(0.3 * fps)
-    frames   = []
+    """Dramatic title card: accent bar sweeps in, headline fades + rises."""
+    n_frames  = int(duration * fps)
+    fade_in   = int(0.5 * fps)
+    fade_out  = int(0.35 * fps)
 
-    hl_font = _font(min(120, max(60, 1400 // max(len(headline), 1))), bold=True)
-    sub_font = _font(40, bold=False)
+    hl_size  = min(112, max(56, 1350 // max(len(headline), 1)))
+    hl_font  = _font(hl_size, bold=True)
+    sub_font = _font(38, bold=False)
 
+    frames = []
     for i in range(n_frames):
-        # Alpha for fade
         if i < fade_in:
             alpha = i / fade_in
         elif i > n_frames - fade_out:
@@ -109,55 +234,54 @@ def make_cold_open_frames(
         else:
             alpha = 1.0
 
-        # Slide-in offset (text rises into place)
-        slide_progress = min(1.0, i / max(fade_in, 1))
-        y_offset = int((1 - slide_progress) * 60)
+        slide = min(1.0, i / max(fade_in, 1))
+        y_offset = int((1 - slide) * 55)
 
         if bg_image:
-            base = bg_image.copy().resize((width, height), Image.LANCZOS)
-            base = dark_overlay(base, opacity=int(150 * alpha))
+            # Subtle Ken Burns on the title bg
+            zoom = 1.0 + 0.06 * (i / n_frames)
+            nw, nh = int(width * zoom), int(height * zoom)
+            zx, zy = (nw - width) // 2, (nh - height) // 2
+            zoomed = bg_image.resize((nw, nh), Image.BILINEAR)
+            bg = zoomed.crop((zx, zy, zx + width, zy + height))
+            base = dark_overlay(bg, opacity=int(140 * alpha + 20))
+            if height > width:  # shorts — extra bottom gradient
+                base = gradient_overlay(base, top_opacity=0, bottom_opacity=120)
         else:
-            bg_val = int(10 * alpha)
-            base = Image.new("RGB", (width, height), (bg_val, bg_val, bg_val + 5))
+            v = int(8 * alpha)
+            base = Image.new("RGB", (width, height), (v, v, v + 4))
 
         draw = ImageDraw.Draw(base)
 
-        # Accent bar
-        bar_h = 6
-        bar_alpha_val = int(255 * alpha)
-        # Draw accent bar
-        bar_img = Image.new("RGBA", (width, bar_h), (*accent_color, bar_alpha_val))
-        base.paste(bar_img.convert("RGB"),
-                   (0, height // 2 - 80 + y_offset),
-                   mask=bar_img.split()[3])
+        # Sweeping accent bar
+        bar_y = height // 2 - int(hl_size * 0.7) + y_offset
+        base = _accent_bar(base, int(width * 0.08), bar_y, int(width * 0.84), 5,
+                           accent_color, progress=slide)
+        draw = ImageDraw.Draw(base)
 
         # Headline
-        hl_lines = _wrap(headline, hl_font, width - 80)
-        y_start = height // 2 - len(hl_lines) * 65 + y_offset
+        hl_lines = _wrap(headline, hl_font, width - 100)
+        y_start = height // 2 - len(hl_lines) * (hl_size + 12) // 2 + y_offset
         for line in hl_lines:
             bbox = draw.textbbox((0, 0), line, font=hl_font)
             x = (width - (bbox[2] - bbox[0])) // 2
-            # Shadow
-            draw.text((x + 3, y_start + 3), line, font=hl_font,
-                      fill=(0, 0, 0))
-            # Main text with alpha simulation
-            r, g, b = (255, 255, 255)
-            c = (int(r * alpha), int(g * alpha), int(b * alpha))
-            draw.text((x, y_start), line, font=hl_font, fill=c)
-            y_start += 75
+            draw.text((x + 3, y_start + 3), line, font=hl_font, fill=(0, 0, 0))
+            draw.text((x, y_start), line, font=hl_font,
+                      fill=(int(255 * alpha), int(255 * alpha), int(255 * alpha)))
+            y_start += hl_size + 12
 
         # Subtext
         if subtext:
             sub_lines = _wrap(subtext, sub_font, width - 120)
-            y_sub = y_start + 20
+            y_sub = y_start + 18 + y_offset
             for line in sub_lines:
                 bbox = draw.textbbox((0, 0), line, font=sub_font)
                 x = (width - (bbox[2] - bbox[0])) // 2
-                c = (int(primary_color[0] * alpha),
-                     int(primary_color[1] * alpha),
-                     int(primary_color[2] * alpha))
-                draw.text((x, y_sub), line, font=sub_font, fill=c)
-                y_sub += 48
+                draw.text((x, y_sub), line, font=sub_font,
+                          fill=(int(primary_color[0] * alpha),
+                                int(primary_color[1] * alpha),
+                                int(primary_color[2] * alpha)))
+                y_sub += 46
 
         frames.append(np.array(base))
 
@@ -167,10 +291,10 @@ def make_cold_open_frames(
 # ── Animated number counter ────────────────────────────────────────────────────
 
 def make_counter_frames(
-    prefix: str,          # e.g. "₹"
-    target: int,          # e.g. 50000
-    suffix: str,          # e.g. "/day"
-    label: str,           # e.g. "EARNING POTENTIAL"
+    prefix: str,
+    target: int,
+    suffix: str,
+    label: str,
     primary_color: tuple,
     accent_color: tuple,
     width: int,
@@ -179,19 +303,16 @@ def make_counter_frames(
     duration: float,
     bg_image: Image.Image | None = None,
 ) -> list[np.ndarray]:
-    """Counter that counts up from 0 to target over duration with easing."""
     n_frames = int(duration * fps)
-    frames   = []
-    num_font = _font(min(160, max(80, 1200 // max(len(str(target)), 1))), bold=True)
-    lbl_font = _font(36, bold=True)
-    pfx_font = _font(80, bold=True)
+    num_font = _font(min(156, max(80, 1200 // max(len(str(target)), 1))), bold=True)
+    lbl_font = _font(34, bold=True)
 
     def ease_out(t: float) -> float:
         return 1 - (1 - t) ** 3
 
+    frames = []
     for i in range(n_frames):
-        t = i / n_frames
-        val = int(ease_out(t) * target)
+        val = int(ease_out(i / n_frames) * target)
 
         if bg_image:
             base = dark_overlay(bg_image.copy().resize((width, height), Image.LANCZOS), 160)
@@ -199,8 +320,6 @@ def make_counter_frames(
             base = Image.new("RGB", (width, height), (8, 6, 2))
 
         draw = ImageDraw.Draw(base)
-
-        # Glow effect — draw text slightly larger in accent color first
         val_str = f"{prefix}{val:,}{suffix}"
         bbox = draw.textbbox((0, 0), val_str, font=num_font)
         x = (width - (bbox[2] - bbox[0])) // 2
@@ -208,36 +327,26 @@ def make_counter_frames(
 
         # Glow passes
         for glow in range(3, 0, -1):
-            glow_color = (
-                min(255, accent_color[0] + 30),
-                min(255, accent_color[1] + 30),
-                min(255, accent_color[2] + 30),
-            )
-            draw.text((x - glow, y - glow), val_str, font=num_font,
-                      fill=(*glow_color, 40))
+            gc = tuple(min(255, c + 40) for c in accent_color)
+            draw.text((x - glow, y - glow), val_str, font=num_font, fill=(*gc, 35))
 
-        # Shadow
         draw.text((x + 4, y + 4), val_str, font=num_font, fill=(0, 0, 0))
-        # Main
         draw.text((x, y), val_str, font=num_font, fill=(255, 255, 255))
 
-        # Label below
         lbbox = draw.textbbox((0, 0), label, font=lbl_font)
         lx = (width - (lbbox[2] - lbbox[0])) // 2
-        draw.text((lx, y + (bbox[3] - bbox[1]) + 20), label,
+        draw.text((lx, y + (bbox[3] - bbox[1]) + 18), label,
                   font=lbl_font, fill=primary_color)
 
-        # Accent line
-        bar_y = y - 20
-        draw.rectangle([width // 2 - 100, bar_y, width // 2 + 100, bar_y + 4],
-                        fill=accent_color)
-
+        bar_y = y - 18
+        draw.rectangle([width // 2 - 90, bar_y, width // 2 + 90, bar_y + 4],
+                       fill=accent_color)
         frames.append(np.array(base))
 
     return frames
 
 
-# ── Lower third (character name + title) ─────────────────────────────────────
+# ── Lower third (character name) ──────────────────────────────────────────────
 
 def make_lower_third_overlay(
     draw: ImageDraw.ImageDraw,
@@ -247,40 +356,21 @@ def make_lower_third_overlay(
     accent_color: tuple,
     width: int,
     height: int,
-    progress: float,   # 0→1 for slide-in animation
+    progress: float,
 ) -> None:
-    """Draw animated lower-third onto an existing draw context."""
-    name_font  = _font(38, bold=True)
-    title_font = _font(26, bold=False)
-
-    bar_w = 340
-    bar_h = 72
+    name_font  = _font(36, bold=True)
+    title_font = _font(24, bold=False)
+    bar_w, bar_h = 330, 70
     x_final = 40
-    y_pos   = height - 150
-
-    # Slide in from left
+    y_pos = height - 145
     x = int(x_final - (1 - progress) * (bar_w + 100))
-
-    # Background pill
-    draw.rounded_rectangle(
-        [x, y_pos, x + bar_w, y_pos + bar_h],
-        radius=8,
-        fill=(0, 0, 0),
-    )
-    # Accent left edge
-    draw.rounded_rectangle(
-        [x, y_pos, x + 6, y_pos + bar_h],
-        radius=4,
-        fill=primary_color,
-    )
-
-    # Name
-    draw.text((x + 18, y_pos + 6), name, font=name_font, fill=(255, 255, 255))
-    # Title
-    draw.text((x + 18, y_pos + 42), title, font=title_font, fill=accent_color)
+    draw.rounded_rectangle([x, y_pos, x + bar_w, y_pos + bar_h], radius=8, fill=(0, 0, 0))
+    draw.rounded_rectangle([x, y_pos, x + 5, y_pos + bar_h], radius=4, fill=primary_color)
+    draw.text((x + 16, y_pos + 6), name, font=name_font, fill=(255, 255, 255))
+    draw.text((x + 16, y_pos + 40), title, font=title_font, fill=accent_color)
 
 
-# ── Kinetic text overlay on a video frame ─────────────────────────────────────
+# ── Kinetic text slide ─────────────────────────────────────────────────────────
 
 def make_kinetic_slide_frames(
     text: str,
@@ -295,82 +385,105 @@ def make_kinetic_slide_frames(
     is_short: bool = True,
 ) -> list[np.ndarray]:
     """
-    Kinetic text slide: text reveals word by word, with subtle scale animation.
+    Card-based kinetic slide:
+    - Background visible at ~55% opacity (not crushed black)
+    - Rounded dark card behind text
+    - Accent left border on card
+    - Word-by-word reveal over 1.2s
+    - Continuous subtle Ken Burns zoom on background
+    - Large bold font (78px short / 62px long)
     """
     words     = text.split()
     n_frames  = int(duration * fps)
-    frames    = []
-    reveal_in = int(0.7 * fps)   # first 0.7s revealing words
+    reveal_frames = min(int(1.2 * fps), max(n_frames // 3, int(0.4 * fps)))
 
-    lbl_font  = _font(24, bold=True)
-    txt_font_size = 64 if is_short else 52
-    txt_font  = _font(txt_font_size, bold=True)
+    txt_size  = 78 if is_short else 62
+    txt_font  = _font(txt_size, bold=True)
+    lbl_size  = 26
+    lbl_font  = _font(lbl_size, bold=True)
 
-    words_per_frame = max(1, len(words) * fps // max(reveal_in, 1))
+    # Text layout (pre-compute)
+    pad_x, pad_y = 52, 40
+    max_text_w = int(width * 0.84) - pad_x * 2
+    lines    = _wrap(text, txt_font, max_text_w)
+    line_h   = txt_size + 18
+    label_h  = (lbl_size + 28) if label else 0
+    text_h   = len(lines) * line_h
+    card_w   = int(width * 0.84)
+    card_h   = pad_y * 2 + label_h + text_h
+    card_x   = (width - card_w) // 2
+    # Position: bottom 55% area for shorts (leave room for caption bar), center for long-form
+    card_y   = int(height * 0.42) if is_short else (height - card_h) // 2
 
+    frames = []
     for i in range(n_frames):
+        # Ken Burns on background
         if bg_image:
-            base = dark_overlay(
-                bg_image.copy().resize((width, height), Image.LANCZOS),
-                opacity=165
-            )
+            zoom = 1.0 + 0.05 * (i / n_frames)
+            nw   = int(width * zoom)
+            nh   = int(height * zoom)
+            zx   = (nw - width) // 2
+            zy   = (nh - height) // 2
+            zoomed = bg_image.resize((nw, nh), Image.BILINEAR)
+            bg   = zoomed.crop((zx, zy, zx + width, zy + height))
+            base = dark_overlay(bg, opacity=95)   # lighter than before
+            if is_short:
+                base = gradient_overlay(base, top_opacity=0, bottom_opacity=160)
         else:
             base = Image.new("RGB", (width, height), (10, 8, 4))
 
+        # Semi-transparent card
+        base = _composite_card(base, card_x, card_y, card_w, card_h,
+                               fill_rgba=(0, 0, 0, 195), radius=20)
+        # Accent left border
+        ab = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        abd = ImageDraw.Draw(ab)
+        abd.rounded_rectangle(
+            [card_x, card_y, card_x + 6, card_y + card_h],
+            radius=3, fill=(*accent_color, 255),
+        )
+        base = base.convert("RGBA")
+        base.alpha_composite(ab)
+        base = base.convert("RGB")
+
         draw = ImageDraw.Draw(base)
 
-        # How many words are revealed so far
-        if i < reveal_in:
-            n_revealed = max(1, int(len(words) * (i / reveal_in)))
-        else:
-            n_revealed = len(words)
-
-        # Build revealed + hidden text
-        revealed  = " ".join(words[:n_revealed])
-        hidden    = " ".join(words[n_revealed:])
-        full_text = text
-
-        # Wrap the full text to get consistent layout
-        lines      = _wrap(full_text, txt_font, width - 80)
-        total_h    = len(lines) * (txt_font_size + 14)
-        y_start    = height // 2 - total_h // 2 - 20
-
-        # Draw each line with word-level reveal
-        revealed_words_left = n_revealed
-        for line in lines:
-            line_words  = line.split()
-            n_draw      = min(len(line_words), revealed_words_left)
-            revealed_words_left -= n_draw
-
-            drawn_part   = " ".join(line_words[:n_draw])
-            undawn_part  = " ".join(line_words[n_draw:])
-
-            bbox = draw.textbbox((0, 0), line, font=txt_font)
-            x = (width - (bbox[2] - bbox[0])) // 2
-
-            if drawn_part:
-                # Revealed words — bright white with shadow
-                draw.text((x + 3, y_start + 3), drawn_part, font=txt_font, fill=(0, 0, 0))
-                draw.text((x, y_start), drawn_part, font=txt_font, fill=(255, 255, 255))
-                drawn_bbox = draw.textbbox((0, 0), drawn_part + " ", font=txt_font)
-                x += drawn_bbox[2] - drawn_bbox[0]
-
-            if undawn_part:
-                # Hidden words — dim
-                draw.text((x, y_start), undawn_part, font=txt_font, fill=(80, 80, 80))
-
-            y_start += txt_font_size + 14
-
-        # Label chip at top
+        # Label chip inside card (top-left of card with padding)
         if label:
-            _draw_label_chip(draw, label, primary_color, accent_color, 40, 40)
+            _draw_label_chip(draw, label, primary_color, (255, 255, 255),
+                             card_x + pad_x, card_y + 14)
+
+        # Word reveal
+        n_revealed = len(words) if i >= reveal_frames else max(1, int(len(words) * i / reveal_frames))
+
+        # Draw text
+        ty = card_y + pad_y + label_h
+        revealed_left = n_revealed
+        for line in lines:
+            lw = line.split()
+            n_draw = min(len(lw), revealed_left)
+            revealed_left -= n_draw
+
+            # X position: left-align inside card
+            tx = card_x + pad_x
+
+            drawn  = " ".join(lw[:n_draw])
+            undawn = " ".join(lw[n_draw:])
+
+            if drawn:
+                draw.text((tx + 2, ty + 2), drawn, font=txt_font, fill=(0, 0, 0))
+                draw.text((tx, ty), drawn, font=txt_font, fill=(255, 255, 255))
+                dbbox = draw.textbbox((0, 0), drawn + " ", font=txt_font)
+                tx += dbbox[2] - dbbox[0]
+
+            if undawn:
+                draw.text((tx, ty), undawn, font=txt_font, fill=(55, 55, 55))
+
+            ty += line_h
 
         # Bottom accent bar
-        draw.rectangle(
-            [0, height - 6, width, height],
-            fill=primary_color,
-        )
-        draw.rectangle([0, 0, width, 6], fill=primary_color)
+        draw.rectangle([0, height - 5, width, height], fill=primary_color)
+        draw.rectangle([0, 0, width, 5], fill=primary_color)
 
         frames.append(np.array(base))
 
@@ -381,9 +494,10 @@ def _draw_label_chip(draw, text: str, bg_color: tuple, text_color: tuple,
                      x: int, y: int) -> None:
     font = _font(22, bold=True)
     bbox = draw.textbbox((0, 0), text, font=font)
-    pw, ph = bbox[2] - bbox[0] + 24, bbox[3] - bbox[1] + 12
+    pw = bbox[2] - bbox[0] + 24
+    ph = bbox[3] - bbox[1] + 12
     draw.rounded_rectangle([x, y, x + pw, y + ph], radius=ph // 2, fill=bg_color)
-    draw.text((x + 12, y + 6), text, font=font, fill=(0, 0, 0))
+    draw.text((x + 12, y + 6), text, font=font, fill=text_color)
 
 
 # ── CTA card ──────────────────────────────────────────────────────────────────
@@ -401,74 +515,71 @@ def make_cta_frames(
     duration: float,
     bg_image: Image.Image | None = None,
 ) -> list[np.ndarray]:
-    """Pulsing CTA card with subscribe animation."""
     n_frames = int(duration * fps)
-    frames   = []
-    l1_font  = _font(64, bold=True)
-    l2_font  = _font(72, bold=True)
-    h_font   = _font(80, bold=True)
+    l1_font  = _font(62, bold=True)
+    l2_font  = _font(70, bold=True)
+    h_font   = _font(82, bold=True)
     sub_font = _font(30, bold=False)
 
+    frames = []
     for i in range(n_frames):
-        # Pulse effect on handle text
         pulse = 1.0 + 0.04 * math.sin(i * math.pi * 2 / fps)
+        fade  = min(1.0, i / max(int(0.4 * fps), 1))
 
         if bg_image:
-            base = dark_overlay(bg_image.copy().resize((width, height), Image.LANCZOS), 170)
+            # Slight zoom
+            zoom = 1.0 + 0.03 * (i / n_frames)
+            nw, nh = int(width * zoom), int(height * zoom)
+            zx, zy = (nw - width) // 2, (nh - height) // 2
+            zoomed = bg_image.resize((nw, nh), Image.BILINEAR)
+            bg = zoomed.crop((zx, zy, zx + width, zy + height))
+            base = dark_overlay(bg, 165)
         else:
             base = Image.new("RGB", (width, height), (8, 5, 2))
 
         draw = ImageDraw.Draw(base)
+        draw.rectangle([0, 0, width, 5], fill=primary_color)
+        draw.rectangle([0, height - 5, width, height], fill=primary_color)
 
-        draw.rectangle([0, 0, width, 6], fill=primary_color)
-        draw.rectangle([0, height - 6, width, height], fill=primary_color)
-
-        y1 = height // 2 - 220
+        y1 = int(height * 0.22)
         for text, font, color in [
-            (cta_line1, l1_font, (255, 255, 255)),
+            (cta_line1, l1_font, (int(255 * fade), int(255 * fade), int(255 * fade))),
             (cta_line2, l2_font, accent_color),
         ]:
             bbox = draw.textbbox((0, 0), text, font=font)
             x = (width - (bbox[2] - bbox[0])) // 2
             draw.text((x + 2, y1 + 2), text, font=font, fill=(0, 0, 0))
             draw.text((x, y1), text, font=font, fill=color)
-            y1 += (bbox[3] - bbox[1]) + 16
+            y1 += (bbox[3] - bbox[1]) + 14
 
         # Pulsing handle
-        h_size = int(80 * pulse)
-        h_font_p = _font(h_size, bold=True)
-        hbbox = draw.textbbox((0, 0), channel_handle, font=h_font_p)
+        h_size = int(82 * pulse)
+        hfp = _font(h_size, bold=True)
+        hbbox = draw.textbbox((0, 0), channel_handle, font=hfp)
         hx = (width - (hbbox[2] - hbbox[0])) // 2
-        hy = height // 2 + 15
-        draw.text((hx + 3, hy + 3), channel_handle, font=h_font_p, fill=(0, 0, 0))
-        draw.text((hx, hy), channel_handle, font=h_font_p, fill=primary_color)
+        hy = height // 2 + 10
+        draw.text((hx + 3, hy + 3), channel_handle, font=hfp, fill=(0, 0, 0))
+        draw.text((hx, hy), channel_handle, font=hfp, fill=primary_color)
 
-        # Subtext
-        sb_bbox = draw.textbbox((0, 0), cta_subtext, font=sub_font)
-        sx = (width - (sb_bbox[2] - sb_bbox[0])) // 2
-        draw.text((sx, hy + h_size + 20), cta_subtext, font=sub_font, fill=(180, 180, 180))
+        sbb = draw.textbbox((0, 0), cta_subtext, font=sub_font)
+        sx = (width - (sbb[2] - sbb[0])) // 2
+        draw.text((sx, hy + h_size + 18), cta_subtext, font=sub_font,
+                  fill=(175, 175, 175))
 
         frames.append(np.array(base))
 
     return frames
 
 
-# ── FFmpeg color grading (cinematic warm Indian tone) ─────────────────────────
+# ── FFmpeg color grading ───────────────────────────────────────────────────────
 
 def apply_cinematic_grade(input_path: str, output_path: str) -> bool:
-    """
-    Applies cinematic color grading:
-    - Warm color temperature (golden Indian tone)
-    - Slight contrast boost
-    - Subtle vignette
-    - Lifted shadows (cinematic look)
-    """
     vf = (
         "curves=r='0/0 0.2/0.22 0.5/0.55 0.8/0.83 1/1':"
         "g='0/0 0.2/0.2 0.5/0.52 0.8/0.8 1/1':"
-        "b='0/0 0.2/0.17 0.5/0.46 0.8/0.76 1/0.95',"    # warm tone
-        "eq=contrast=1.08:brightness=0.02:saturation=1.12,"   # contrast + sat
-        "vignette=PI/3.5"                                      # vignette
+        "b='0/0 0.2/0.17 0.5/0.46 0.8/0.76 1/0.95',"
+        "eq=contrast=1.07:brightness=0.015:saturation=1.10,"
+        "vignette=PI/4"
     )
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
@@ -486,15 +597,13 @@ def apply_cinematic_grade(input_path: str, output_path: str) -> bool:
     return False
 
 
-# ── Frames → video ────────────────────────────────────────────────────────────
+# ── Frames → video ─────────────────────────────────────────────────────────────
 
 def frames_to_video(frames: list[np.ndarray], output_path: str, fps: int) -> str:
-    """Convert a list of numpy frames to an mp4 via MoviePy."""
     from moviepy import VideoClip
 
     def make_frame(t: float) -> np.ndarray:
-        idx = min(int(t * fps), len(frames) - 1)
-        return frames[idx]
+        return frames[min(int(t * fps), len(frames) - 1)]
 
     duration = len(frames) / fps
     clip = VideoClip(make_frame, duration=duration).with_fps(fps)
@@ -504,40 +613,15 @@ def frames_to_video(frames: list[np.ndarray], output_path: str, fps: int) -> str
     return output_path
 
 
-# ── xfade transition between two clips ───────────────────────────────────────
+# ── xfade concat ──────────────────────────────────────────────────────────────
 
 def xfade_concat(clip_paths: list[str], output_path: str,
                  transition: str = "fade", duration: float = 0.3) -> bool:
-    """Concatenate clips with smooth xfade transitions."""
     if len(clip_paths) == 1:
         import shutil
         shutil.copy2(clip_paths[0], output_path)
         return True
 
-    # Build ffmpeg xfade filter chain
-    n = len(clip_paths)
-    inputs = []
-    for p in clip_paths:
-        inputs += ["-i", p]
-
-    # Build complex filter
-    # We need to calculate cumulative offsets
-    # Get durations first
-    durations = []
-    for p in clip_paths:
-        r = subprocess.run(
-            ["ffprobe", "-v", "quiet", "-print_format", "json",
-             "-show_format", p],
-            capture_output=True, text=True,
-        )
-        import json
-        try:
-            d = float(json.loads(r.stdout)["format"]["duration"])
-        except Exception:
-            d = 3.0
-        durations.append(d)
-
-    # Simple concat for now (xfade gets complex with n>2, use concat filter)
     list_file = output_path + ".concat.txt"
     with open(list_file, "w") as f:
         for p in clip_paths:
@@ -548,7 +632,7 @@ def xfade_concat(clip_paths: list[str], output_path: str,
         "-f", "concat", "-safe", "0",
         "-i", list_file,
         "-c:v", "libx264", "-preset", "ultrafast", "-crf", "22",
-        "-c:a", "aac", "-b:a", "192k",
+        "-an",
         output_path,
     ]
     r = subprocess.run(cmd, capture_output=True, text=True)
