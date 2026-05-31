@@ -165,28 +165,20 @@ def _update_config_url(channel: str) -> None:
 
 def _git_push(paths: list[str]) -> None:
     print("\n  Committing character images to GitHub...")
-    subprocess.run(["git", "add"] + paths, check=True, capture_output=True)
-    # Also add updated configs
-    subprocess.run(
-        ["git", "add", "channels/configs/"],
-        check=True, capture_output=True,
-    )
-    result = subprocess.run(
-        ["git", "diff", "--staged", "--quiet"],
-        capture_output=True,
-    )
+    repo_root = str(Path(__file__).parent.parent)
+    def git(*args):
+        return subprocess.run(["git", "-C", repo_root] + list(args),
+                               check=True, capture_output=True)
+    git("add", *paths)
+    git("add", "channels/configs/")
+    result = subprocess.run(["git", "-C", repo_root, "diff", "--staged", "--quiet"],
+                             capture_output=True)
     if result.returncode == 0:
         print("  Nothing to commit (all images already up to date).")
         return
-    subprocess.run(
-        ["git", "commit", "-m", "feat(characters): add AI host avatars for all 7 channels [skip ci]"],
-        check=True, capture_output=True,
-    )
-    subprocess.run(
-        ["git", "pull", "--rebase", "origin", "main"],
-        check=True, capture_output=True,
-    )
-    subprocess.run(["git", "push", "origin", "main"], check=True, capture_output=True)
+    git("commit", "-m", "feat(characters): add AI host avatars for all 7 channels [skip ci]")
+    git("pull", "--rebase", "origin", "main")
+    git("push", "origin", "main")
     print("  ✅ Pushed to GitHub — D-ID character URLs are now live.")
 
 

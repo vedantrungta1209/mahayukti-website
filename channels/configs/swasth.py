@@ -14,7 +14,7 @@ SECRET_NAME    = "YOUTUBE_SWASTH_TOKEN_JSON"
 CHARACTER_NAME      = "Dr. Anjali"
 CHARACTER_BIO       = "38-year-old health educator and wellness researcher from Mumbai with a Masters in Public Health. Has spent 12 years translating complex medical research into actionable advice for Indian families."
 CHARACTER_STYLE     = "Warm, caring, science-based. Like a doctor friend who gives you real answers, not textbook ones. Uses Indian food and lifestyle examples naturally. Always ends with something the viewer can do TODAY."
-CHARACTER_IMAGE_URL = ""
+CHARACTER_IMAGE_URL = "https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/channels/characters/swasth.jpg"
 
 ELEVENLABS_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"   # Bella — warm caring female
 
