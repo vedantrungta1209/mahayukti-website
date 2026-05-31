@@ -118,19 +118,18 @@ def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> b
             print(f"  Music synth warning: {r1.stderr[:100]}")
             return False
 
-        # Post-process: low-pass filter (removes harshness) + gentle reverb via
-        # adelay + amix + trim to exact duration
+        # Post-process: low-pass (kills harshness) + warmth EQ + room reverb
         cmd_post = [
             "ffmpeg", "-y", "-loglevel", "error",
             "-i", raw_path,
             "-af", (
-                "lowpass=f=4000,"           # cut harsh highs
-                "equalizer=f=200:t=o:w=2:g=3,"   # boost low-mids (warmth)
-                "aecho=0.8:0.6:60:0.4,"    # subtle room reverb
-                "volume=0.85,"              # pull back slightly after reverb
-                f"atrim=0:{duration},"
-                "aformat=sample_rates=44100:channel_layouts=stereo"
+                "lowpass=f=4000,"
+                "equalizer=f=200:t=o:w=2:g=3,"
+                "aecho=0.8:0.6:60:0.4,"
+                "volume=0.85"
             ),
+            "-t", str(duration),
+            "-ar", "44100", "-ac", "2",
             "-c:a", "aac", "-b:a", "192k", output_path,
         ]
         r2 = subprocess.run(cmd_post, capture_output=True, text=True)
