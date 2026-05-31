@@ -37,14 +37,8 @@ jobs:
           if [ "${{ github.event.inputs.force }}" = "true" ]; then
             echo "skip=false" >> $GITHUB_OUTPUT; exit 0
           fi
-          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
-          LAST_TS=$(git log -1 --format="%ct" -- "channels/counters/business_long.txt" 2>/dev/null || echo "")
-          if [ -n "$LAST_TS" ]; then
-            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d 2>/dev/null || date -r $LAST_TS +%Y-%m-%d)
-            [ "$LAST_IST" = "$TODAY_IST" ] && echo "skip=true" >> $GITHUB_OUTPUT || echo "skip=false" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
+          COUNT=$(git log --since="$(date -u +%Y-%m-%dT00:00:00Z)" --format="%s" -- "channels/counters/business_long.txt" | grep -c "counter" || echo 0)
+          [ "$COUNT" -ge 1 ] && echo "skip=true" >> $GITHUB_OUTPUT || echo "skip=false" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-python@v5
         if: steps.guard.outputs.skip != 'true'
