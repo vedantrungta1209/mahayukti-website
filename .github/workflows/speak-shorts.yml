@@ -65,6 +65,7 @@ jobs:
           GH_TOKEN:                      ${{ secrets.GH_TOKEN }}
           ELEVENLABS_API_KEY:            ${{ secrets.ELEVENLABS_API_KEY }}
           D_ID_API_KEY:                  ${{ secrets.D_ID_API_KEY }}
+          PEXELS_API_KEY:                ${{ secrets.PEXELS_API_KEY }}
         run: python runner.py --channel speak --mode short
 
       - name: Persist counter
