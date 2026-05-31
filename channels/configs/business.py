@@ -14,7 +14,7 @@ SECRET_NAME    = "YOUTUBE_BUSINESS_TOKEN_JSON"
 CHARACTER_NAME      = "Arjun"
 CHARACTER_BIO       = "35-year-old ex-IIM MBA turned startup analyst from Mumbai. Has evaluated 200+ Indian startups and brings razor-sharp financial analysis to every story."
 CHARACTER_STYLE     = "Authoritative but accessible English, like a brilliant analyst friend. Uses data and specific numbers. Occasionally drops a sharp Hindi phrase for emphasis."
-CHARACTER_IMAGE_URL = ""
+CHARACTER_IMAGE_URL = "https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/channels/characters/business.jpg"
 
 ELEVENLABS_VOICE_ID = "ErXwobaYiN019PkySvjV"   # Antoni — deep authoritative male
 

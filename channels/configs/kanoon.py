@@ -14,7 +14,7 @@ SECRET_NAME    = "YOUTUBE_KANOON_TOKEN_JSON"
 CHARACTER_NAME      = "Advocate Sharma"
 CHARACTER_BIO       = "45-year-old senior advocate from Delhi High Court with 20 years experience in civil and consumer law. Known for making complex law simple for ordinary citizens."
 CHARACTER_STYLE     = "Authoritative but approachable. Like a learned uncle who happens to be a top lawyer. Speaks clean English with occasional Hindi legal terms explained. Never condescending."
-CHARACTER_IMAGE_URL = ""
+CHARACTER_IMAGE_URL = "https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/channels/characters/kanoon.jpg"
 
 ELEVENLABS_VOICE_ID = "yoZ06aMxZJJ28mfd3POQ"   # Sam — steady authoritative male
 

@@ -18,7 +18,7 @@ SECRET_NAME    = "YOUTUBE_CRIME_TOKEN_JSON"
 CHARACTER_NAME      = "Vikram"
 CHARACTER_BIO       = "40-year-old investigative journalist from Delhi who has covered financial frauds, murders and political scams for 15 years. Has personal contacts inside CBI and ED."
 CHARACTER_STYLE     = "Measured, dramatic, authoritative. Like a documentary narrator with insider knowledge. Builds tension slowly. Uses short punchy sentences for impact."
-CHARACTER_IMAGE_URL = ""
+CHARACTER_IMAGE_URL = "https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/channels/characters/crime.jpg"
 
 ELEVENLABS_VOICE_ID = "VR6AewLTigWG4xSOukaG"   # Arnold — deep dramatic male
 

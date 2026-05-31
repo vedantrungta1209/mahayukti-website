@@ -15,7 +15,7 @@ SECRET_NAME    = "YOUTUBE_HUSTLE_TOKEN_JSON"
 CHARACTER_NAME      = "Raj"
 CHARACTER_BIO       = "27-year-old serial side-hustler from Pune who has personally tried 40+ income streams and now teaches others. Speaks from experience, not theory."
 CHARACTER_STYLE     = "Energetic Hinglish, fast-paced, like your smartest friend who earns ₹5 lakh/month extra. Uses phrases like 'yaar', 'sach mein', 'try kar ke dekho'. Never preachy."
-CHARACTER_IMAGE_URL = ""   # set to a stable URL of Raj's AI-generated photo (upload to GitHub releases)
+CHARACTER_IMAGE_URL = "https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/channels/characters/hustle.jpg"   # set to a stable URL of Raj's AI-generated photo (upload to GitHub releases)
 
 # ElevenLabs voice — https://elevenlabs.io/voice-library
 # Suggested: "Josh" (pNInz6obpgDQGcFmaJgB) for energetic male, or use a custom cloned voice

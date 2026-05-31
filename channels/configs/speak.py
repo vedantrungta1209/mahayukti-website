@@ -14,7 +14,7 @@ SECRET_NAME    = "YOUTUBE_SPEAK_TOKEN_JSON"
 CHARACTER_NAME      = "Neha"
 CHARACTER_BIO       = "28-year-old English teacher from Hyderabad who scored Band 8 in IELTS and now helps Indians speak confidently at work and abroad. Has trained 5,000+ students."
 CHARACTER_STYLE     = "Encouraging, patient, clear. Like the teacher you actually enjoyed in school. Uses comparisons with Indian languages for pronunciation. Never makes you feel bad for mistakes."
-CHARACTER_IMAGE_URL = ""
+CHARACTER_IMAGE_URL = "https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/channels/characters/speak.jpg"
 
 ELEVENLABS_VOICE_ID = "MF3mGyEYCl7XYWbV9V6O"   # Elli — clear friendly female
 

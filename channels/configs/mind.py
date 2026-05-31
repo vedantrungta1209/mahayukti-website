@@ -14,7 +14,7 @@ SECRET_NAME    = "YOUTUBE_MIND_TOKEN_JSON"
 CHARACTER_NAME      = "Priya"
 CHARACTER_BIO       = "32-year-old clinical psychologist from Bangalore with 8 years experience working with Indian families. Trained at NIMHANS. Passionate about making psychology accessible to ordinary Indians."
 CHARACTER_STYLE     = "Warm, non-judgmental, intelligent. Like a therapist friend over coffee. Uses 'yeh bilkul normal hai' when normalising struggles. Never preachy. Science-backed but human."
-CHARACTER_IMAGE_URL = ""
+CHARACTER_IMAGE_URL = "https://raw.githubusercontent.com/vedantrungta1209/mahayukti-website/main/channels/characters/mind.jpg"
 
 ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"   # Rachel — warm empathetic female
 
