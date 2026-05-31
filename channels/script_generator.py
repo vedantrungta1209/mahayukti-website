@@ -92,14 +92,15 @@ def _llm(prompt: str, cfg, max_tokens: int = 2000) -> dict:
             print(f"  Claude error ({e}) — falling back to Groq")
 
     if groq_key:
-        # Groq has strict RPM limits; retry once on 429
-        for attempt in range(2):
+        # Groq has strict RPM limits; retry up to 4 times with exponential backoff
+        for attempt in range(4):
             try:
                 return _call_groq(prompt, groq_key, max_tokens)
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 429 and attempt == 0:
-                    print("  Groq 429 — waiting 65s then retrying...")
-                    time.sleep(65)
+                if e.response.status_code == 429 and attempt < 3:
+                    wait = 65 * (attempt + 1)   # 65s, 130s, 195s
+                    print(f"  Groq 429 — waiting {wait}s then retrying (attempt {attempt+1}/3)...")
+                    time.sleep(wait)
                 else:
                     raise
 
@@ -165,6 +166,15 @@ def generate_long_script(topic: dict, cfg) -> dict:
     affiliates = _affiliate_context(cfg)
     base_prompt = cfg.LONG_PROMPT_TEMPLATE.format(**{k: str(v) for k, v in topic.items()})
 
+    # Strip "full_script" from the JSON schema — it's ~3000 tokens of repeated content
+    # that causes truncation. We rebuild it from structured parts below.
+    base_prompt = re.sub(
+        r'\s*"full_script"\s*:.*?(?=,\s*"|\s*\})',
+        '',
+        base_prompt,
+        flags=re.DOTALL,
+    )
+
     json_inject = _monetization_json_fields()
     if '"title"' in base_prompt:
         prompt = base_prompt.replace('"title"', f'{json_inject}\n  "title"', 1)
@@ -174,4 +184,18 @@ def generate_long_script(topic: dict, cfg) -> dict:
     if character or affiliates:
         prompt = character + affiliates + prompt
 
-    return _llm(prompt, cfg, max_tokens=5500)
+    data = _llm(prompt, cfg, max_tokens=5500)
+
+    # Reconstruct full_script from structured parts (avoids asking LLM to repeat everything)
+    if not data.get("full_script"):
+        parts = []
+        if data.get("intro_script"):
+            parts.append(data["intro_script"])
+        for item in data.get("items", []):
+            if item.get("narration"):
+                parts.append(item["narration"])
+        if data.get("outro_script"):
+            parts.append(data["outro_script"])
+        data["full_script"] = "\n\n".join(parts)
+
+    return data
