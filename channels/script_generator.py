@@ -26,25 +26,38 @@ You ALWAYS return valid JSON and nothing else."""
 
 
 def _call_claude(prompt: str, anthropic_key: str, max_tokens: int = 2000) -> dict:
-    r = requests.post(
-        _CLAUDE_URL,
-        headers={
-            "x-api-key": anthropic_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        },
-        json={
-            "model": _CLAUDE_MODEL,
-            "max_tokens": max_tokens,
-            "system": _QUALITY_SYSTEM,
-            "messages": [{"role": "user", "content": prompt}],
-        },
-        timeout=120,
-    )
-    r.raise_for_status()
-    text = r.json()["content"][0]["text"]
-    m = re.search(r"\{.*\}", text, re.DOTALL)
-    return json.loads(m.group()) if m else {}
+    for attempt in range(2):
+        r = requests.post(
+            _CLAUDE_URL,
+            headers={
+                "x-api-key": anthropic_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": _CLAUDE_MODEL,
+                "max_tokens": max_tokens,
+                "system": _QUALITY_SYSTEM,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=180,
+        )
+        r.raise_for_status()
+        stop_reason = r.json().get("stop_reason", "")
+        text = r.json()["content"][0]["text"]
+        m = re.search(r"\{.*\}", text, re.DOTALL)
+        if not m:
+            raise ValueError("No JSON object found in Claude response")
+        try:
+            return json.loads(m.group())
+        except json.JSONDecodeError:
+            if attempt == 0 and stop_reason == "max_tokens":
+                # Response was truncated — retry with more tokens
+                print(f"  Claude response truncated (max_tokens={max_tokens}), retrying with +1000…")
+                max_tokens = max_tokens + 1000
+                continue
+            raise
+    return {}
 
 
 def _call_groq(prompt: str, groq_key: str, max_tokens: int = 2000) -> dict:

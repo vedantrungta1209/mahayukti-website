@@ -836,15 +836,21 @@ def post_to_facebook(content, sq_path_or_url):
         local_path = candidate if _os.path.exists(candidate) else None
 
     if local_path:
-        with open(local_path, "rb") as f:
-            r = requests.post(
-                f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/photos",
-                files={"source": (local_path, f, "image/jpeg")},
-                data={
-                    "caption":      content["facebook_text"],
-                    "access_token": FB_PAGE_ACCESS_TOKEN,
-                },
-            )
+        # Compress to ≤800KB for Facebook's binary upload limit
+        import io as _io
+        img_obj = Image.open(local_path).convert("RGB")
+        img_obj.thumbnail((1080, 1080), Image.LANCZOS)
+        buf = _io.BytesIO()
+        img_obj.save(buf, "JPEG", quality=82, optimize=True)
+        buf.seek(0)
+        r = requests.post(
+            f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/photos",
+            files={"source": ("photo.jpg", buf, "image/jpeg")},
+            data={
+                "caption":      content["facebook_text"],
+                "access_token": FB_PAGE_ACCESS_TOKEN,
+            },
+        )
     else:
         # Fallback: URL-based (may fail if Cloudflare blocks Facebook's crawler)
         r = requests.post(
