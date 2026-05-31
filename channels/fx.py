@@ -259,25 +259,23 @@ def make_cold_open_frames(
                            accent_color, progress=slide)
         draw = ImageDraw.Draw(base)
 
-        # Headline
-        hl_lines = _wrap(headline, hl_font, width - 100)
+        # Headline — left-aligned from left margin
+        lm = 56   # left margin
+        hl_lines = _wrap(headline, hl_font, width - lm * 2)
         y_start = height // 2 - len(hl_lines) * (hl_size + 12) // 2 + y_offset
         for line in hl_lines:
-            bbox = draw.textbbox((0, 0), line, font=hl_font)
-            x = (width - (bbox[2] - bbox[0])) // 2
+            x = lm
             draw.text((x + 3, y_start + 3), line, font=hl_font, fill=(0, 0, 0))
             draw.text((x, y_start), line, font=hl_font,
                       fill=(int(255 * alpha), int(255 * alpha), int(255 * alpha)))
             y_start += hl_size + 12
 
-        # Subtext
+        # Subtext — left-aligned
         if subtext:
-            sub_lines = _wrap(subtext, sub_font, width - 120)
+            sub_lines = _wrap(subtext, sub_font, width - lm * 2)
             y_sub = y_start + 18 + y_offset
             for line in sub_lines:
-                bbox = draw.textbbox((0, 0), line, font=sub_font)
-                x = (width - (bbox[2] - bbox[0])) // 2
-                draw.text((x, y_sub), line, font=sub_font,
+                draw.text((lm, y_sub), line, font=sub_font,
                           fill=(int(primary_color[0] * alpha),
                                 int(primary_color[1] * alpha),
                                 int(primary_color[2] * alpha)))
@@ -385,57 +383,62 @@ def make_kinetic_slide_frames(
     is_short: bool = True,
 ) -> list[np.ndarray]:
     """
-    Card-based kinetic slide:
-    - Background visible at ~55% opacity (not crushed black)
-    - Rounded dark card behind text
-    - Accent left border on card
-    - Word-by-word reveal over 1.2s
-    - Continuous subtle Ken Burns zoom on background
-    - Large bold font (78px short / 62px long)
+    Left-anchored bottom strip layout (not centered card):
+    - Background fully visible in top ~50% (shorts) / full frame (long)
+    - Heavy gradient darkens only the bottom strip where text lives
+    - Card spans near-full width, anchored to left edge (not centered)
+    - Text: left-aligned, large font, word-by-word reveal
+    - Ken Burns zoom on background throughout
     """
-    words     = text.split()
-    n_frames  = int(duration * fps)
-    reveal_frames = min(int(1.2 * fps), max(n_frames // 3, int(0.4 * fps)))
+    words  = text.split()
+    n_frames      = int(duration * fps)
+    reveal_frames = min(int(1.2 * fps), max(n_frames // 3, int(0.5 * fps)))
 
-    txt_size  = 78 if is_short else 62
-    txt_font  = _font(txt_size, bold=True)
-    lbl_size  = 26
-    lbl_font  = _font(lbl_size, bold=True)
+    txt_size = 72 if is_short else 58
+    txt_font = _font(txt_size, bold=True)
+    lbl_size = 24
 
-    # Text layout (pre-compute)
-    pad_x, pad_y = 52, 40
-    max_text_w = int(width * 0.84) - pad_x * 2
-    lines    = _wrap(text, txt_font, max_text_w)
-    line_h   = txt_size + 18
-    label_h  = (lbl_size + 28) if label else 0
+    # Layout — full width strip, left-anchored
+    margin   = 28          # px from left/right edge
+    pad_x    = 36
+    pad_y    = 32
+    label_h  = (lbl_size + 26) if label else 0
+    max_tw   = width - margin * 2 - pad_x * 2
+    lines    = _wrap(text, txt_font, max_tw)
+    line_h   = txt_size + 16
     text_h   = len(lines) * line_h
-    card_w   = int(width * 0.84)
-    card_h   = pad_y * 2 + label_h + text_h
-    card_x   = (width - card_w) // 2
-    # Position: bottom 55% area for shorts (leave room for caption bar), center for long-form
-    card_y   = int(height * 0.42) if is_short else (height - card_h) // 2
+    card_w   = width - margin * 2
+    card_h   = pad_y * 2 + label_h + text_h + 8
+
+    # Anchor: bottom of screen for shorts, vertical-centre for long
+    if is_short:
+        card_y = height - card_h - 40   # 40px from bottom edge
+    else:
+        card_y = height - card_h - 60
+    card_x = margin   # LEFT-anchored, not centered
 
     frames = []
     for i in range(n_frames):
         # Ken Burns on background
         if bg_image:
             zoom = 1.0 + 0.05 * (i / n_frames)
-            nw   = int(width * zoom)
-            nh   = int(height * zoom)
-            zx   = (nw - width) // 2
-            zy   = (nh - height) // 2
+            nw, nh = int(width * zoom), int(height * zoom)
+            zx, zy = (nw - width) // 2, (nh - height) // 2
             zoomed = bg_image.resize((nw, nh), Image.BILINEAR)
-            bg   = zoomed.crop((zx, zy, zx + width, zy + height))
-            base = dark_overlay(bg, opacity=95)   # lighter than before
-            if is_short:
-                base = gradient_overlay(base, top_opacity=0, bottom_opacity=160)
+            bg = zoomed.crop((zx, zy, zx + width, zy + height))
+            # Light overlay on whole frame
+            base = dark_overlay(bg, opacity=70)
+            # Strong gradient darkening only the bottom strip (where card lives)
+            base = gradient_overlay(base, top_opacity=0,
+                                    bottom_opacity=200 if is_short else 170)
         else:
             base = Image.new("RGB", (width, height), (10, 8, 4))
 
-        # Semi-transparent card
+        # Dark card (semi-transparent, left-anchored, full-width)
         base = _composite_card(base, card_x, card_y, card_w, card_h,
-                               fill_rgba=(0, 0, 0, 195), radius=20)
-        # Accent left border
+                               fill_rgba=(0, 0, 0, 185), radius=16)
+
+        # Accent left border stripe on card
         ab = Image.new("RGBA", (width, height), (0, 0, 0, 0))
         abd = ImageDraw.Draw(ab)
         abd.rounded_rectangle(
@@ -448,42 +451,44 @@ def make_kinetic_slide_frames(
 
         draw = ImageDraw.Draw(base)
 
-        # Label chip inside card (top-left of card with padding)
+        # Label chip — top-left inside card
         if label:
             _draw_label_chip(draw, label, primary_color, (255, 255, 255),
-                             card_x + pad_x, card_y + 14)
+                             card_x + pad_x, card_y + 12)
 
-        # Word reveal
-        n_revealed = len(words) if i >= reveal_frames else max(1, int(len(words) * i / reveal_frames))
+        # Word-by-word reveal
+        n_rev = (len(words) if i >= reveal_frames
+                 else max(1, int(len(words) * i / reveal_frames)))
 
-        # Draw text
+        # Draw text — strictly left-aligned from card_x + pad_x
         ty = card_y + pad_y + label_h
-        revealed_left = n_revealed
+        rev_left = n_rev
         for line in lines:
-            lw = line.split()
-            n_draw = min(len(lw), revealed_left)
-            revealed_left -= n_draw
+            lw  = line.split()
+            n_d = min(len(lw), rev_left)
+            rev_left -= n_d
+            tx  = card_x + pad_x   # always restart from left edge per line
 
-            # X position: left-align inside card
-            tx = card_x + pad_x
-
-            drawn  = " ".join(lw[:n_draw])
-            undawn = " ".join(lw[n_draw:])
+            drawn  = " ".join(lw[:n_d])
+            undawn = " ".join(lw[n_d:])
 
             if drawn:
+                # Shadow
                 draw.text((tx + 2, ty + 2), drawn, font=txt_font, fill=(0, 0, 0))
+                # Revealed: bright white
                 draw.text((tx, ty), drawn, font=txt_font, fill=(255, 255, 255))
-                dbbox = draw.textbbox((0, 0), drawn + " ", font=txt_font)
-                tx += dbbox[2] - dbbox[0]
+                dx = draw.textbbox((0, 0), drawn + " ", font=txt_font)
+                tx += dx[2] - dx[0]
 
             if undawn:
-                draw.text((tx, ty), undawn, font=txt_font, fill=(55, 55, 55))
+                # Unrevealed: dim grey
+                draw.text((tx, ty), undawn, font=txt_font, fill=(60, 60, 60))
 
             ty += line_h
 
-        # Bottom accent bar
-        draw.rectangle([0, height - 5, width, height], fill=primary_color)
-        draw.rectangle([0, 0, width, 5], fill=primary_color)
+        # Thin accent bar at very top and bottom of screen
+        draw.rectangle([0, height - 4, width, height], fill=primary_color)
+        draw.rectangle([0, 0, width, 4], fill=primary_color)
 
         frames.append(np.array(base))
 
@@ -538,32 +543,28 @@ def make_cta_frames(
             base = Image.new("RGB", (width, height), (8, 5, 2))
 
         draw = ImageDraw.Draw(base)
-        draw.rectangle([0, 0, width, 5], fill=primary_color)
-        draw.rectangle([0, height - 5, width, height], fill=primary_color)
+        draw.rectangle([0, 0, width, 4], fill=primary_color)
+        draw.rectangle([0, height - 4, width, height], fill=primary_color)
 
+        lm = 56   # left margin — matches slide layout
         y1 = int(height * 0.22)
         for text, font, color in [
             (cta_line1, l1_font, (int(255 * fade), int(255 * fade), int(255 * fade))),
             (cta_line2, l2_font, accent_color),
         ]:
+            draw.text((lm + 2, y1 + 2), text, font=font, fill=(0, 0, 0))
+            draw.text((lm, y1), text, font=font, fill=color)
             bbox = draw.textbbox((0, 0), text, font=font)
-            x = (width - (bbox[2] - bbox[0])) // 2
-            draw.text((x + 2, y1 + 2), text, font=font, fill=(0, 0, 0))
-            draw.text((x, y1), text, font=font, fill=color)
             y1 += (bbox[3] - bbox[1]) + 14
 
-        # Pulsing handle
+        # Pulsing handle — left-aligned
         h_size = int(82 * pulse)
         hfp = _font(h_size, bold=True)
-        hbbox = draw.textbbox((0, 0), channel_handle, font=hfp)
-        hx = (width - (hbbox[2] - hbbox[0])) // 2
         hy = height // 2 + 10
-        draw.text((hx + 3, hy + 3), channel_handle, font=hfp, fill=(0, 0, 0))
-        draw.text((hx, hy), channel_handle, font=hfp, fill=primary_color)
+        draw.text((lm + 3, hy + 3), channel_handle, font=hfp, fill=(0, 0, 0))
+        draw.text((lm, hy), channel_handle, font=hfp, fill=primary_color)
 
-        sbb = draw.textbbox((0, 0), cta_subtext, font=sub_font)
-        sx = (width - (sbb[2] - sbb[0])) // 2
-        draw.text((sx, hy + h_size + 18), cta_subtext, font=sub_font,
+        draw.text((lm, hy + h_size + 18), cta_subtext, font=sub_font,
                   fill=(175, 175, 175))
 
         frames.append(np.array(base))

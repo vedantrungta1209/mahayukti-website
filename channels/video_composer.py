@@ -61,25 +61,27 @@ def _get_bg(category: str, topic: str, w: int, h: int, cfg) -> Image.Image | Non
     return _fg_bg(category, topic, w, h, cfg)
 
 
-def _burn_subtitles(video_path: str, srt_path: str) -> None:
+def _attach_subtitles(video_path: str, srt_path: str) -> None:
+    """Mux SRT as a soft subtitle track so YouTube picks it up automatically.
+    Does NOT burn text into the picture — kinetic slides are the visual story."""
     tmp = video_path.replace(".mp4", "_nosub.mp4")
     os.rename(video_path, tmp)
-    srt_abs = str(Path(srt_path).resolve())
-    style = (
-        "FontName=DejaVu Sans,FontSize=30,PrimaryColour=&H00FFFFFF,"
-        "BorderStyle=3,BackColour=&H99000000,Outline=0,Shadow=0,"
-        "Alignment=2,MarginV=80"
-    )
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
-        "-i", tmp,
-        "-vf", f"subtitles={srt_abs}:force_style='{style}'",
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "20",
-        "-c:a", "copy", video_path,
+        "-i", tmp, "-i", srt_path,
+        "-map", "0:v", "-map", "0:a", "-map", "1:s",
+        "-c:v", "copy", "-c:a", "copy",
+        "-c:s", "mov_text",
+        "-metadata:s:s:0", "language=hin",
+        video_path,
     ]
-    subprocess.run(cmd, capture_output=True)
+    result = subprocess.run(cmd, capture_output=True)
     Path(tmp).unlink(missing_ok=True)
-    print("  Subtitles burned in.")
+    if result.returncode == 0:
+        print("  Subtitles muxed as soft track.")
+    else:
+        # mov_text mux failed — just keep the video without subtitle track
+        os.rename(tmp, video_path) if Path(tmp).exists() else None
 
 
 def _detect_stat(script_data: dict) -> tuple[str, int, str] | None:
@@ -248,7 +250,7 @@ def compose_short(audio_path: str, script_data: dict, output_path: str,
 
     # 8. Subtitles
     if srt_path and Path(srt_path).exists():
-        _burn_subtitles(output_path, srt_path)
+        _attach_subtitles(output_path, srt_path)
 
     # 9. Cinematic grade
     graded = output_path.replace(".mp4", "_graded.mp4")
@@ -401,7 +403,7 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
 
     # 7. Subtitles
     if srt_path and Path(srt_path).exists():
-        _burn_subtitles(output_path, srt_path)
+        _attach_subtitles(output_path, srt_path)
 
     # 8. Cinematic grade
     graded = output_path.replace(".mp4", "_graded.mp4")
