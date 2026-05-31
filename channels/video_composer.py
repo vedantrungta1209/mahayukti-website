@@ -211,7 +211,7 @@ def compose_short(audio_path: str, script_data: dict, output_path: str,
 
         if broll_clip:
             # Overlay kinetic text onto b-roll
-                        bg_frame = Image.fromarray(broll_clip.get_frame(0).astype(np.uint8))
+            bg_frame = Image.fromarray(broll_clip.get_frame(0).astype(np.uint8))
             k_frames = make_kinetic_slide_frames(
                 text, label, primary, accent, w, h, fps, duration,
                 bg_image=bg_frame, is_short=True,
