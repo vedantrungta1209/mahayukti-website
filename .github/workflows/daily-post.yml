@@ -2,8 +2,17 @@ name: MahaYukti Daily Marketing Automation
 
 on:
   schedule:
-    - cron: '30 2 * * *'   # 8:00 AM IST (morning — clients)
-    - cron: '30 12 * * *'  # 6:00 PM IST (evening — members)
+    # LinkedIn max-reach schedule: Tue–Sat only (Sun/Mon lowest engagement on LI)
+    # Morning: 8:30 AM IST (professionals check LI before work) — Tue, Wed, Thu, Fri, Sat
+    - cron: '0 3 * * 2'    # Tuesday   8:30 AM IST — morning
+    - cron: '0 3 * * 3'    # Wednesday 8:30 AM IST — morning
+    - cron: '0 3 * * 4'    # Thursday  8:30 AM IST — morning
+    - cron: '0 3 * * 5'    # Friday    8:30 AM IST — morning
+    - cron: '0 3 * * 6'    # Saturday  8:30 AM IST — morning
+    # Evening: 6:00 PM IST (post-work scroll) — Tue, Wed, Thu only (Fri/Sat evenings are dead)
+    - cron: '30 12 * * 2'  # Tuesday   6:00 PM IST — evening
+    - cron: '30 12 * * 3'  # Wednesday 6:00 PM IST — evening
+    - cron: '30 12 * * 4'  # Thursday  6:00 PM IST — evening
   workflow_dispatch:
     inputs:
       post_type:
@@ -31,7 +40,7 @@ on:
 # If GitHub fires the delayed original cron after the guardian already triggered a run,
 # the second run queues, sees the counter was updated today, and exits immediately.
 concurrency:
-  group: daily-post-${{ github.event.inputs.post_type || (github.event.schedule == '30 2 * * *' && 'morning' || 'evening') }}
+  group: daily-post-${{ github.event.inputs.post_type || (contains(github.event.schedule, '0 3') && 'morning' || 'evening') }}
   cancel-in-progress: false
 
 env:
@@ -55,7 +64,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             POST_TYPE="${{ github.event.inputs.post_type }}"
-          elif [ "${{ github.event.schedule }}" = "30 2 * * *" ]; then
+          elif echo "${{ github.event.schedule }}" | grep -q "0 3"; then
             POST_TYPE="morning"
           else
             POST_TYPE="evening"
@@ -123,16 +132,18 @@ jobs:
       - name: Run automation
         if: steps.guard.outputs.skip != 'true'
         env:
-          ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
-          GH_TOKEN:               ${{ secrets.GH_TOKEN }}
-          POST_TYPE:              ${{ env.POST_TYPE }}
-          LINKEDIN_ACCESS_TOKEN:  ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
-          LINKEDIN_AUTHOR_URN:    ${{ secrets.LINKEDIN_AUTHOR_URN }}
-          FB_PAGE_ACCESS_TOKEN:   ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
-          FB_PAGE_ID:             ${{ secrets.FB_PAGE_ID }}
-          IG_USER_ID:             ${{ secrets.IG_USER_ID }}
-          YOUTUBE_TOKEN_JSON:     ${{ secrets.YOUTUBE_MARKETING_TOKEN_JSON }}
-          ONLY_PLATFORMS:         ${{ github.event.inputs.only_platforms }}
+          ANTHROPIC_API_KEY:            ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN:                     ${{ secrets.GH_TOKEN }}
+          POST_TYPE:                    ${{ env.POST_TYPE }}
+          LINKEDIN_ACCESS_TOKEN:        ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN:          ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          MAKE_LINKEDIN_WEBHOOK_URL:    ${{ secrets.MAKE_LINKEDIN_WEBHOOK_URL }}
+          IMGBB_API_KEY:                ${{ secrets.IMGBB_API_KEY }}
+          FB_PAGE_ACCESS_TOKEN:         ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+          FB_PAGE_ID:                   ${{ secrets.FB_PAGE_ID }}
+          IG_USER_ID:                   ${{ secrets.IG_USER_ID }}
+          YOUTUBE_TOKEN_JSON:           ${{ secrets.YOUTUBE_MARKETING_TOKEN_JSON }}
+          ONLY_PLATFORMS:               ${{ github.event.inputs.only_platforms }}
         run: python scripts/generate_and_post.py
 
       - name: Commit topic counter

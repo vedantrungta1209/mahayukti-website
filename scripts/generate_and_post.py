@@ -16,8 +16,10 @@ POST_TYPE             = os.environ.get("POST_TYPE", "morning")  # "morning" or "
 ONLY_PLATFORMS        = os.environ.get("ONLY_PLATFORMS", "")    # comma-separated: "instagram", "linkedin", etc. Empty = all
 
 # Social platform credentials (set as GitHub Actions secrets)
-LINKEDIN_ACCESS_TOKEN = os.environ.get("LINKEDIN_ACCESS_TOKEN", "")
-LINKEDIN_AUTHOR_URN   = os.environ.get("LINKEDIN_AUTHOR_URN", "")    # urn:li:organization:XXX
+LINKEDIN_ACCESS_TOKEN     = os.environ.get("LINKEDIN_ACCESS_TOKEN", "")
+LINKEDIN_AUTHOR_URN       = os.environ.get("LINKEDIN_AUTHOR_URN", "")
+MAKE_LINKEDIN_WEBHOOK_URL = os.environ.get("MAKE_LINKEDIN_WEBHOOK_URL", "")  # Make.com fallback
+IMGBB_API_KEY             = os.environ.get("IMGBB_API_KEY", "")              # for public image URLs
 FB_PAGE_ACCESS_TOKEN  = os.environ.get("FB_PAGE_ACCESS_TOKEN", "")
 FB_PAGE_ID            = os.environ.get("FB_PAGE_ID", "")
 IG_USER_ID            = os.environ.get("IG_USER_ID", "")
@@ -313,6 +315,18 @@ HARD RULES — never break:
 - Titles must be specific to the scenario — never a template.
 - LinkedIn must sound like a real person wrote it, not a PR agency.
 
+LINKEDIN MAXIMUM REACH RULES (follow these exactly for the linkedin_text field):
+- First line MUST stop the scroll. Use a surprising stat, a provocative statement, or a scene.
+  Examples: "Most Indian startups don't die from competition. They die from the wrong advice."
+  Or: "A Pune CFO spent ₹8 lakh on a Big 4 consultant. The consultant had never worked in manufacturing."
+- NEVER start with "I" — LinkedIn algorithm deprioritises first-person openers.
+- Short paragraphs. Max 2 lines per paragraph. White space = engagement.
+- No bullet points. Prose only. Lists kill LinkedIn reach.
+- End with ONE open question that invites comments. Comments = distribution.
+  Example: "Has anyone here had a similar experience finding the right expert in India?"
+- Maximum 3 hashtags. More kills reach. Choose specific ones: #MahayuktiNetwork #ExpertNetwork #IndiaStartup
+- The "...see more" fold is after line 3. Lines 1-3 must make the reader click to expand.
+
 Respond ONLY with a valid JSON object. No markdown. No preamble. No backticks.\
 """
 
@@ -349,7 +363,7 @@ Return this exact JSON:
   "title": "Blog post title — specific to {subdomain} scenario, not a template (8-12 words)",
   "excerpt": "One sentence that hits the exact pain point for {subdomain} clients (max 25 words)",
   "blog_content": "Full blog post (900-1100 words). Use the content angle to open. Explain the specific problem in {domain}/{subdomain}. Show why finding the right expert in India is broken. Introduce Mahayukti clearly — what it is, how it works for a client, why it is different. Give 2 specific use cases in {subdomain}. End with direct CTA to mahayukti.com. Paragraph breaks only — no bullet points.",
-  "linkedin_text": "LinkedIn post (180-220 words). Open with the specific pain point. Explain what Mahayukti is in plain language. Show how it works in 3 steps. End with: 'Describe your problem at mahayukti.com'. Sound like a real person — not a brand account.",
+  "linkedin_text": "LinkedIn post (180-220 words). FIRST LINE must be a scroll-stopper stat or provocative truth about {subdomain} in India — NOT 'I' and NOT generic. Short paragraphs (1-2 lines, lots of white space). Explain the gap Mahayukti fills. End with a genuine question inviting comments. CTA: 'Describe your problem at mahayukti.com'. Use max 3 hashtags at end. Sound like a real founding team member sharing a genuine observation — not a brand.",
   "instagram_caption": "Instagram caption (90-110 words). Hook in first line. Explain Mahayukti in 2 sentences. Specific scenario. CTA: mahayukti.com. 8-10 relevant hashtags at end.",
   "facebook_text": "Facebook post (120-160 words). Conversational and relatable. Specific Indian scenario. Explain what Mahayukti does. Clear CTA at end.",
   "image_headline": "Bold image headline (max 7 words, specific to the problem — not generic)",
@@ -387,7 +401,7 @@ Return this exact JSON:
   "title": "Blog post title — specific to {subdomain} professionals, not a template (8-12 words)",
   "excerpt": "One sentence speaking to the professional opportunity for {subdomain} experts (max 25 words)",
   "blog_content": "Full blog post (900-1100 words). Use the content angle to open — speak directly to a {subdomain} professional's reality. Show the gap: their expertise exists but clients can't reach them. Introduce Mahayukti clearly — what it is, how it works for a Member. Paint a specific picture of what being in the network looks like. Explain the join process. Close with direct CTA to apply at mahayukti.com. Paragraph breaks only — no bullet points.",
-  "linkedin_text": "LinkedIn post (180-220 words). Speak directly to {subdomain} professionals. Open with a truth they recognise about their work. Explain Mahayukti in plain language. Show what joining means in 3 steps. End with: 'Apply to join at mahayukti.com'. Sound like a real colleague — not a recruitment ad.",
+  "linkedin_text": "LinkedIn post (180-220 words). FIRST LINE must be an identity-affirming truth or uncomfortable observation about being a top {subdomain} professional in India — NOT 'I' and NOT generic. Short paragraphs, lots of white space. End with a question that makes {subdomain} professionals want to comment. CTA: 'Apply to join at mahayukti.com'. Max 3 hashtags. Sound like a respected peer sharing a real insight.",
   "instagram_caption": "Instagram caption (90-110 words). Identity-affirming hook. 2-sentence Mahayukti explanation. What they gain. CTA: mahayukti.com. 8-10 hashtags.",
   "facebook_text": "Facebook post (120-160 words). Community feel — belonging and opportunity. Specific to {subdomain}. Explain Mahayukti clearly. CTA to apply.",
   "image_headline": "Bold image headline (max 7 words, speaks to the professional — identity-affirming)",
@@ -713,49 +727,97 @@ _LI_HEADERS = lambda: {
     "Content-Type":             "application/json",
 }
 
-def post_to_linkedin(content, sq_path):
+
+def _upload_image_imgbb(image_path: str) -> str | None:
+    """Upload image to imgbb and return public URL. Free, no account needed beyond API key."""
+    if not IMGBB_API_KEY:
+        return None
+    with open(image_path, "rb") as f:
+        img_b64 = base64.b64encode(f.read()).decode()
+    r = requests.post(
+        "https://api.imgbb.com/1/upload",
+        data={"key": IMGBB_API_KEY, "image": img_b64},
+        timeout=30,
+    )
+    if r.ok:
+        return r.json()["data"]["url"]
+    print(f"  imgbb upload failed: {r.status_code} {r.text[:200]}")
+    return None
+
+
+def _post_linkedin_via_make(content: dict, image_url: str | None) -> bool:
+    """Post to LinkedIn via Make.com webhook scenario."""
+    if not MAKE_LINKEDIN_WEBHOOK_URL:
+        return False
+    payload = {
+        "text":      content["linkedin_text"],
+        "title":     content.get("title", ""),
+        "image_url": image_url or "",
+    }
+    r = requests.post(MAKE_LINKEDIN_WEBHOOK_URL, json=payload, timeout=30)
+    if r.ok:
+        print("✅ LinkedIn posted via Make.com webhook")
+        return True
+    print(f"⚠️  Make.com webhook failed ({r.status_code}): {r.text[:200]}")
+    return False
+
+
+def _post_linkedin_direct(content: dict, sq_path: str) -> bool:
+    """Post to LinkedIn directly via REST API (requires approved app + valid token)."""
     if not LINKEDIN_ACCESS_TOKEN or not LINKEDIN_AUTHOR_URN:
-        print("⚠️  LinkedIn credentials missing — skipping")
+        return False
+    try:
+        init = requests.post(
+            "https://api.linkedin.com/rest/images?action=initializeUpload",
+            headers=_LI_HEADERS(),
+            json={"initializeUploadRequest": {"owner": LINKEDIN_AUTHOR_URN}},
+        )
+        init.raise_for_status()
+        val        = init.json()["value"]
+        upload_url = val["uploadUrl"]
+        image_urn  = val["image"]
+
+        with open(sq_path, "rb") as f:
+            requests.put(
+                upload_url, data=f,
+                headers={"Authorization": f"Bearer {LINKEDIN_ACCESS_TOKEN}",
+                         "Content-Type": "application/octet-stream"},
+            ).raise_for_status()
+
+        requests.post(
+            "https://api.linkedin.com/rest/posts",
+            headers=_LI_HEADERS(),
+            json={
+                "author":         LINKEDIN_AUTHOR_URN,
+                "commentary":     content["linkedin_text"],
+                "visibility":     "PUBLIC",
+                "distribution":   {"feedDistribution": "MAIN_FEED",
+                                   "targetEntities": [],
+                                   "thirdPartyDistributionChannels": []},
+                "content":        {"media": {"title": content["title"], "id": image_urn}},
+                "lifecycleState": "PUBLISHED",
+                "isReshareDisabledByAuthor": False,
+            },
+        ).raise_for_status()
+        print("✅ LinkedIn posted via direct API")
+        return True
+    except Exception as e:
+        print(f"⚠️  LinkedIn direct API failed: {e}")
+        return False
+
+
+def post_to_linkedin(content, sq_path):
+    # Path 1: Make.com webhook (works while LinkedIn API app is under review)
+    if MAKE_LINKEDIN_WEBHOOK_URL:
+        image_url = _upload_image_imgbb(sq_path)
+        if _post_linkedin_via_make(content, image_url):
+            return
+
+    # Path 2: Direct LinkedIn REST API (once app is approved)
+    if _post_linkedin_direct(content, sq_path):
         return
 
-    # 1. Initialize image upload (owner = person or org URN, both work)
-    init = requests.post(
-        "https://api.linkedin.com/rest/images?action=initializeUpload",
-        headers=_LI_HEADERS(),
-        json={"initializeUploadRequest": {"owner": LINKEDIN_AUTHOR_URN}},
-    )
-    init.raise_for_status()
-    val        = init.json()["value"]
-    upload_url = val["uploadUrl"]
-    image_urn  = val["image"]
-
-    # 2. Upload image binary
-    with open(sq_path, "rb") as f:
-        up = requests.put(
-            upload_url,
-            data=f,
-            headers={"Authorization": f"Bearer {LINKEDIN_ACCESS_TOKEN}",
-                     "Content-Type": "application/octet-stream"},
-        )
-        up.raise_for_status()
-
-    # 3. Publish post
-    requests.post(
-        "https://api.linkedin.com/rest/posts",
-        headers=_LI_HEADERS(),
-        json={
-            "author":         LINKEDIN_AUTHOR_URN,
-            "commentary":     content["linkedin_text"],
-            "visibility":     "PUBLIC",
-            "distribution":   {"feedDistribution": "MAIN_FEED",
-                               "targetEntities": [],
-                               "thirdPartyDistributionChannels": []},
-            "content":        {"media": {"title": content["title"], "id": image_urn}},
-            "lifecycleState": "PUBLISHED",
-            "isReshareDisabledByAuthor": False,
-        },
-    ).raise_for_status()
-    print("✅ LinkedIn posted")
+    print("⚠️  LinkedIn skipped — set MAKE_LINKEDIN_WEBHOOK_URL or LINKEDIN_ACCESS_TOKEN+LINKEDIN_AUTHOR_URN")
 
 
 def post_to_facebook(content, sq_url):

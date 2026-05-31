@@ -1,0 +1,78 @@
+name: Mahayukti Speak — Long-form (Tue/Thu)
+
+on:
+  schedule:
+    - cron: '30 13 * * 2'  # Tuesday   7:00 PM IST
+    - cron: '30 13 * * 4'  # Thursday  7:00 PM IST
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force run'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+concurrency:
+  group: speak-long
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  long:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Idempotency check
+        id: guard
+        run: |
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT; exit 0
+          fi
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          LAST_TS=$(git log -1 --format="%ct" -- "channels/counters/speak_long.txt" 2>/dev/null || echo "")
+          if [ -n "$LAST_TS" ]; then
+            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d 2>/dev/null || date -r $LAST_TS +%Y-%m-%d)
+            [ "$LAST_IST" = "$TODAY_IST" ] && echo "skip=true" >> $GITHUB_OUTPUT || echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg fonts-liberation fonts-dejavu-core
+          pip install -r channels/requirements.txt
+
+      - name: Generate and upload
+        if: steps.guard.outputs.skip != 'true'
+        working-directory: channels
+        env:
+          GROQ_API_KEY:               ${{ secrets.GROQ_API_KEY }}
+          ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}
+          YOUTUBE_SPEAK_TOKEN_JSON:   ${{ secrets.YOUTUBE_SPEAK_TOKEN_JSON }}
+          GH_TOKEN:                      ${{ secrets.GH_TOKEN }}
+          ELEVENLABS_API_KEY:            ${{ secrets.ELEVENLABS_API_KEY }}
+          D_ID_API_KEY:                  ${{ secrets.D_ID_API_KEY }}
+        run: python runner.py --channel speak --mode long
+
+      - name: Persist counter
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add channels/counters/
+          git diff --staged --quiet || git commit -m "chore: speak long counter [skip ci]"
+          git pull --rebase origin main && git push
