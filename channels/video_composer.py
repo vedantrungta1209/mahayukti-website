@@ -380,7 +380,7 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
             progress = min(1.0, (fi - lt_start) / max(int(0.4 * fps), 1))
             img = Image.fromarray(frames_c_list[fi])
             draw = _ID.Draw(img)
-                make_lower_third_overlay(
+            make_lower_third_overlay(
                 draw, char_name, getattr(cfg, "CHANNEL_NAME", ""),
                 primary, accent, w, h, progress,
             )
