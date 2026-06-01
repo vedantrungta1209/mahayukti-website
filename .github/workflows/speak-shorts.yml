@@ -1,9 +1,7 @@
 name: Mahayukti Speak — Shorts (1× daily)
 
 on:
-  schedule:
-    - cron: '30 2 * * *'   # 8:00 AM IST — morning learning habit
-  workflow_dispatch:
+  workflow_dispatch:  # paused — re-enable schedule when resuming this channel
     inputs:
       force:
         description: 'Force run'

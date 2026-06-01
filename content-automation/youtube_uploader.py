@@ -51,6 +51,10 @@ def upload_video(
     creds = _get_credentials()
     yt = build("youtube", "v3", credentials=creds)
 
+    # Ensure YouTube classifies this as a Short
+    if "#Shorts" not in title:
+        title = (title[:93] + " #Shorts") if len(title) > 93 else title + " #Shorts"
+
     body = {
         "snippet": {
             "title": title[:100],

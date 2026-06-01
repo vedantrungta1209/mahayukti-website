@@ -1,11 +1,7 @@
 name: Mahayukti Swasth — Long-form (Tue/Thu/Sat)
 
 on:
-  schedule:
-    - cron: '0 13 * * 2'   # Tuesday   6:30 PM IST
-    - cron: '0 13 * * 4'   # Thursday  6:30 PM IST
-    - cron: '0 13 * * 6'   # Saturday  6:30 PM IST
-  workflow_dispatch:
+  workflow_dispatch:  # paused — re-enable schedule when resuming this channel
     inputs:
       force:
         description: 'Force run'

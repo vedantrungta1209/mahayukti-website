@@ -1,10 +1,7 @@
 name: Mahayukti Hustle — Long-form (Mon/Thu)
 
 on:
-  schedule:
-    - cron: '30 13 * * 1'  # Monday    7:00 PM IST
-    - cron: '30 13 * * 4'  # Thursday  7:00 PM IST
-  workflow_dispatch:
+  workflow_dispatch:  # paused — re-enable schedule when resuming this channel
     inputs:
       force:
         description: 'Force run'

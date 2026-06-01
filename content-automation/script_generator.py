@@ -32,43 +32,32 @@ def _sanitize(data: dict) -> dict:
 def generate_script(topic: dict) -> dict:
     client = Groq(api_key=GROQ_API_KEY)
 
-    prompt = f"""You are a senior financial analyst and head scriptwriter for "{CHANNEL_NAME}" ({CHANNEL_HANDLE}), a professional Indian personal finance YouTube channel that helps urban Indians make informed, data-driven financial decisions.
+    prompt = f"""You are the scriptwriter for "{CHANNEL_NAME}" ({CHANNEL_HANDLE}), a YouTube Shorts channel for urban Indians aged 22-40 who want practical, data-driven personal finance advice.
 
 Topic: "{topic['angle']}"
 Category: {topic['category']}
 
-⚠️  ABSOLUTE RULE: This channel is MAHAYUKTI FINANCE. The old channel name "Paisa Gyaan" must NEVER appear anywhere — not in the script, description, tags, or any field. Every CTA must say "Mahayukti Finance ko subscribe karein." Violation of this rule is not acceptable.
+⚠️  ABSOLUTE RULE: This channel is MAHAYUKTI FINANCE. The old channel name "Paisa Gyaan" must NEVER appear anywhere. Every CTA must say "Mahayukti Finance ko follow karein." Violation is not acceptable.
 
-Write a complete, professional video package in HINGLISH (sophisticated Hindi-English mix in Roman script).
-Target audience: Urban Indians aged 22-40 who are serious about building long-term wealth.
-Script length: ~850-950 words (6-7 minutes at a measured, authoritative pace).
+Format: YouTube SHORT — strict 60 seconds. Script must be exactly 110-130 words.
 
 Return ONLY valid JSON — no markdown, no backticks, no explanation:
 
 {{
-  "title": "Professional YouTube title in Hinglish, max 70 chars. Lead with a specific number or insight. Compelling but never sensationalist.",
-  "hook": "One authoritative opening statement with a real data point, max 20 words. No hyperbole.",
-  "script": "Full voiceover script. Authoritative Hinglish tone — like a SEBI-registered financial advisor who speaks plainly. Open with a concrete real-world statistic. Structure: strong data-led opening → clear problem or concept → 5-7 well-explained actionable points with specific Indian rupee examples → honest trade-off or risk disclaimer → professional CTA: 'Mahayukti Finance ko subscribe karein aur notification bell on karein — financial clarity ke liye.'",
-  "key_points": ["Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words", "Concise insight max 12 words"],
-  "description": "YouTube description, 200 words. Professional tone. Summarise the video, list key takeaways, add timestamps for each section, include relevant hashtags: #MahayuktiFinance #PaisaSamjho #PersonalFinance #MoneyTips #FinancialPlanning. End with: 'Subscribe to Mahayukti Finance for expert personal finance guidance.'",
-  "tags": ["MahayuktiFinance", "mahayukti", "PaisaSamjho", "PersonalFinance", "FinancialPlanning", "MoneyTips", "IndianFinance", "WealthBuilding", "tag9", "tag10", "tag11", "tag12", "tag13", "tag14", "tag15"],
-  "thumbnail_text": "Short punchy ALL CAPS text for thumbnail, max 5 words, no channel names"
-}}
-
-Script quality standards:
-- Authoritative, not sensationalist — no "crorepati ban jao", "secret trick", "guaranteed returns"
-- Real data: cite actual figures — "Nifty 50 ka 20-year CAGR 14.5% raha hai", "RBI ne repo rate 6.5% rakha hai"
-- Nuanced: acknowledge risks and trade-offs honestly — viewers should trust you, not just like you
-- Structured: clear transitions between each point, professional signposting
-- Practical: every video should leave viewers with 2-3 things they can do this week
-- Culturally authentic: real Indian examples — LIC, PPF, Zerodha, NSE, Indian tax slabs
-- Mix Hindi and English naturally for educated Indian professionals"""
+  "title": "Hinglish title max 60 chars. Lead with a number or surprising fact. No fluff.",
+  "hook": "Opening line max 15 words — one real data point that stops the scroll instantly.",
+  "script": "Voiceover script EXACTLY 110-130 words. Structure: hook (15 words) → 1 key insight with real Indian rupee/% example (60 words) → 1 actionable tip viewer can do today (25 words) → CTA: 'Mahayukti Finance ko follow karein — roz ek finance tip.' Tone: smart Indian friend, not a lecturer. Real data only — LIC, PPF, Zerodha, NSE figures.",
+  "key_points": ["Insight max 8 words", "Insight max 8 words", "Insight max 8 words"],
+  "description": "100-word YouTube description. Crisp summary, 2-3 takeaways, hashtags: #MahayuktiFinance #Shorts #PersonalFinance #MoneyTips #IndianFinance #PaisaSamjho. End: 'Follow Mahayukti Finance for daily finance tips.'",
+  "tags": ["MahayuktiFinance", "Shorts", "PersonalFinance", "MoneyTips", "IndianFinance", "PaisaSamjho", "FinanceTips", "WealthBuilding", "IndianInvestor", "StockMarket", "MutualFunds", "TaxSaving"],
+  "thumbnail_text": "ALL CAPS max 4 words for thumbnail"
+}}"""
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.65,
-        max_tokens=2500,
+        max_tokens=900,
     )
 
     text = response.choices[0].message.content.strip()

@@ -1,10 +1,7 @@
 name: Mahayukti Hustle — Shorts (2× daily)
 
 on:
-  schedule:
-    - cron: '30 4 * * *'   # 10:00 AM IST
-    - cron: '30 14 * * *'  # 8:00 PM IST
-  workflow_dispatch:
+  workflow_dispatch:  # paused — re-enable schedule when resuming this channel
     inputs:
       force:
         description: 'Force run'
