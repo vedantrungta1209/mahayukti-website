@@ -750,9 +750,9 @@ def _post_linkedin_via_make(content: dict, image_url: str | None) -> bool:
     if not MAKE_LINKEDIN_WEBHOOK_URL:
         return False
     payload = {
-        "text":      content["linkedin_text"],
-        "title":     content.get("title", ""),
-        "image_url": image_url or "",
+        "linkedin_text": content["linkedin_text"],
+        "title":         content.get("title", ""),
+        "image_url":     image_url or "",
     }
     r = requests.post(MAKE_LINKEDIN_WEBHOOK_URL, json=payload, timeout=30)
     if r.ok:
