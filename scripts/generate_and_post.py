@@ -931,14 +931,15 @@ def post_to_facebook_reel(content, reel_url):
         print(f"⚠️  Facebook Reel upload failed ({up.status_code}): {up.text[:200]}")
         return
 
-    # Step 3: publish
+    # Step 3: publish — description capped at 500 chars (Graph API errors on large payloads)
+    reel_desc = content["facebook_text"][:500].strip()
     pub = requests.post(
         f"https://graph.facebook.com/v22.0/{FB_PAGE_ID}/video_reels",
         data={
             "video_id":     video_id,
             "upload_phase": "finish",
             "video_state":  "PUBLISHED",
-            "description":  content["facebook_text"],
+            "description":  reel_desc,
             "access_token": FB_PAGE_ACCESS_TOKEN,
         },
     )
