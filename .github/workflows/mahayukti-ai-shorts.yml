@@ -74,6 +74,9 @@ jobs:
           ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
           YOUTUBE_AI_TOKEN_JSON:     ${{ secrets.YOUTUBE_AI_TOKEN_JSON }}
           GH_TOKEN:                  ${{ secrets.GH_TOKEN }}
+          IG_USER_ID:                ${{ secrets.IG_USER_ID }}
+          FB_PAGE_ACCESS_TOKEN:      ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+          FB_PAGE_ID:                ${{ secrets.FB_PAGE_ID }}
         run: python main.py --mode short
 
       - name: Persist tool counter
