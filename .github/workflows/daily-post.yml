@@ -137,7 +137,7 @@ jobs:
           POST_TYPE:                    ${{ env.POST_TYPE }}
           LINKEDIN_ACCESS_TOKEN:        ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           LINKEDIN_AUTHOR_URN:          ${{ secrets.LINKEDIN_AUTHOR_URN }}
-          MAKE_LINKEDIN_WEBHOOK_URL:    ${{ secrets.MAKE_LINKEDIN_WEBHOOK_URL }}
+          MAKE_LINKEDIN_WEBHOOK_URL:    ${{ secrets.MAKE_WEBHOOK_URL }}
           IMGBB_API_KEY:                ${{ secrets.IMGBB_API_KEY }}
           FB_PAGE_ACCESS_TOKEN:         ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
           FB_PAGE_ID:                   ${{ secrets.FB_PAGE_ID }}

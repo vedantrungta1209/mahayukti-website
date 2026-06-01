@@ -806,10 +806,11 @@ def _post_linkedin_direct(content: dict, sq_path: str) -> bool:
         return False
 
 
-def post_to_linkedin(content, sq_path):
+def post_to_linkedin(content, sq_path, sq_cdn_url: str = ""):
     # Path 1: Make.com webhook (works while LinkedIn API app is under review)
     if MAKE_LINKEDIN_WEBHOOK_URL:
-        image_url = _upload_image_imgbb(sq_path)
+        # Use CDN URL directly if available (avoids needing IMGBB_API_KEY)
+        image_url = sq_cdn_url or _upload_image_imgbb(sq_path)
         if _post_linkedin_via_make(content, image_url):
             return
 
@@ -1101,7 +1102,7 @@ def main():
     _only = [p.strip().lower() for p in ONLY_PLATFORMS.split(",") if p.strip()]
     print("\n📣 Posting to social platforms..." + (f" (only: {', '.join(_only)})" if _only else ""))
     for name, fn, args in [
-        ("LinkedIn",          post_to_linkedin,        (content, sq_path)),
+        ("LinkedIn",          post_to_linkedin,        (content, sq_path, sq_url)),
         ("Facebook photo",    post_to_facebook,        (content, sq_path)),   # binary upload — no CDN issues
         ("Facebook Reel",     post_to_facebook_reel,   (content, reel_url) if reel_url else None),
         ("Instagram image",   post_to_instagram_image, (content, sq_url)),
