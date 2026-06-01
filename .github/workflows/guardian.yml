@@ -39,7 +39,7 @@ jobs:
   guard:
     name: Check and recover missed posts
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: Checkout (with recent history for counter timestamps)
@@ -52,6 +52,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           REPO: ${{ github.repository }}
+          FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
         run: |
           # ── Helpers ──────────────────────────────────────────────────────────
 
@@ -92,8 +93,9 @@ jobs:
 
           # ── Context ──────────────────────────────────────────────────────────
           IST_HOUR=$(TZ="Asia/Kolkata" date +%-H)
+          IST_DOW=$(TZ="Asia/Kolkata" date +%u)   # 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat 7=Sun
           IST_TIME=$(TZ="Asia/Kolkata" date '+%Y-%m-%d %H:%M %Z')
-          echo "Guardian running at: $IST_TIME (IST hour: $IST_HOUR)"
+          echo "Guardian running at: $IST_TIME (IST hour: $IST_HOUR, DOW: $IST_DOW)"
 
           # ── Morning social post (8 AM IST target) ────────────────────────────
           # No upper bound: if it's past 9 AM and still unposted, trigger now.
@@ -139,6 +141,71 @@ jobs:
               trigger_workflow "youtube-upload.yml" ""
             else
               echo "✅ YouTube upload already done today"
+            fi
+          fi
+
+          # ── AI Long-form (Mon/Wed/Fri after 8:30 PM IST) ─────────────────────
+          if { [ "$IST_DOW" -eq 1 ] || [ "$IST_DOW" -eq 3 ] || [ "$IST_DOW" -eq 5 ]; } && [ "$IST_HOUR" -ge 21 ]; then
+            if [ "$(was_posted_today MahayuktiAI/tool_counter_long.txt)" = "false" ]; then
+              echo "⚠️  AI Long-form MISSING — triggering now"
+              trigger_workflow "mahayukti-ai-long.yml" ""
+            else
+              echo "✅ AI Long-form posted today"
+            fi
+          fi
+
+          # ── Crime episode (Tue/Sat after 9:30 PM IST) ────────────────────────
+          if { [ "$IST_DOW" -eq 2 ] || [ "$IST_DOW" -eq 6 ]; } && [ "$IST_HOUR" -ge 22 ]; then
+            if [ "$(was_posted_today channels/counters/crime_long.txt)" = "false" ]; then
+              echo "⚠️  Crime episode MISSING — triggering now"
+              trigger_workflow "crime.yml" ""
+            else
+              echo "✅ Crime episode posted today"
+            fi
+          fi
+
+          # ── FB token expiry check (once daily at 9 AM IST) ───────────────────
+          # Creates a GitHub issue when fewer than 14 days remain.
+          # Token expires every ~60 days — needs manual refresh via Graph API Explorer.
+          if [ "$IST_HOUR" -eq 9 ] && [ -n "$FB_PAGE_ACCESS_TOKEN" ]; then
+            echo "Checking FB_PAGE_ACCESS_TOKEN expiry..."
+            EXPIRES_AT=$(curl -s \
+              "https://graph.facebook.com/debug_token?input_token=${FB_PAGE_ACCESS_TOKEN}&access_token=${FB_PAGE_ACCESS_TOKEN}" \
+              | python3 -c "import json,sys; d=json.load(sys.stdin).get('data',{}); print(d.get('expires_at',0))" 2>/dev/null || echo "0")
+
+            if [ "$EXPIRES_AT" -gt 0 ]; then
+              DAYS_LEFT=$(python3 -c "import time; print(int(($EXPIRES_AT - time.time()) / 86400))" 2>/dev/null || echo "99")
+              echo "  FB token expires in $DAYS_LEFT days"
+              if [ "$DAYS_LEFT" -lt 14 ]; then
+                echo "⚠️  Token expiring soon — checking for existing issue..."
+                EXISTING=$(gh issue list --repo "$REPO" --state open \
+                  --search "FB_PAGE_ACCESS_TOKEN expires" --json number --jq length 2>/dev/null || echo "0")
+                if [ "$EXISTING" -eq 0 ]; then
+                  gh issue create \
+                    --repo "$REPO" \
+                    --title "⚠️ FB_PAGE_ACCESS_TOKEN expires in ${DAYS_LEFT} days — refresh needed" \
+                    --body "## Action Required
+The \`FB_PAGE_ACCESS_TOKEN\` secret expires in **${DAYS_LEFT} days**.
+
+When it expires, **Instagram and Facebook stop posting** (both use this token).
+
+## How to refresh
+1. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/)
+2. Select the **Mahayukti Automation** app
+3. Generate a new User Token with \`pages_manage_posts\`, \`instagram_basic\`, \`instagram_content_publish\` scopes
+4. Exchange for a long-lived token via: \`GET /oauth/access_token?grant_type=fb_exchange_token\`
+5. Get the Page Access Token via: \`GET /me/accounts\`
+6. Update the \`FB_PAGE_ACCESS_TOKEN\` secret in GitHub repo settings
+
+Close this issue once the secret is updated." 2>/dev/null \
+                  && echo "  GitHub issue created." \
+                  || echo "  Issue creation failed — check manually."
+                else
+                  echo "  Issue already open — skipping duplicate."
+                fi
+              fi
+            else
+              echo "  Could not read token expiry (API error or non-expiring token)"
             fi
           fi
 
