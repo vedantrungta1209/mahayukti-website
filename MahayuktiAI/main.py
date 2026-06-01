@@ -17,7 +17,6 @@ from script_generator import generate_short_script, generate_long_script
 from audio_generator import generate_audio, SHORT_VOICE, LONG_VOICE
 from video_composer import compose_short, compose_long, generate_thumbnail
 from youtube_uploader import upload_video
-from social_poster import post_to_social
 
 COUNTER_SHORT = Path(__file__).parent / "tool_counter_short.txt"
 COUNTER_LONG  = Path(__file__).parent / "tool_counter_long.txt"
@@ -85,14 +84,6 @@ def run_short() -> None:
     )
 
     _push_token_secret("YOUTUBE_AI_TOKEN_JSON")
-
-    # Cross-post to Instagram Reels + Facebook Reels
-    caption = f"{script.get('title', tool['name'])}\n\n{script.get('description', '')}"
-    print("  Cross-posting to Instagram + Facebook...")
-    social_results = post_to_social(video_path, caption)
-    for platform, result in social_results.items():
-        print(f"  {platform}: {'✓ ' + result if result else 'skipped'}")
-
     _write_counter(COUNTER_SHORT, idx + 1)
     _cleanup()
     print(f"  Done ✓  YouTube: https://youtube.com/watch?v={yt_video_id}")
