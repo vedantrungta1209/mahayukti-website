@@ -97,10 +97,10 @@ jobs:
           IST_TIME=$(TZ="Asia/Kolkata" date '+%Y-%m-%d %H:%M %Z')
           echo "Guardian running at: $IST_TIME (IST hour: $IST_HOUR, DOW: $IST_DOW)"
 
-          # ── Morning social post (8 AM IST target) ────────────────────────────
+          # ── Morning social post (8 AM IST target, Tue–Sat only) ─────────────
           # No upper bound: if it's past 9 AM and still unposted, trigger now.
           # Idempotency check inside daily-post.yml prevents any double-posting.
-          if [ "$IST_HOUR" -ge 9 ]; then
+          if [ "$IST_HOUR" -ge 9 ] && [ "$IST_DOW" -ge 2 ] && [ "$IST_DOW" -le 6 ]; then
             if [ "$(was_posted_today scripts/topic_counter_morning.txt)" = "false" ]; then
               echo "⚠️  Morning post MISSING — triggering now"
               trigger_workflow "daily-post.yml" "-f post_type=morning"
@@ -124,8 +124,8 @@ jobs:
             echo "✅ AI Shorts on track ($SHORT_COUNT done)"
           fi
 
-          # ── Evening social post (6 PM IST target) ────────────────────────────
-          if [ "$IST_HOUR" -ge 18 ]; then
+          # ── Evening social post (6 PM IST target, Tue–Thu only) ─────────────
+          if [ "$IST_HOUR" -ge 18 ] && [ "$IST_DOW" -ge 2 ] && [ "$IST_DOW" -le 4 ]; then
             if [ "$(was_posted_today scripts/topic_counter_evening.txt)" = "false" ]; then
               echo "⚠️  Evening post MISSING — triggering now"
               trigger_workflow "daily-post.yml" "-f post_type=evening"
