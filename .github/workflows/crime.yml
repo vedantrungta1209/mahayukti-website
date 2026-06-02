@@ -1,9 +1,7 @@
 name: Mahayukti Crime — Long + Trailer Short (Tue/Sat)
 
 on:
-  schedule:
-    - cron: '30 15 * * 2'  # Tuesday   9:00 PM IST
-    - cron: '30 15 * * 6'  # Saturday  9:00 PM IST
+  # Triggered exclusively by guardian.yml
   workflow_dispatch:
     inputs:
       force:

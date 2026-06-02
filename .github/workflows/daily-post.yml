@@ -1,18 +1,8 @@
 name: MahaYukti Daily Marketing Automation
 
 on:
-  schedule:
-    # LinkedIn max-reach schedule: Tue–Sat only (Sun/Mon lowest engagement on LI)
-    # Morning: 8:30 AM IST (professionals check LI before work) — Tue, Wed, Thu, Fri, Sat
-    - cron: '0 3 * * 2'    # Tuesday   8:30 AM IST — morning
-    - cron: '0 3 * * 3'    # Wednesday 8:30 AM IST — morning
-    - cron: '0 3 * * 4'    # Thursday  8:30 AM IST — morning
-    - cron: '0 3 * * 5'    # Friday    8:30 AM IST — morning
-    - cron: '0 3 * * 6'    # Saturday  8:30 AM IST — morning
-    # Evening: 6:00 PM IST (post-work scroll) — Tue, Wed, Thu only (Fri/Sat evenings are dead)
-    - cron: '30 12 * * 2'  # Tuesday   6:00 PM IST — evening
-    - cron: '30 12 * * 3'  # Wednesday 6:00 PM IST — evening
-    - cron: '30 12 * * 4'  # Thursday  6:00 PM IST — evening
+  # Triggered exclusively by guardian.yml — no direct cron to stay under
+  # GitHub's 20-slot-per-repo scheduler limit (guardian handles all timing)
   workflow_dispatch:
     inputs:
       post_type:

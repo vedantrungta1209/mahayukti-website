@@ -1,9 +1,7 @@
 name: Mahayukti AI — Shorts (2× daily)
 
 on:
-  schedule:
-    - cron: '30 4 * * *'   # 10:00 AM IST — morning scroll peak
-    - cron: '0 13 * * *'   # 6:30 PM IST  — evening commute peak
+  # Triggered exclusively by guardian.yml
   workflow_dispatch:
     inputs:
       force:
