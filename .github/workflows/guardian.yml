@@ -1,4 +1,4 @@
-name: 🛡️ Post Guardian
+name: Post Guardian
 
 # GitHub's cron scheduler can delay runs by up to 12+ hours during high-load periods.
 # This guardian runs every ~90 min and also accepts external pings via workflow_dispatch.
