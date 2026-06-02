@@ -181,23 +181,26 @@ jobs:
                 EXISTING=$(gh issue list --repo "$REPO" --state open \
                   --search "FB_PAGE_ACCESS_TOKEN expires" --json number --jq length 2>/dev/null || echo "0")
                 if [ "$EXISTING" -eq 0 ]; then
+                  printf '%s\n' \
+                    "## Action Required" \
+                    "The \`FB_PAGE_ACCESS_TOKEN\` secret expires in **${DAYS_LEFT} days**." \
+                    "" \
+                    "When it expires, **Instagram and Facebook stop posting** (both use this token)." \
+                    "" \
+                    "## How to refresh" \
+                    "1. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/)" \
+                    "2. Select the **Mahayukti Automation** app" \
+                    "3. Generate a new User Token with \`pages_manage_posts\`, \`instagram_basic\`, \`instagram_content_publish\` scopes" \
+                    "4. Exchange for a long-lived token via: \`GET /oauth/access_token?grant_type=fb_exchange_token\`" \
+                    "5. Get the Page Access Token via: \`GET /me/accounts\`" \
+                    "6. Update the \`FB_PAGE_ACCESS_TOKEN\` secret in GitHub repo settings" \
+                    "" \
+                    "Close this issue once the secret is updated." \
+                    > /tmp/fb_expiry_body.md
                   gh issue create \
                     --repo "$REPO" \
-                    --title "⚠️ FB_PAGE_ACCESS_TOKEN expires in ${DAYS_LEFT} days — refresh needed" \
-                    --body "## Action Required
-The \`FB_PAGE_ACCESS_TOKEN\` secret expires in **${DAYS_LEFT} days**.
-
-When it expires, **Instagram and Facebook stop posting** (both use this token).
-
-## How to refresh
-1. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/)
-2. Select the **Mahayukti Automation** app
-3. Generate a new User Token with \`pages_manage_posts\`, \`instagram_basic\`, \`instagram_content_publish\` scopes
-4. Exchange for a long-lived token via: \`GET /oauth/access_token?grant_type=fb_exchange_token\`
-5. Get the Page Access Token via: \`GET /me/accounts\`
-6. Update the \`FB_PAGE_ACCESS_TOKEN\` secret in GitHub repo settings
-
-Close this issue once the secret is updated." 2>/dev/null \
+                    --title "FB_PAGE_ACCESS_TOKEN expires in ${DAYS_LEFT} days — refresh needed" \
+                    --body-file /tmp/fb_expiry_body.md 2>/dev/null \
                   && echo "  GitHub issue created." \
                   || echo "  Issue creation failed — check manually."
                 else
