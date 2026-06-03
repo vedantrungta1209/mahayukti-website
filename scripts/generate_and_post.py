@@ -660,20 +660,25 @@ def upload_image(filepath, filename):
     api_url = f"https://api.github.com/repos/{repo}/contents/images/{filename}"
     headers = {"Authorization": f"token {GH_TOKEN}", "Accept": "application/vnd.github.v3+json"}
 
-    with open(filepath, "rb") as f:
-        encoded = base64.b64encode(f.read()).decode()
-
-    check = requests.get(api_url, headers=headers)
-    sha   = check.json().get("sha") if check.status_code == 200 else None
-
-    payload = {"message": f"Image: {filename}", "content": encoded, "branch": "main"}
-    if sha: payload["sha"] = sha
-
-    r = requests.put(api_url, headers=headers, json=payload)
-    r.raise_for_status()
-    url = f"https://mahayukti.com/images/{filename}"
-    print(f"✅ Uploaded: {url}")
-    return url
+    for attempt in range(3):
+        try:
+            with open(filepath, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode()
+            check = requests.get(api_url, headers=headers, timeout=15)
+            sha   = check.json().get("sha") if check.status_code == 200 else None
+            payload = {"message": f"Image: {filename}", "content": encoded, "branch": "main"}
+            if sha: payload["sha"] = sha
+            r = requests.put(api_url, headers=headers, json=payload, timeout=30)
+            r.raise_for_status()
+            url = f"https://mahayukti.com/images/{filename}"
+            print(f"✅ Uploaded: {url}")
+            return url
+        except Exception as e:
+            print(f"⚠️  Image upload attempt {attempt+1}/3 failed: {e}")
+            if attempt < 2:
+                import time; time.sleep(5)
+    print(f"⚠️  Image upload failed after 3 attempts — social posts will use local file where possible")
+    return None
 
 # ══════════════════════════════════════════════════════════════════════════
 # STEP 4 — Update blog-data.json
@@ -683,38 +688,41 @@ def update_blog(content, image_filename):
     api_url = f"https://api.github.com/repos/{repo}/contents/blog-data.json"
     headers = {"Authorization": f"token {GH_TOKEN}", "Accept": "application/vnd.github.v3+json"}
 
-    r        = requests.get(api_url, headers=headers); r.raise_for_status()
-    data     = r.json()
-    sha      = data["sha"]
-    blog_db  = json.loads(base64.b64decode(data["content"]).decode())
+    try:
+        r        = requests.get(api_url, headers=headers, timeout=15); r.raise_for_status()
+        data     = r.json()
+        sha      = data["sha"]
+        blog_db  = json.loads(base64.b64decode(data["content"]).decode())
 
-    new_post = {
-        "id":        POST_ID,
-        "date":      DATE_STR,
-        "time":      "08:00" if POST_TYPE == "morning" else "18:00",
-        "post_type": POST_TYPE,
-        "audience":  "Clients" if POST_TYPE == "morning" else "Members",
-        "domain":    domain,
-        "subdomain": subdomain,
-        "title":     content["title"],
-        "excerpt":   content["excerpt"],
-        "content":   content["blog_content"],
-        "image":     image_filename
-    }
+        new_post = {
+            "id":        POST_ID,
+            "date":      DATE_STR,
+            "time":      "08:00" if POST_TYPE == "morning" else "18:00",
+            "post_type": POST_TYPE,
+            "audience":  "Clients" if POST_TYPE == "morning" else "Members",
+            "domain":    domain,
+            "subdomain": subdomain,
+            "title":     content["title"],
+            "excerpt":   content["excerpt"],
+            "content":   content["blog_content"],
+            "image":     image_filename
+        }
 
-    blog_db["posts"].insert(0, new_post)
-    blog_db["posts"] = blog_db["posts"][:180]  # keep 90 days × 2 posts
+        blog_db["posts"].insert(0, new_post)
+        blog_db["posts"] = blog_db["posts"][:180]
 
-    updated = base64.b64encode(
-        json.dumps(blog_db, indent=2, ensure_ascii=False).encode()
-    ).decode()
+        updated = base64.b64encode(
+            json.dumps(blog_db, indent=2, ensure_ascii=False).encode()
+        ).decode()
 
-    r2 = requests.put(api_url, headers=headers, json={
-        "message": f"[{POST_TYPE.upper()}] {content['title']} [{DATE_STR}]",
-        "content": updated, "sha": sha, "branch": "main"
-    })
-    r2.raise_for_status()
-    print("✅ Blog updated → Cloudflare deploying...")
+        r2 = requests.put(api_url, headers=headers, timeout=30, json={
+            "message": f"[{POST_TYPE.upper()}] {content['title']} [{DATE_STR}]",
+            "content": updated, "sha": sha, "branch": "main"
+        })
+        r2.raise_for_status()
+        print("✅ Blog updated → Cloudflare deploying...")
+    except Exception as e:
+        print(f"⚠️  Blog update failed (non-fatal): {e}")
 
 # ══════════════════════════════════════════════════════════════════════════
 # STEP 5 — Direct social posting (no Make.com)
@@ -1061,19 +1069,38 @@ def main():
     print(f"🎯 Audience: {'Potential Clients' if POST_TYPE=='morning' else 'Member Enrolment'}")
     print(f"📌 Domain: {domain} → {subdomain}\n")
 
-    content = generate_content()
+    # Claude with retry — transient API errors shouldn't kill the whole post
+    content = None
+    for attempt in range(3):
+        try:
+            content = generate_content()
+            break
+        except Exception as e:
+            print(f"⚠️  Content generation attempt {attempt+1}/3 failed: {e}")
+            if attempt < 2:
+                import time; time.sleep(10)
+    if content is None:
+        print("❌ Content generation failed after 3 attempts — aborting")
+        sys.exit(1)
 
     # Landscape image — kept for blog thumbnail
     land_name = f"post-{POST_ID}-land.png"
     land_path = f"/tmp/{land_name}"
-    generate_image(content, 1200, 627, land_path)
-    upload_image(land_path, land_name)
+    try:
+        generate_image(content, 1200, 627, land_path)
+        upload_image(land_path, land_name)
+    except Exception as e:
+        print(f"⚠️  Landscape image failed (non-fatal): {e}")
 
     # Square JPEG — used for all social platforms
     sq_name = f"post-{POST_ID}-sq.jpg"
     sq_path = f"/tmp/{sq_name}"
-    generate_image(content, 1080, 1080, sq_path)
-    sq_url  = upload_image(sq_path, sq_name)
+    sq_url  = None
+    try:
+        generate_image(content, 1080, 1080, sq_path)
+        sq_url = upload_image(sq_path, sq_name)
+    except Exception as e:
+        print(f"⚠️  Square image failed (non-fatal): {e}")
 
     update_blog(content, land_name)
 
