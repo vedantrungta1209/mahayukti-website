@@ -47,28 +47,18 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         run: pip install kaggle
 
-      - name: Patch kernel-metadata with Kaggle username
-        if: steps.guard.outputs.skip != 'true'
-        env:
-          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-        run: |
-          sed -i "s/KAGGLE_USERNAME/$KAGGLE_USERNAME/g" \
-            kaggle/finance-short/kernel-metadata.json
-
       - name: Push kernel to Kaggle (triggers run)
         if: steps.guard.outputs.skip != 'true'
         env:
-          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-          KAGGLE_KEY:      ${{ secrets.KAGGLE_KEY }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: kaggle kernels push -p kaggle/finance-short/
 
       - name: Wait for Kaggle run to complete
         if: steps.guard.outputs.skip != 'true'
         env:
-          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-          KAGGLE_KEY:      ${{ secrets.KAGGLE_KEY }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
-          KERNEL="$KAGGLE_USERNAME/mahayukti-finance-short"
+          KERNEL="mahayukticoncierge/mahayukti-finance-short"
           echo "Polling $KERNEL…"
           for i in $(seq 1 120); do
             STATUS=$(kaggle kernels status "$KERNEL" 2>&1 | grep -oE 'running|complete|error|cancelAcknowledged' | head -1)
