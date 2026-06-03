@@ -21,7 +21,7 @@ if _cuda_major < 7:
     print(f"P100 detected (sm_{_gpu.replace('.','')}) — installing torch 2.0.1+cu118")
     subprocess.run([
         sys.executable, "-m", "pip", "install", "-q",
-        "torch==2.0.1+cu118", "torchvision==0.15.2+cu118",
+        "torch==2.2.2+cu118", "torchvision==0.17.2+cu118",
         "--index-url", "https://download.pytorch.org/whl/cu118",
         "--force-reinstall",
     ], check=True)
