@@ -45,7 +45,6 @@ def run_short():
     import anthropic
     import edge_tts
     import torch
-    from diffusers import WanPipeline
     from diffusers.utils import export_to_video
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
@@ -155,11 +154,14 @@ Write a 55-60 second Short. Return ONLY valid JSON, no markdown:
         print(f"  [{i}] {scene['actual_duration']:.1f}s — {scene['narration'][:40]}")
 
     # ── Wan 2.1 video generation ──────────────────────────────────────────────
-    print("🎬  Loading Wan 2.1 1.3B…")
+    print("🎬  Loading ZeroScope v2 576w…")
     CLIPS_DIR = WORK / "clips"
     CLIPS_DIR.mkdir(exist_ok=True)
 
-    pipe = WanPipeline.from_pretrained("Wan-AI/Wan2.1-T2V-1.3B", torch_dtype=torch.float16)
+    from diffusers import TextToVideoSDPipeline
+    pipe = TextToVideoSDPipeline.from_pretrained(
+        "cerspense/zeroscope_v2_576w", torch_dtype=torch.float16
+    )
     pipe.enable_model_cpu_offload()
 
     NEGATIVE = "text, subtitles, watermark, logo, blurry, low quality, distorted, faces"
@@ -167,14 +169,14 @@ Write a 55-60 second Short. Return ONLY valid JSON, no markdown:
     for i, scene in enumerate(scenes):
         clip_path  = CLIPS_DIR / f"clip_{i:02d}.mp4"
         dur        = scene["actual_duration"]
-        num_frames = min(81, max(49, int(dur * 16)))
+        num_frames = min(24, max(16, int(dur * 8)))
         print(f"  generating clip {i} ({dur:.1f}s → {num_frames} frames)…")
         output = pipe(
             prompt=scene["visual_prompt"], negative_prompt=NEGATIVE,
-            height=832, width=480, num_frames=num_frames,
-            num_inference_steps=25, guidance_scale=5.0,
+            height=320, width=576, num_frames=num_frames,
+            num_inference_steps=25, guidance_scale=7.5,
         )
-        export_to_video(output.frames[0], str(clip_path), fps=16)
+        export_to_video(output.frames[0], str(clip_path), fps=8)
         scene["clip_path"] = str(clip_path)
         print(f"    ✓ clip {i} saved")
 
@@ -197,7 +199,9 @@ Write a 55-60 second Short. Return ONLY valid JSON, no markdown:
             "-i", scene["audio_path"],
             "-map", "0:v", "-map", "1:a", "-shortest",
             "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-            "-c:a", "aac", "-b:a", "128k", "-vf", "scale=480:832", str(seg)
+            "-c:a", "aac", "-b:a", "128k",
+            "-vf", "scale=480:832:force_original_aspect_ratio=increase,crop=480:832",
+            str(seg)
         )
         seg_paths.append(seg)
 

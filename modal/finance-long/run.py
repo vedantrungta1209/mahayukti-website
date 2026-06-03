@@ -45,7 +45,6 @@ def run_long():
     import anthropic
     import edge_tts
     import torch
-    from diffusers import WanPipeline
     from diffusers.utils import export_to_video
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
@@ -158,11 +157,14 @@ Write a 12-15 minute video (1800-2200 words narration). Return ONLY valid JSON:
         print(f"  section {i}: {sec['audio_duration']:.0f}s — {sec['heading']}")
 
     # ── Wan 2.1 video generation ──────────────────────────────────────────────
-    print("🎬  Loading Wan 2.1 1.3B…")
+    print("🎬  Loading ZeroScope v2 576w…")
     CLIPS_DIR = WORK / "clips"
     CLIPS_DIR.mkdir(exist_ok=True)
 
-    pipe = WanPipeline.from_pretrained("Wan-AI/Wan2.1-T2V-1.3B", torch_dtype=torch.float16)
+    from diffusers import TextToVideoSDPipeline
+    pipe = TextToVideoSDPipeline.from_pretrained(
+        "cerspense/zeroscope_v2_576w", torch_dtype=torch.float16
+    )
     pipe.enable_model_cpu_offload()
 
     NEGATIVE = "text, subtitles, watermark, logo, blurry, low quality, distorted, faces"
@@ -174,10 +176,10 @@ Write a 12-15 minute video (1800-2200 words narration). Return ONLY valid JSON:
             print(f"  section {i} clip {j}…")
             output = pipe(
                 prompt=vp, negative_prompt=NEGATIVE,
-                height=480, width=832, num_frames=81,
-                num_inference_steps=25, guidance_scale=5.0,
+                height=320, width=576, num_frames=24,
+                num_inference_steps=25, guidance_scale=7.5,
             )
-            export_to_video(output.frames[0], str(cp), fps=16)
+            export_to_video(output.frames[0], str(cp), fps=8)
             sec["clip_paths"].append(str(cp))
             print(f"    ✓ clip saved")
 
@@ -207,7 +209,9 @@ Write a 12-15 minute video (1800-2200 words narration). Return ONLY valid JSON:
                 "-stream_loop", "-1", "-i", clip, "-i", str(sub_audio),
                 "-map", "0:v", "-map", "1:a", "-shortest",
                 "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-                "-c:a", "aac", "-b:a", "128k", "-vf", "scale=832:480", str(sub_seg)
+                "-c:a", "aac", "-b:a", "128k",
+                "-vf", "scale=832:480:force_original_aspect_ratio=increase,crop=832:480",
+                str(sub_seg)
             )
             sub_segs.append(sub_seg)
         sec_seg = SEG_DIR / f"section_{i:02d}.mp4"
