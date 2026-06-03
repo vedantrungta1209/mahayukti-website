@@ -2,11 +2,6 @@
 """
 Mahayukti Finance — LONG-FORM pipeline on Kaggle T4 GPU.
 Runs Wan 2.1 locally (free). No fal.ai needed.
-
-Secrets required in Kaggle (Settings → Secrets):
-  ANTHROPIC_API_KEY
-  YOUTUBE_FINANCE_TOKEN_JSON
-  GH_TOKEN
 """
 import asyncio
 import json
@@ -34,12 +29,31 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# ── 2. Load secrets ───────────────────────────────────────────────────────────
-from kaggle_secrets import UserSecretsClient
-_s = UserSecretsClient()
-ANTHROPIC_KEY = _s.get_secret("ANTHROPIC_API_KEY")
-YT_TOKEN_JSON = _s.get_secret("YOUTUBE_FINANCE_TOKEN_JSON")
-GH_TOKEN      = _s.get_secret("GH_TOKEN")
+# ── 2. GPU compatibility check ────────────────────────────────────────────────
+if torch.cuda.is_available():
+    cc = torch.cuda.get_device_capability()
+    if cc[0] < 7:
+        raise RuntimeError(
+            f"Incompatible GPU: CUDA capability {cc[0]}.{cc[1]} "
+            f"({torch.cuda.get_device_name(0)}). Need T4 (7.5+). Retrying."
+        )
+    print(f"✅ GPU: {torch.cuda.get_device_name(0)} (sm_{cc[0]}{cc[1]})")
+else:
+    raise RuntimeError("No GPU available. Need T4.")
+
+# ── 3. Load secrets ───────────────────────────────────────────────────────────
+_secrets_file = Path(__file__).parent / "secrets.json"
+if _secrets_file.exists():
+    _s = json.loads(_secrets_file.read_text())
+    ANTHROPIC_KEY = _s["ANTHROPIC_API_KEY"]
+    YT_TOKEN_JSON = _s["YOUTUBE_FINANCE_TOKEN_JSON"]
+    GH_TOKEN      = _s["GH_TOKEN"]
+else:
+    from kaggle_secrets import UserSecretsClient
+    _sc = UserSecretsClient()
+    ANTHROPIC_KEY = _sc.get_secret("ANTHROPIC_API_KEY")
+    YT_TOKEN_JSON = _sc.get_secret("YOUTUBE_FINANCE_TOKEN_JSON")
+    GH_TOKEN      = _sc.get_secret("GH_TOKEN")
 
 # ── 3. Clone repo ─────────────────────────────────────────────────────────────
 GH_REPO  = "vedantrungta1209/mahayukti-website"

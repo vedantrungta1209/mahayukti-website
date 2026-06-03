@@ -24,3 +24,4 @@ output/
 
 # macOS
 .DS_Store
+kaggle/*/secrets.json
