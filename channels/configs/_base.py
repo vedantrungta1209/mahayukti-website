@@ -17,14 +17,13 @@ VIDEO_STYLE = (
 )
 
 # ── Audio ─────────────────────────────────────────────────────────────────────
-# Kokoro ONNX voice ID. Options:
-#   af_heart  — American female, warm, clear (good default)
-#   af_sky    — American female, bright, upbeat
-#   am_adam   — American male, neutral
-#   am_michael — American male, deep, authoritative
-#   bf_emma   — British female, precise
-#   bm_george — British male, calm
-VOICE = "af_heart"
+# edge-tts voice name. Options (all free, no API key):
+#   en-IN-NeerjaNeural   — Indian English female, warm (recommended)
+#   en-IN-PrabhatNeural  — Indian English male, clear
+#   en-US-AriaNeural     — American female, expressive
+#   en-US-GuyNeural      — American male, neutral
+#   en-GB-SoniaNeural    — British female, precise
+VOICE = "en-IN-NeerjaNeural"
 
 # ── Visual branding ───────────────────────────────────────────────────────────
 PRIMARY_HEX = "#00C864"   # Channel brand colour for watermark bar

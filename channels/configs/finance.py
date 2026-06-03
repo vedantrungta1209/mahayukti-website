@@ -18,7 +18,7 @@ VIDEO_STYLE = (
     "Indian rupee symbols, clean professional aesthetic, dramatic lighting"
 )
 
-VOICE = "af_heart"   # warm, clear — works well for finance content
+VOICE = "en-IN-NeerjaNeural"   # Indian English female — warm, clear, high quality
 
 PRIMARY_HEX = "#00C864"   # green for finance/wealth
 
