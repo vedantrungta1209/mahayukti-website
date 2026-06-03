@@ -63,34 +63,32 @@ jobs:
               }, f)
           "
 
-      - name: Push kernel + retry on P100
+      - name: Push kernel to Kaggle
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: kaggle kernels push -p kaggle/finance-long/
+
+      - name: Wait for Kaggle run to complete
         if: steps.guard.outputs.skip != 'true'
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           KERNEL="mahayukticoncierge/mahayukti-finance-long-form"
-          for attempt in 1 2 3; do
-            echo "── Attempt $attempt ──"
-            kaggle kernels push -p kaggle/finance-long/
-            echo "Polling $KERNEL…"
-            for i in $(seq 1 200); do
-              STATUS=$(kaggle kernels status "$KERNEL" 2>&1 | grep -oE 'running|complete|error|cancelAcknowledged' | head -1)
-              echo "  [$i] status: $STATUS"
-              if [ "$STATUS" = "complete" ]; then
-                echo "✅ Kaggle run complete"
-                exit 0
-              fi
-              if [ "$STATUS" = "error" ] || [ "$STATUS" = "cancelAcknowledged" ]; then
-                LOGS=$(kaggle kernels output "$KERNEL" -p /tmp/kfl-out/ 2>/dev/null && cat /tmp/kfl-out/*.log 2>/dev/null | grep -o 'Incompatible GPU[^.]*' | head -1)
-                if echo "$LOGS" | grep -q "Incompatible GPU"; then
-                  echo "⚠️  Got P100, retrying for T4…"
-                  break
-                fi
-                echo "❌ Kaggle run failed"
-                exit 1
-              fi
-              sleep 30
-            done
+          echo "Polling $KERNEL…"
+          for i in $(seq 1 200); do
+            STATUS=$(kaggle kernels status "$KERNEL" 2>&1 | grep -oE 'running|complete|error|cancelAcknowledged' | head -1)
+            echo "  [$i] status: $STATUS"
+            if [ "$STATUS" = "complete" ]; then
+              echo "✅ Kaggle run complete"
+              exit 0
+            fi
+            if [ "$STATUS" = "error" ] || [ "$STATUS" = "cancelAcknowledged" ]; then
+              echo "❌ Kaggle run failed"
+              kaggle kernels output "$KERNEL" -p /tmp/kfl-out/ || true
+              exit 1
+            fi
+            sleep 30
           done
-          echo "❌ All attempts exhausted"
+          echo "⏱️ Timeout"
           exit 1

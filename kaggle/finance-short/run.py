@@ -11,7 +11,24 @@ import sys
 import tempfile
 from pathlib import Path
 
-# ── 1. Install dependencies ───────────────────────────────────────────────────
+# ── 1. Torch version — P100 (sm_60) needs torch 2.0.x ────────────────────────
+_gpu = subprocess.run(
+    ["nvidia-smi", "--query-gpu=compute_cap", "--format=csv,noheader"],
+    capture_output=True, text=True
+).stdout.strip()
+_cuda_major = int(_gpu.split(".")[0]) if _gpu else 8
+if _cuda_major < 7:
+    print(f"P100 detected (sm_{_gpu.replace('.','')}) — installing torch 2.0.1+cu118")
+    subprocess.run([
+        sys.executable, "-m", "pip", "install", "-q",
+        "torch==2.0.1+cu118", "torchvision==0.15.2+cu118",
+        "--index-url", "https://download.pytorch.org/whl/cu118",
+        "--force-reinstall",
+    ], check=True)
+else:
+    print(f"GPU sm_{_gpu.replace('.','')}: using default torch")
+
+# ── 2. Install dependencies ───────────────────────────────────────────────────
 subprocess.run([
     sys.executable, "-m", "pip", "install", "-q",
     "anthropic", "edge-tts", "diffusers>=0.33.0", "transformers",
@@ -31,17 +48,10 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# ── 2. GPU compatibility check ────────────────────────────────────────────────
 if torch.cuda.is_available():
-    cc = torch.cuda.get_device_capability()
-    if cc[0] < 7:
-        raise RuntimeError(
-            f"Incompatible GPU: CUDA capability {cc[0]}.{cc[1]} "
-            f"({torch.cuda.get_device_name(0)}). Need T4 (7.5+). Retrying."
-        )
-    print(f"✅ GPU: {torch.cuda.get_device_name(0)} (sm_{cc[0]}{cc[1]})")
+    print(f"✅ GPU: {torch.cuda.get_device_name(0)}")
 else:
-    raise RuntimeError("No GPU available. Need T4.")
+    raise RuntimeError("No GPU available.")
 
 # ── 3. Load secrets ───────────────────────────────────────────────────────────
 _secrets_file = Path(__file__).parent / "secrets.json"
