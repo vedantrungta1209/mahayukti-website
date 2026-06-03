@@ -92,6 +92,14 @@ CHANNELS = [
         "token_file":  "swasth_token.json",
         "port":        8086,
     },
+    {
+        "id":          "finance",
+        "name":        "Mahayukti Finance",
+        "handle":      "@mahayuktifinance",
+        "secret_name": "YOUTUBE_FINANCE_TOKEN_JSON",
+        "token_file":  "finance_token.json",
+        "port":        8087,
+    },
 ]
 
 
