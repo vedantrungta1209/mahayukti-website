@@ -3,21 +3,39 @@ Text-to-speech via Kokoro ONNX (free, no API key).
 Generates per-scene audio WAV files.
 """
 import os
-import tempfile
 from pathlib import Path
 
-import numpy as np
 import soundfile as sf
 
 _kokoro = None
 
+# HuggingFace model files (~80 MB total)
+_HF_BASE   = "https://huggingface.co/thewh1teagle/kokoro-onnx/resolve/main"
+_MODEL_URL  = f"{_HF_BASE}/kokoro-v1.0.onnx"
+_VOICES_URL = f"{_HF_BASE}/voices-v1.0.bin"
+_CACHE_DIR  = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "kokoro-onnx"
 
-def _get_kokoro(voice_preset: str):
-    """Lazy-load Kokoro model (downloads ~80 MB on first use)."""
+
+def _download_if_needed(url: str, dest: Path) -> None:
+    if dest.exists():
+        return
+    import urllib.request
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    print(f"  downloading {dest.name}…")
+    urllib.request.urlretrieve(url, dest)
+    print(f"  ✓ {dest.name} ready")
+
+
+def _get_kokoro():
+    """Lazy-load Kokoro model, downloading files on first use."""
     global _kokoro
     if _kokoro is None:
+        model_path  = _CACHE_DIR / "kokoro-v1.0.onnx"
+        voices_path = _CACHE_DIR / "voices-v1.0.bin"
+        _download_if_needed(_MODEL_URL,  model_path)
+        _download_if_needed(_VOICES_URL, voices_path)
         from kokoro_onnx import Kokoro
-        _kokoro = Kokoro()
+        _kokoro = Kokoro(str(model_path), str(voices_path))
     return _kokoro
 
 
@@ -26,7 +44,7 @@ def synthesise(text: str, voice: str, output_path: str | Path) -> float:
     Synthesise text to WAV at output_path.
     Returns actual audio duration in seconds.
     """
-    kokoro = _get_kokoro(voice)
+    kokoro = _get_kokoro()
     samples, sample_rate = kokoro.create(text, voice=voice, speed=1.0, lang="en-us")
     sf.write(str(output_path), samples, sample_rate)
     return len(samples) / sample_rate
