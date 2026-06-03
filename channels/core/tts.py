@@ -9,10 +9,10 @@ import soundfile as sf
 
 _kokoro = None
 
-# HuggingFace model files (~80 MB total)
-_HF_BASE   = "https://huggingface.co/thewh1teagle/kokoro-onnx/resolve/main"
-_MODEL_URL  = f"{_HF_BASE}/kokoro-v1.0.onnx"
-_VOICES_URL = f"{_HF_BASE}/voices-v1.0.bin"
+# GitHub releases — no auth required (~80 MB total)
+_GH_BASE    = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files"
+_MODEL_URL  = f"{_GH_BASE}/kokoro-v1.0.onnx"
+_VOICES_URL = f"{_GH_BASE}/voices-v1.0.bin"
 _CACHE_DIR  = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "kokoro-onnx"
 
 
