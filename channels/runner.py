@@ -98,7 +98,7 @@ def run_short(cfg) -> None:
     )
 
     print("  Composing video...")
-    compose_short(audio_path, script, video_path, srt_path, cfg)
+    compose_short(audio_path, script, video_path, None, cfg)
 
     print("  Uploading to YouTube...")
     yt_id = upload_video(
@@ -152,7 +152,7 @@ def run_long(cfg, also_short: bool = False) -> None:
     )
 
     print("  Composing video...")
-    compose_long(audio_path, script, video_path, srt_path, cfg)
+    compose_long(audio_path, script, video_path, None, cfg)
 
     print("  Generating thumbnail...")
     generate_thumbnail(script, thumbnail_path, cfg)
@@ -188,7 +188,7 @@ def run_long(cfg, also_short: bool = False) -> None:
             voice=cfg.SHORT_VOICE, music_seed=idx + 200,
             **_el_params(cfg),
         )
-        compose_short(t_audio, trailer, t_video, t_srt, cfg)
+        compose_short(t_audio, trailer, t_video, None, cfg)
         upload_video(
             video_path=t_video,
             title=trailer.get("title", f"Trailer: {topic['name']}"),

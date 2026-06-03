@@ -71,7 +71,7 @@ def run_short() -> None:
     generate_audio(script["script"], audio_path, srt_path, voice=SHORT_VOICE, music_seed=idx)
 
     print("  Composing video...")
-    compose_short(audio_path, script, video_path, srt_path)
+    compose_short(audio_path, script, video_path, None)
 
     # Upload to YouTube
     print("  Uploading to YouTube...")
@@ -112,7 +112,7 @@ def run_long() -> None:
     generate_audio(script["full_script"], audio_path, srt_path, voice=LONG_VOICE, music_seed=idx + 100)
 
     print("  Composing video...")
-    compose_long(audio_path, script, video_path, srt_path)
+    compose_long(audio_path, script, video_path, None)
 
     print("  Generating thumbnail...")
     generate_thumbnail(script, thumbnail_path)
