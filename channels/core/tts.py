@@ -9,33 +9,20 @@ import soundfile as sf
 
 _kokoro = None
 
-# GitHub releases — no auth required (~80 MB total)
-_GH_BASE    = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files"
-_MODEL_URL  = f"{_GH_BASE}/kokoro-v1.0.onnx"
-_VOICES_URL = f"{_GH_BASE}/voices-v1.0.bin"
-_CACHE_DIR  = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "kokoro-onnx"
-
-
-def _download_if_needed(url: str, dest: Path) -> None:
-    if dest.exists():
-        return
-    import urllib.request
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    print(f"  downloading {dest.name}…")
-    urllib.request.urlretrieve(url, dest)
-    print(f"  ✓ {dest.name} ready")
+_HF_REPO = "thewh1teagle/kokoro-onnx"
 
 
 def _get_kokoro():
-    """Lazy-load Kokoro model, downloading files on first use."""
+    """Lazy-load Kokoro model via huggingface_hub (handles redirects + caching)."""
     global _kokoro
     if _kokoro is None:
-        model_path  = _CACHE_DIR / "kokoro-v1.0.onnx"
-        voices_path = _CACHE_DIR / "voices-v1.0.bin"
-        _download_if_needed(_MODEL_URL,  model_path)
-        _download_if_needed(_VOICES_URL, voices_path)
+        from huggingface_hub import hf_hub_download
         from kokoro_onnx import Kokoro
-        _kokoro = Kokoro(str(model_path), str(voices_path))
+        print("  downloading Kokoro model files…")
+        model_path  = hf_hub_download(repo_id=_HF_REPO, filename="kokoro-v1.0.onnx")
+        voices_path = hf_hub_download(repo_id=_HF_REPO, filename="voices-v1.0.bin")
+        print("  ✓ Kokoro ready")
+        _kokoro = Kokoro(model_path, voices_path)
     return _kokoro
 
 
