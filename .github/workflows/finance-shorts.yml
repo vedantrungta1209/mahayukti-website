@@ -78,7 +78,7 @@ jobs:
           KERNEL="mahayukticoncierge/mahayukti-finance-short"
           echo "Polling $KERNEL…"
           for i in $(seq 1 120); do
-            STATUS=$(kaggle kernels status "$KERNEL" 2>&1 | grep -oE 'running|complete|error|cancelAcknowledged' | head -1)
+            STATUS=$(kaggle kernels status "$KERNEL" 2>&1 | grep -ioE 'running|complete|error|cancelAcknowledged' | head -1 | tr '[:upper:]' '[:lower:]')
             echo "  [$i] status: $STATUS"
             if [ "$STATUS" = "complete" ]; then
               echo "✅ Kaggle run complete"
