@@ -164,6 +164,29 @@ jobs:
             fi
           fi
 
+          # ── Finance Shorts — 2× daily (9:30 AM + 3:30 PM IST targets) ────────
+          FIN_SHORT_COUNT=$(posts_today_count channels/counters/finance_short.txt)
+          echo "Finance Shorts today: $FIN_SHORT_COUNT/2"
+          if [ "$IST_HOUR" -ge 10 ] && [ "$FIN_SHORT_COUNT" -lt 1 ]; then
+            echo "⚠️  Morning Finance Short MISSING — triggering now"
+            trigger_workflow "finance-shorts.yml" ""
+          elif [ "$IST_HOUR" -ge 16 ] && [ "$FIN_SHORT_COUNT" -lt 2 ]; then
+            echo "⚠️  Afternoon Finance Short MISSING — triggering now"
+            trigger_workflow "finance-shorts.yml" ""
+          else
+            echo "✅ Finance Shorts on track ($FIN_SHORT_COUNT done)"
+          fi
+
+          # ── Finance Long-form (Mon/Wed/Fri after 10:30 AM IST) ───────────────
+          if { [ "$IST_DOW" -eq 1 ] || [ "$IST_DOW" -eq 3 ] || [ "$IST_DOW" -eq 5 ]; } && [ "$IST_HOUR" -ge 11 ]; then
+            if [ "$(was_posted_today channels/counters/finance_long.txt)" = "false" ]; then
+              echo "⚠️  Finance Long-form MISSING — triggering now"
+              trigger_workflow "finance-long.yml" ""
+            else
+              echo "✅ Finance Long-form posted today"
+            fi
+          fi
+
           # ── FB token expiry check (once daily at 9 AM IST) ───────────────────
           # Creates a GitHub issue when fewer than 14 days remain.
           # Token expires every ~60 days — needs manual refresh via Graph API Explorer.
