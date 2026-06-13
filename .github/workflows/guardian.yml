@@ -28,6 +28,9 @@ on:
     - cron: '30 14 * * *'  # 8:00 PM IST
     - cron: '0 16 * * *'   # 9:30 PM IST
     - cron: '30 17 * * *'  # 11:00 PM IST
+    - cron: '0 14 * * 2,6' # 7:30 PM IST Tue/Sat  (early crime window)
+    - cron: '0 15 * * 2,6' # 8:30 PM IST Tue/Sat  (pre-crime slot)
+    - cron: '0 17 * * 2,6' # 10:30 PM IST Tue/Sat (late crime backup)
 
   # Triggered by external cron (cron-job.org) or manually
   workflow_dispatch:
@@ -82,13 +85,34 @@ jobs:
             git log --since="$MIDNIGHT_IST" --format="%H" -- "$COUNTER_FILE" 2>/dev/null | wc -l | tr -d ' '
           }
 
-          # Trigger a workflow if it has not already been triggered in the last 10 min
-          # (prevents duplicate guardian triggers on the same missed post)
+          # Returns whole number of days since the counter file was last committed (0 = today)
+          days_since_last_post() {
+            local COUNTER_FILE="$1"
+            local LAST_TS
+            LAST_TS=$(git log -1 --format="%ct" -- "$COUNTER_FILE" 2>/dev/null || echo "")
+            if [ -z "$LAST_TS" ]; then
+              echo "999"
+              return
+            fi
+            local NOW_TS
+            NOW_TS=$(date +%s)
+            echo $(( (NOW_TS - LAST_TS) / 86400 ))
+          }
+
+          # Trigger a workflow; logs an error if the gh command fails so failures are visible
           trigger_workflow() {
             local WORKFLOW="$1"
             local EXTRA_ARGS="$2"
             echo "  → Triggering $WORKFLOW $EXTRA_ARGS"
-            eval "gh workflow run $WORKFLOW --repo $REPO --ref main $EXTRA_ARGS"
+            local OUT
+            OUT=$(eval "gh workflow run $WORKFLOW --repo $REPO --ref main $EXTRA_ARGS" 2>&1)
+            local RC=$?
+            if [ $RC -ne 0 ]; then
+              echo "  ❌ trigger_workflow FAILED (rc=$RC): $OUT"
+            else
+              echo "  ✅ trigger sent"
+            fi
+            return $RC
           }
 
           # ── Context ──────────────────────────────────────────────────────────
@@ -154,13 +178,24 @@ jobs:
             fi
           fi
 
-          # ── Crime episode (Tue/Sat after 9:30 PM IST) ────────────────────────
-          if { [ "$IST_DOW" -eq 2 ] || [ "$IST_DOW" -eq 6 ]; } && [ "$IST_HOUR" -ge 22 ]; then
+          # ── Crime episode (Tue/Sat after 9 PM IST, or overdue catch-up) ────────
+          CRIME_DAYS=$(days_since_last_post channels/counters/crime_long.txt)
+          echo "Crime: last posted ${CRIME_DAYS}d ago"
+          # Primary window: Tue/Sat after 9 PM IST
+          CRIME_TRIGGERED=false
+          if { [ "$IST_DOW" -eq 2 ] || [ "$IST_DOW" -eq 6 ]; } && [ "$IST_HOUR" -ge 21 ]; then
             if [ "$(was_posted_today channels/counters/crime_long.txt)" = "false" ]; then
-              echo "⚠️  Crime episode MISSING — triggering now"
-              trigger_workflow "crime.yml" ""
+              echo "⚠️  Crime episode MISSING (scheduled day) — triggering now"
+              trigger_workflow "crime.yml" "" && CRIME_TRIGGERED=true
             else
               echo "✅ Crime episode posted today"
+            fi
+          fi
+          # Catch-up: if not triggered above AND overdue by 3+ days AND it's after 8 PM IST, trigger regardless of day
+          if [ "$CRIME_TRIGGERED" = "false" ] && [ "$CRIME_DAYS" -ge 3 ] && [ "$IST_HOUR" -ge 20 ]; then
+            if [ "$(was_posted_today channels/counters/crime_long.txt)" = "false" ]; then
+              echo "⚠️  Crime overdue by ${CRIME_DAYS}d — catch-up trigger"
+              trigger_workflow "crime.yml" ""
             fi
           fi
 
@@ -177,13 +212,23 @@ jobs:
             echo "✅ Finance Shorts on track ($FIN_SHORT_COUNT done)"
           fi
 
-          # ── Finance Long-form (Mon/Wed/Fri after 10:30 AM IST) ───────────────
+          # ── Finance Long-form (Mon/Wed/Fri after 10:30 AM IST, or overdue catch-up) ──
+          FIN_LONG_DAYS=$(days_since_last_post channels/counters/finance_long.txt)
+          echo "Finance Long-form: last posted ${FIN_LONG_DAYS}d ago"
+          FIN_LONG_TRIGGERED=false
           if { [ "$IST_DOW" -eq 1 ] || [ "$IST_DOW" -eq 3 ] || [ "$IST_DOW" -eq 5 ]; } && [ "$IST_HOUR" -ge 11 ]; then
             if [ "$(was_posted_today channels/counters/finance_long.txt)" = "false" ]; then
-              echo "⚠️  Finance Long-form MISSING — triggering now"
-              trigger_workflow "finance-long.yml" ""
+              echo "⚠️  Finance Long-form MISSING (scheduled day) — triggering now"
+              trigger_workflow "finance-long.yml" "" && FIN_LONG_TRIGGERED=true
             else
               echo "✅ Finance Long-form posted today"
+            fi
+          fi
+          # Catch-up: if overdue by 2+ days AND after 9 AM IST on any day, trigger
+          if [ "$FIN_LONG_TRIGGERED" = "false" ] && [ "$FIN_LONG_DAYS" -ge 2 ] && [ "$IST_HOUR" -ge 9 ]; then
+            if [ "$(was_posted_today channels/counters/finance_long.txt)" = "false" ]; then
+              echo "⚠️  Finance Long-form overdue by ${FIN_LONG_DAYS}d — catch-up trigger"
+              trigger_workflow "finance-long.yml" ""
             fi
           fi
 
