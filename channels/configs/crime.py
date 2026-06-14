@@ -130,7 +130,7 @@ Era: {era}
 Key figures/facts: {key_figures}
 
 Rules:
-- Total narration: 2000-2500 words (20-25 min at measured, dramatic pace)
+- Total narration: 1200-1500 words (12-15 min at measured, dramatic pace)
 - Language: English with occasional Hindi phrases for drama
 - Structure: Cold open → Background → The Crime → Unraveling → Investigation → Verdict/Status → Impact
 - Use REAL names, dates, amounts, court judgements where available
@@ -147,7 +147,7 @@ Return valid JSON:
     {{
       "rank": 1,
       "name": "chapter title (e.g. 'The Setup', 'The Crime', 'The Unraveling', 'The Verdict')",
-      "narration": "500-600 word dramatic narrative with real facts and timeline",
+      "narration": "250-300 word dramatic narrative with real facts and timeline",
       "key_points": ["Key fact 1", "Key fact 2", "Key fact 3"],
       "summary": "One-line chapter summary",
       "category": "{category}"
