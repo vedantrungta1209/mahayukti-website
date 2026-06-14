@@ -601,16 +601,24 @@ def apply_cinematic_grade(input_path: str, output_path: str) -> bool:
 # ── Frames → video ─────────────────────────────────────────────────────────────
 
 def frames_to_video(frames: list[np.ndarray], output_path: str, fps: int) -> str:
-    from moviepy import VideoClip
-
-    def make_frame(t: float) -> np.ndarray:
-        return frames[min(int(t * fps), len(frames) - 1)]
-
-    duration = len(frames) / fps
-    clip = VideoClip(make_frame, duration=duration).with_fps(fps)
-    clip.write_videofile(output_path, fps=fps, codec="libx264",
-                         audio=False, preset="ultrafast", logger=None)
-    clip.close()
+    """Encode frames to H.264 via ffmpeg pipe, freeing each frame after write."""
+    if not frames:
+        return output_path
+    h, w = frames[0].shape[:2]
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-f", "rawvideo", "-vcodec", "rawvideo",
+        "-s", f"{w}x{h}", "-pix_fmt", "rgb24",
+        "-r", str(fps), "-i", "pipe:0",
+        "-vcodec", "libx264", "-preset", "ultrafast",
+        "-pix_fmt", "yuv420p", output_path,
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    for i in range(len(frames)):
+        proc.stdin.write(frames[i].tobytes())
+        frames[i] = None  # allow GC to free the buffer immediately
+    proc.stdin.close()
+    proc.wait()
     return output_path
 
 
