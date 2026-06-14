@@ -211,7 +211,7 @@ def compose_short(audio_path: str, script_data: dict, output_path: str,
         text  = slide.get("text", "")
 
         broll_q    = get_broll_query(getattr(cfg, "CHANNEL_ID", ""), label, text)
-        broll_clip = _broll_clip(broll_q, per_slide, w, h, idx=i)
+        broll_clip = _broll_clip(broll_q, 5.0, w, h, idx=i)  # only need first frame
 
         if broll_clip:
             bg_frame = Image.fromarray(broll_clip.get_frame(0).astype(np.uint8))
@@ -318,10 +318,10 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
 
         print(f"  [Item {rank}: {item_name[:35]}]")
 
-        # Shared b-roll for this item
+        # Shared b-roll for this item — only need first frame as still background
         broll_a = _broll_clip(
             get_broll_query(getattr(cfg, "CHANNEL_ID", ""), item_cat, item_name),
-            per_slide, w, h, idx=item_idx,
+            5.0, w, h, idx=item_idx,
         )
         bg_a = (Image.fromarray(broll_a.get_frame(0).astype(np.uint8))
                 if broll_a else _get_bg(item_cat, item_name, w, h, cfg))
@@ -341,7 +341,7 @@ def compose_long(audio_path: str, script_data: dict, output_path: str,
         kpt_text = " • ".join(kpts) if kpts else summary[:140]
         broll_b = _broll_clip(
             get_broll_query(getattr(cfg, "CHANNEL_ID", ""), item_cat, kpt_text[:30]),
-            per_slide, w, h, idx=item_idx + 1,
+            5.0, w, h, idx=item_idx + 1,
         )
         bg_b = (Image.fromarray(broll_b.get_frame(0).astype(np.uint8))
                 if broll_b else _get_bg(item_cat, kpt_text[:40], w, h, cfg))
