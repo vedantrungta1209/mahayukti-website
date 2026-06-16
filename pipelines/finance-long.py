@@ -156,6 +156,43 @@ for i, sec in enumerate(sections):
         download_clip(q, cp, fallback_idx=(i + j))
         sec["clip_paths"].append(str(cp))
 
+# ── Generate Yukti portrait overlay (right-side anchor) ──────────────────────
+print("🎭  Fetching Yukti overlay…")
+YUKTI_PNG  = None
+YUKTI_W, YUKTI_H = 560, 720   # portrait — fits right 44% of 1280×720
+
+try:
+    from PIL import Image as _PILImage, ImageDraw as _PILDraw
+    import io as _io
+    from urllib.parse import quote as _quote
+    _YUKTI_PROMPT = (
+        "candid portrait photograph of a 29 year old Indian woman, financial professional, "
+        "natural warm confident smile, sharp intelligent eyes, subtle bindi, natural wavy black hair, "
+        "wearing a deep teal blazer with gold threading, shot on Canon EOS R5 85mm f1.4 lens, "
+        "shallow depth of field, natural studio lighting with soft rim light, ultra photorealistic, "
+        "skin pores visible, natural imperfections, not AI generated, editorial photography quality, "
+        "Vogue India style"
+    )
+    _yukti_url = (
+        f"https://image.pollinations.ai/prompt/{_quote(_YUKTI_PROMPT)}"
+        f"?width={YUKTI_W}&height={YUKTI_H}&seed=55901&nologo=true&model=flux-realism"
+    )
+    _r = requests.get(_yukti_url, timeout=90)
+    _r.raise_for_status()
+    _img = _PILImage.open(_io.BytesIO(_r.content)).convert("RGBA").resize((YUKTI_W, YUKTI_H))
+    # Gradient fade on left edge so she blends into the text area
+    _fade_w = 200
+    _mask   = _PILImage.new("L", (YUKTI_W, YUKTI_H), 255)
+    _md     = _PILDraw.Draw(_mask)
+    for _x in range(_fade_w):
+        _md.line([(_x, 0), (_x, YUKTI_H)], fill=int(255 * (_x / _fade_w) ** 1.8))
+    _img.putalpha(_mask)
+    YUKTI_PNG = WORK / "yukti_overlay.png"
+    _img.save(str(YUKTI_PNG))
+    print(f"  ✓ yukti overlay saved ({YUKTI_W}x{YUKTI_H})")
+except Exception as _e:
+    print(f"  ⚠ Yukti fetch failed, continuing without: {_e}")
+
 # ── Compose with FFmpeg ───────────────────────────────────────────────────────
 print("🎞️  Composing…")
 COMP_DIR = WORK / "composed"
@@ -182,17 +219,34 @@ for i, sec in enumerate(sections):
                "-c:a", "copy", str(sub_audio))
 
         sub_seg = SEG_DIR / f"seg_{i:02d}_{j:02d}.mp4"
-        ffmpeg(
-            "-stream_loop", "-1", "-i", clip,
-            "-i", str(sub_audio),
-            "-map", "0:v", "-map", "1:a",
-            "-shortest",
-            "-vf", "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "22",
-            "-c:a", "aac", "-b:a", "128k",
-            "-r", "30",
-            str(sub_seg)
-        )
+        if YUKTI_PNG and YUKTI_PNG.exists():
+            # Yukti overlaid on right side: W-w positions PNG flush with right edge
+            ffmpeg(
+                "-stream_loop", "-1", "-i", clip,
+                "-i", str(sub_audio),
+                "-i", str(YUKTI_PNG),
+                "-filter_complex",
+                "[0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720[bg];"
+                "[bg][2:v]overlay=W-w:0[out]",
+                "-map", "[out]", "-map", "1:a",
+                "-shortest",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "22",
+                "-c:a", "aac", "-b:a", "128k",
+                "-r", "30",
+                str(sub_seg)
+            )
+        else:
+            ffmpeg(
+                "-stream_loop", "-1", "-i", clip,
+                "-i", str(sub_audio),
+                "-map", "0:v", "-map", "1:a",
+                "-shortest",
+                "-vf", "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "22",
+                "-c:a", "aac", "-b:a", "128k",
+                "-r", "30",
+                str(sub_seg)
+            )
         sub_segs.append(str(sub_seg))
 
     sec_seg = SEG_DIR / f"section_{i:02d}.mp4"

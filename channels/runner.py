@@ -206,7 +206,7 @@ def run_long(cfg, also_short: bool = False) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--channel", required=True,
-                        choices=["hustle", "business", "crime", "mind", "kanoon", "speak", "swasth"])
+                        choices=["hustle", "business", "crime", "mind", "kanoon", "speak", "swasth", "finance"])
     parser.add_argument("--mode", choices=["short", "long"], required=True)
     args = parser.parse_args()
 

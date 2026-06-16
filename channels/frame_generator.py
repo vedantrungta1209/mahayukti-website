@@ -14,6 +14,82 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 _POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
 
+_YUKTI_PROMPT = (
+    "candid portrait photograph of a 29 year old Indian woman, financial professional, "
+    "natural warm confident smile, sharp intelligent eyes, subtle bindi, natural wavy black hair, "
+    "wearing a deep teal blazer with gold threading, shot on Canon EOS R5 85mm f1.4 lens, "
+    "shallow depth of field, natural studio lighting with soft rim light, ultra photorealistic, "
+    "skin pores visible, natural imperfections, not AI generated, editorial photography quality, "
+    "Vogue India style"
+)
+_YUKTI_SEED = 55901
+_yukti_cache: dict = {}
+
+
+# ── Yukti character (finance channel only) ───────────────────────────────────
+
+def _fetch_yukti(w: int, h: int, retries: int = 3) -> "Image.Image | None":
+    key = (w, h)
+    if key in _yukti_cache:
+        return _yukti_cache[key]
+    encoded = quote(_YUKTI_PROMPT)
+    url = (
+        f"{_POLLINATIONS_BASE}/{encoded}"
+        f"?width={w}&height={h}&seed={_YUKTI_SEED}&nologo=true&model=flux-realism"
+    )
+    for attempt in range(retries):
+        try:
+            r = requests.get(url, timeout=60)
+            if r.status_code == 200:
+                img = Image.open(io.BytesIO(r.content)).convert("RGBA")
+                img = img.resize((w, h), Image.LANCZOS)
+                _yukti_cache[key] = img
+                return img
+        except Exception as e:
+            print(f"  Yukti fetch attempt {attempt + 1} failed: {e}")
+            if attempt < retries - 1:
+                time.sleep(3)
+    return None
+
+
+def _composite_yukti_bottom(img: Image.Image, fade_h: int = 280) -> Image.Image:
+    """Composites Yukti into the bottom 46% of a portrait frame with a top fade."""
+    w, h = img.size
+    zone_h = int(h * 0.46)
+    yukti = _fetch_yukti(w, zone_h + 100)
+    if yukti is None:
+        return img
+    yukti = yukti.crop((0, 100, w, zone_h + 100)).resize((w, zone_h), Image.LANCZOS).convert("RGBA")
+    mask = Image.new("L", (w, zone_h), 255)
+    mask_draw = ImageDraw.Draw(mask)
+    for y in range(fade_h):
+        a = int(255 * (y / fade_h) ** 1.8)
+        mask_draw.line([(0, y), (w, y)], fill=a)
+    yukti.putalpha(mask)
+    base = img.convert("RGBA")
+    base.alpha_composite(yukti, dest=(0, h - zone_h))
+    return base.convert("RGB")
+
+
+def _composite_yukti_right(img: Image.Image, fade_w: int = 180) -> Image.Image:
+    """Composites Yukti into the right 46% of a landscape frame with a left fade."""
+    w, h = img.size
+    zone_w = int(w * 0.46)
+    zone_x = w - zone_w
+    yukti = _fetch_yukti(zone_w, h)
+    if yukti is None:
+        return img
+    yukti = yukti.resize((zone_w, h), Image.LANCZOS).convert("RGBA")
+    mask = Image.new("L", (zone_w, h), 255)
+    mask_draw = ImageDraw.Draw(mask)
+    for x in range(fade_w):
+        a = int(255 * (x / fade_w) ** 1.8)
+        mask_draw.line([(x, 0), (x, h)], fill=a)
+    yukti.putalpha(mask)
+    base = img.convert("RGBA")
+    base.alpha_composite(yukti, dest=(zone_x, 0))
+    return base.convert("RGB")
+
 
 # ── Palette / background ──────────────────────────────────────────────────────
 
@@ -169,21 +245,26 @@ def _progress_dots(draw, total, current, cx, y, primary):
 def create_short_title_frame(topic_name: str, category: str, output_path: str,
                               cfg, slide_idx: int = 0, total_slides: int = 5) -> str:
     bg1, _, primary, accent = _palette(category, cfg)
+    is_finance = getattr(cfg, 'CHANNEL_ID', '') == 'finance'
 
     img = _get_bg(category, topic_name, cfg.SHORT_WIDTH, cfg.SHORT_HEIGHT, cfg)
-    img = _edge_gradients(img, bg1, top_pct=0.20, bot_pct=0.32)
+    img = _edge_gradients(img, bg1, top_pct=0.20, bot_pct=0.50 if is_finance else 0.32)
+
+    # Composite Yukti in bottom half before drawing UI elements
+    if is_finance:
+        img = _composite_yukti_bottom(img, fade_h=300)
 
     draw = ImageDraw.Draw(img)
     draw.rectangle([0, 0, cfg.SHORT_WIDTH, 6], fill=primary)
     draw.text((44, 24), cfg.CHANNEL_NAME.upper(), font=_font(30, True, cfg), fill=(255, 255, 255))
     _pill(draw, 44, 70, f"  {category.upper()}  ", _font(26, True, cfg), primary, (0, 0, 0))
 
-    # Frosted card
+    # Frosted card — shifted to top 55% when Yukti occupies bottom
     pad = 48
     card_w = cfg.SHORT_WIDTH - 2 * pad
-    card_h = int(cfg.SHORT_HEIGHT * 0.36)
+    card_h = int(cfg.SHORT_HEIGHT * (0.30 if is_finance else 0.36))
     card_x = pad
-    card_y = int(cfg.SHORT_HEIGHT * 0.32)
+    card_y = int(cfg.SHORT_HEIGHT * (0.20 if is_finance else 0.32))
 
     img = _frosted_card(img, card_x, card_y, card_w, card_h, alpha=168, radius=28)
     draw = ImageDraw.Draw(img)
@@ -204,8 +285,8 @@ def create_short_title_frame(topic_name: str, category: str, output_path: str,
     text_cy = rule_y + (card_h - 78) // 2 + 22
     _block_center(draw, lines, name_font, text_cy, line_h, (255, 255, 255), cfg.SHORT_WIDTH)
 
-    # Bottom
-    dots_y = int(cfg.SHORT_HEIGHT * 0.82)
+    # Bottom — dots sit above Yukti's zone
+    dots_y = int(cfg.SHORT_HEIGHT * (0.57 if is_finance else 0.82))
     _progress_dots(draw, total_slides, slide_idx, cfg.SHORT_WIDTH // 2, dots_y, primary)
 
     hbbox = draw.textbbox((0, 0), cfg.CHANNEL_HANDLE, font=_font(46, True, cfg))
@@ -427,6 +508,7 @@ def create_long_outro_frame(category: str, output_path: str, cfg) -> str:
 def create_thumbnail(title: str, category: str, output_path: str, cfg) -> str:
     bg1, _, primary, accent = _palette(category, cfg)
     tw, th = 1280, 720
+    is_finance = getattr(cfg, 'CHANNEL_ID', '') == 'finance'
 
     bg = _fetch_bg(cfg.bg_prompt(category, title, portrait=False),
                    _seed(f"thumb:{title}"), tw, th)
@@ -435,7 +517,13 @@ def create_thumbnail(title: str, category: str, output_path: str, cfg) -> str:
 
     img = _edge_gradients(bg, bg1, top_pct=0.24, bot_pct=0.36)
 
-    card_x, card_w = 60, tw - 120
+    # Composite Yukti on right side for finance channel
+    if is_finance:
+        img = _composite_yukti_right(img, fade_w=200)
+
+    # Card occupies left portion only when Yukti is present
+    card_x = 60
+    card_w = int(tw * 0.50) if is_finance else tw - 120
     card_h = int(th * 0.52)
     card_y = th // 2 - card_h // 2 + 10
 
@@ -447,7 +535,9 @@ def create_thumbnail(title: str, category: str, output_path: str, cfg) -> str:
 
     title_font = _font(64, True, cfg)
     lines = _wrap(title, title_font, card_w - 60, draw)
-    _block_center(draw, lines, title_font, th // 2 + 10, 78, (255, 255, 255), tw)
+    # canvas_w is used as (canvas_w // 2) for center-x; derive it from card center
+    text_canvas_w = tw if not is_finance else (card_x * 2 + card_w)
+    _block_center(draw, lines, title_font, th // 2 + 10, 78, (255, 255, 255), text_canvas_w)
 
     draw.rectangle([0, th - 6, tw, th], fill=primary)
     draw.text((32, th - 46), cfg.CHANNEL_HANDLE, font=_font(30, False, cfg), fill=accent)

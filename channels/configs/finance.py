@@ -1,12 +1,15 @@
 """
 Mahayukti Finance — personal finance, investing & wealth building for India.
 @mahayuktifinance | 2 Shorts/day + 3 Long-form/week (Mon/Wed/Fri)
+AI host: Yukti (seed 55901, flux-realism) — composited into every frame.
 """
 
 CHANNEL_ID     = "finance"
 CHANNEL_NAME   = "Mahayukti Finance"
 CHANNEL_HANDLE = "@mahayuktifinance"
 TOKEN_ENV_VAR  = "YOUTUBE_FINANCE_TOKEN_JSON"
+TOKEN_FILE     = "finance_token.json"
+SECRET_NAME    = "YOUTUBE_FINANCE_TOKEN_JSON"
 
 NICHE = (
     "Personal finance, stock market, mutual funds, tax planning, and wealth "
@@ -18,9 +21,92 @@ VIDEO_STYLE = (
     "Indian rupee symbols, clean professional aesthetic, dramatic lighting"
 )
 
-VOICE = "en-IN-NeerjaNeural"   # Indian English female — warm, clear, high quality
+# ── Audio ─────────────────────────────────────────────────────────────────────
+SHORT_VOICE = "en-IN-NeerjaNeural"
+LONG_VOICE  = "en-IN-NeerjaNeural"
+VOICE       = "en-IN-NeerjaNeural"   # kept for legacy compat
 
-PRIMARY_HEX = "#00C864"   # green for finance/wealth
+# ── Canvas ────────────────────────────────────────────────────────────────────
+SHORT_WIDTH  = 1080
+SHORT_HEIGHT = 1920
+LONG_WIDTH   = 1920
+LONG_HEIGHT  = 1080
+FPS          = 24
+OUTPUT_DIR   = "output"
+
+# ── Brand colours (deep forest green + gold) ──────────────────────────────────
+PRIMARY_HEX   = "#00C864"
+BG_COLOR      = (5, 14, 9)
+BG_COLOR_2    = (10, 24, 15)
+PRIMARY_COLOR = (0, 180, 90)
+ACCENT_COLOR  = (201, 150, 58)
+TEXT_COLOR    = (245, 239, 230)
+SUBTLE_COLOR  = (120, 160, 130)
+
+# ── Fonts (Linux CI paths with Mac fallback) ──────────────────────────────────
+BOLD_FONT_PATHS = [
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+    "/System/Library/Fonts/Helvetica.ttc",
+]
+REGULAR_FONT_PATHS = [
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+]
+
+# ── Category palettes (bg1, bg2, primary, accent) ────────────────────────────
+CATEGORY_PALETTES = {
+    "Mutual Funds":    ((5, 14, 9),   (10, 24, 15), (0, 180, 90),   (201, 150, 58)),
+    "Tax Planning":    ((8, 14, 5),   (14, 24, 10), (0, 180, 90),   (255, 200, 50)),
+    "Insurance":       ((14, 5, 5),   (24, 10, 10), (180, 60, 60),  (255, 140, 60)),
+    "Personal Finance":((5, 14, 9),   (10, 24, 15), (0, 180, 90),   (201, 150, 58)),
+    "Stock Market":    ((5, 10, 14),  (10, 18, 24), (40, 140, 220), (201, 150, 58)),
+    "Fixed Income":    ((10, 10, 5),  (20, 20, 10), (180, 160, 0),  (255, 220, 50)),
+    "Retirement":      ((8, 5, 14),   (14, 10, 24), (120, 80, 200), (201, 150, 58)),
+    "Credit":          ((14, 8, 5),   (24, 14, 10), (200, 100, 0),  (255, 180, 60)),
+    "Crypto":          ((2, 8, 14),   (5, 14, 24),  (0, 160, 255),  (201, 150, 58)),
+    "Real Estate":     ((10, 6, 2),   (20, 12, 5),  (180, 120, 0),  (255, 200, 80)),
+    "General":         ((5, 14, 9),   (10, 24, 15), (0, 180, 90),   (201, 150, 58)),
+}
+
+# ── Copy strings ──────────────────────────────────────────────────────────────
+CTA_LINE1        = "Follow for"
+CTA_LINE2        = "wealth tips"
+CTA_SUBTEXT      = "New finance tip every day"
+LONG_INTRO_BADGE = "MAHAYUKTI FINANCE"
+OUTRO_LINE1      = "Subscribe for more!"
+OUTRO_LINE2      = "Master your money with Yukti"
+OUTRO_BELL_TEXT  = "Ring the bell — new finance insight every Mon/Wed/Fri"
+
+# ── Affiliate programmes ──────────────────────────────────────────────────────
+AFFILIATE_PROGRAMS = [
+    {"name": "Zerodha Referral",        "commission": "300 per account", "link_placeholder": "https://zerodha.com/open-account?c=YOUR_CODE"},
+    {"name": "Groww Referral",          "commission": "100 per signup",  "link_placeholder": "https://groww.in/open-demat-account"},
+    {"name": "PolicyBazaar Insurance",  "commission": "500+ per lead",   "link_placeholder": "https://www.policybazaar.com/affiliates/"},
+    {"name": "Amazon Associates (books)", "commission": "8% on finance books", "link_placeholder": "https://www.amazon.in/s?k=personal+finance+india&tag=YOUR-TAG"},
+]
+
+
+def bg_prompt(category: str, topic_name: str, portrait: bool) -> str:
+    orientation = "vertical portrait" if portrait else "horizontal landscape"
+    prompts = {
+        "Mutual Funds":    f"stock market dashboard glowing green charts rupee coins dark bokeh {orientation} cinematic no text no people",
+        "Tax Planning":    f"indian tax forms calculator gold coins dark professional desk {orientation} cinematic no text no people",
+        "Insurance":       f"umbrella protection shield gold light dark background security {orientation} cinematic no text no people",
+        "Personal Finance":f"indian rupee coins piggy bank wealth growth dark gold bokeh {orientation} cinematic no text no people",
+        "Stock Market":    f"nse bse stock ticker green red candles dark trading screen {orientation} cinematic no text no people",
+        "Fixed Income":    f"bank vault gold bars government bonds dark secure professional {orientation} cinematic no text no people",
+        "Retirement":      f"peaceful sunrise horizon indian landscape golden hour retirement {orientation} cinematic no text no people",
+        "Credit":          f"credit card dark background gold light payment professional {orientation} cinematic no text no people",
+        "Crypto":          f"bitcoin ethereum blockchain glowing blue dark digital finance {orientation} cinematic no text no people",
+        "Real Estate":     f"indian apartment building skyline investment gold dark night {orientation} cinematic no text no people",
+    }
+    return prompts.get(
+        category,
+        f"indian financial district dark cinematic gold green wealth {orientation} cinematic no text no people",
+    )
 
 # ── Short topics ──────────────────────────────────────────────────────────────
 

@@ -47,7 +47,7 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         run: |
           sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg fonts-liberation
-          pip install anthropic edge-tts requests \
+          pip install anthropic edge-tts requests pillow \
             google-api-python-client google-auth \
             google-auth-oauthlib google-auth-httplib2
 
