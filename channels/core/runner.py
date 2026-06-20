@@ -41,10 +41,19 @@ def _write_counter(path: Path, value: int) -> None:
 def run_short(config, work_dir: Path) -> None:
     from core import writer, tts, video, composer, uploader
 
-    # Pick topic
+    # Pick topic — try trending signals first
     ctr_path = _counter_path(config.CHANNEL_ID, "short")
     idx = _read_counter(ctr_path) % len(config.SHORT_TOPICS)
-    topic = config.SHORT_TOPICS[idx]
+    try:
+        from core.trending import pick_topic_with_trending
+        seeds = getattr(config, "TRENDING_SEEDS", None)
+        if seeds:
+            topic = pick_topic_with_trending(config.SHORT_TOPICS, seeds, idx)
+        else:
+            topic = config.SHORT_TOPICS[idx]
+    except Exception as e:
+        print(f"  Trending detection failed ({e}), using static topic")
+        topic = config.SHORT_TOPICS[idx]
     print(f"\n📱 SHORT: {topic['name']}")
 
     # 1. Script
@@ -53,10 +62,11 @@ def run_short(config, work_dir: Path) -> None:
     print(f"   title: {script['youtube_title']}")
     print(f"   scenes: {len(script['scenes'])}")
 
-    # 2. TTS
+    # 2. TTS — prefer ElevenLabs voice ID if available
     print("🎙️  Synthesising audio…")
     audio_dir = work_dir / "audio"
-    scenes = tts.synthesise_scenes(script["scenes"], config.VOICE, audio_dir)
+    voice = getattr(config, "ELEVENLABS_VOICE_ID", None) or config.VOICE
+    scenes = tts.synthesise_scenes(script["scenes"], voice, audio_dir)
 
     # 3. Video clips
     print("🎬  Generating video clips (fal.ai Wan)…")

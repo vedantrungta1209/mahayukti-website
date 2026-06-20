@@ -58,4 +58,5 @@ jobs:
           YOUTUBE_FINANCE_TOKEN_JSON: ${{ secrets.YOUTUBE_FINANCE_TOKEN_JSON }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
         run: python pipelines/finance-long.py

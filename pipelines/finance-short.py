@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
 Mahayukti Finance — SHORT pipeline
-Pexels stock footage • Runs on GitHub Actions runner (no GPU needed)
+ElevenLabs TTS • Pexels stock footage • Trending topic detection
+Runs on GitHub Actions runner (no GPU needed).
 """
-import asyncio, json, os, re, subprocess, sys, time, requests
+import asyncio, json, os, re, subprocess, sys, time, requests, urllib.parse, urllib.request
 from pathlib import Path
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
-ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
-YT_TOKEN_JSON = os.environ["YOUTUBE_FINANCE_TOKEN_JSON"]
-GH_TOKEN      = os.environ["GH_TOKEN"]
-PEXELS_KEY    = os.environ["PEXELS_API_KEY"]
+ANTHROPIC_KEY      = os.environ["ANTHROPIC_API_KEY"]
+YT_TOKEN_JSON      = os.environ["YOUTUBE_FINANCE_TOKEN_JSON"]
+GH_TOKEN           = os.environ["GH_TOKEN"]
+PEXELS_KEY         = os.environ["PEXELS_API_KEY"]
+ELEVENLABS_KEY     = os.environ.get("ELEVENLABS_API_KEY", "")
 
 # ── Clone repo for configs + counter ─────────────────────────────────────────
 GH_REPO  = "vedantrungta1209/mahayukti-website"
@@ -42,8 +44,51 @@ def push_counter(idx):
     ]:
         subprocess.run(cmd, check=True)
 
+# ── Trending topic detection ──────────────────────────────────────────────────
+def get_trending_topic(static_topics, static_idx):
+    """Try YouTube autocomplete for a trending finance topic. Fall back to static."""
+    seeds = getattr(cfg, "TRENDING_SEEDS", [
+        "mutual fund india 2025", "income tax india 2025",
+        "stock market today india", "best investment india 2025",
+    ])
+    seen = set()
+    trending_terms = []
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    for seed in seeds[:3]:
+        try:
+            url = (
+                "https://suggestqueries.google.com/complete/search"
+                f"?client=youtube&ds=yt&q={urllib.parse.quote(seed)}&hl=en&gl=IN"
+            )
+            req = urllib.request.Request(url, headers={"User-Agent": ua})
+            with urllib.request.urlopen(req, timeout=8) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            for item in (data[1] if len(data) > 1 else []):
+                term = item[0] if isinstance(item, list) else str(item)
+                if term and term.lower() not in seen and len(term) > 10:
+                    seen.add(term.lower())
+                    trending_terms.append(term)
+        except Exception as e:
+            print(f"  Trending skip '{seed}': {e}")
+
+    if trending_terms:
+        # Check if any trending term overlaps with a static topic
+        for term in trending_terms[:8]:
+            term_words = set(term.lower().split())
+            for t in static_topics:
+                topic_words = set(t["name"].lower().split())
+                if len(topic_words & term_words) >= 2:
+                    print(f"  Trending match: '{term}' → '{t['name']}'")
+                    return t
+        # No match — use top trending term as ad-hoc topic
+        top = trending_terms[0]
+        print(f"  Using live trending: '{top}'")
+        return {"name": top, "category": "Trending"}
+
+    return static_topics[static_idx % len(static_topics)]
+
 idx   = read_counter()
-topic = cfg.SHORT_TOPICS[idx % len(cfg.SHORT_TOPICS)]
+topic = get_trending_topic(cfg.SHORT_TOPICS, idx)
 print(f"\n📱 SHORT [{idx}]: {topic['name']}")
 
 # ── Generate script ───────────────────────────────────────────────────────────
@@ -58,17 +103,24 @@ Category: {topic.get('category', 'General')}
 
 Write a 55-60 second Short. Return ONLY valid JSON, no markdown fences:
 {{
-  "youtube_title": "Max 60 chars, punchy, emoji",
+  "youtube_title": "Max 60 chars, punchy, emoji, stops scroll",
   "youtube_description": "80-word description + 6 hashtags",
   "tags": ["tag1","tag2","tag3","tag4","tag5"],
   "scenes": [
     {{
-      "narration": "8-12 words, punchy, spoken aloud",
-      "search_query": "2-3 words for Pexels stock footage (e.g. 'stock market', 'indian rupee', 'mutual fund', 'tax planning')"
+      "narration": "8-12 words max, punchy, spoken aloud, no filler",
+      "search_query": "2-3 words for Pexels stock footage (e.g. 'stock market', 'indian rupee', 'mutual fund')"
     }}
   ]
 }}
-8-10 scenes, ~55 sec total. Scene 1: brutal hook. Last scene: micro-CTA."""
+Rules:
+- 8-10 scenes, ~55 sec total
+- Scene 1: brutal hook — shocking stat or bold claim in first 3 words
+- Scenes 2-8: one tight insight per scene, rapid delivery
+- Last scene: micro-CTA ("Follow for daily finance tips")
+- Use specific numbers, percentages, rupee amounts — makes it credible
+- No filler: no "okay so", "basically", "right?"
+"""
 
 resp = client.messages.create(
     model="claude-opus-4-5", max_tokens=2000,
@@ -79,12 +131,13 @@ scenes = script["scenes"]
 print(f"   title : {script['youtube_title']}")
 print(f"   scenes: {len(scenes)}")
 
-# ── TTS — single event loop ───────────────────────────────────────────────────
-import edge_tts
+# ── TTS — ElevenLabs primary, edge-tts fallback ──────────────────────────────
 print("🎙️  Synthesising audio…")
 WORK      = Path("/tmp/finance_short")
 AUDIO_DIR = WORK / "audio"
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+EL_VOICE_ID = getattr(cfg, "ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
 
 def ffprobe_dur(path):
     r = subprocess.run([
@@ -93,17 +146,41 @@ def ffprobe_dur(path):
     ], capture_output=True, text=True)
     return float(r.stdout.strip())
 
-async def synth_all():
-    for i, scene in enumerate(scenes):
-        ap = AUDIO_DIR / f"scene_{i:02d}.mp3"
-        await edge_tts.Communicate(scene["narration"], cfg.VOICE).save(str(ap))
-        scene["audio_path"] = str(ap)
-        print(f"  [{i}] {scene['narration'][:50]}")
+def synth_elevenlabs(text, output_path):
+    r = requests.post(
+        f"https://api.elevenlabs.io/v1/text-to-speech/{EL_VOICE_ID}",
+        headers={"xi-api-key": ELEVENLABS_KEY, "Content-Type": "application/json",
+                 "Accept": "audio/mpeg"},
+        json={
+            "text": text,
+            "model_id": "eleven_turbo_v2_5",
+            "voice_settings": {"stability": 0.45, "similarity_boost": 0.80, "style": 0.15},
+        },
+        timeout=60,
+    )
+    r.raise_for_status()
+    Path(output_path).write_bytes(r.content)
 
-asyncio.run(synth_all())
-for scene in scenes:
-    scene["dur"] = ffprobe_dur(scene["audio_path"])
-    print(f"  dur: {scene['dur']:.1f}s")
+async def synth_edge(text, output_path):
+    import edge_tts
+    await edge_tts.Communicate(text, cfg.VOICE).save(str(output_path))
+
+use_elevenlabs = bool(ELEVENLABS_KEY)
+print(f"  TTS engine: {'ElevenLabs' if use_elevenlabs else 'edge-tts'}")
+
+for i, scene in enumerate(scenes):
+    ap = AUDIO_DIR / f"scene_{i:02d}.mp3"
+    if use_elevenlabs:
+        try:
+            synth_elevenlabs(scene["narration"], ap)
+        except Exception as e:
+            print(f"  EL failed ({e}), falling back to edge-tts")
+            asyncio.run(synth_edge(scene["narration"], ap))
+    else:
+        asyncio.run(synth_edge(scene["narration"], ap))
+    scene["audio_path"] = str(ap)
+    scene["dur"] = ffprobe_dur(ap)
+    print(f"  [{i}] {scene['dur']:.1f}s — {scene['narration'][:50]}")
 
 # ── Download Pexels clips ─────────────────────────────────────────────────────
 print("🎬  Downloading stock footage…")
@@ -130,7 +207,6 @@ def download_clip(query, save_path, orientation="portrait", fallback_idx=0):
                 continue
             files = sorted(videos[0].get("video_files", []),
                            key=lambda f: f.get("width", 0) * f.get("height", 0), reverse=True)
-            # Pick HD (≤1920 wide) to avoid huge 4K downloads
             chosen = next((f for f in files if f.get("width", 9999) <= 1920), files[0])
             dl = requests.get(chosen["link"], stream=True, timeout=60)
             dl.raise_for_status()

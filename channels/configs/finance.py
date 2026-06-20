@@ -22,9 +22,10 @@ VIDEO_STYLE = (
 )
 
 # ── Audio ─────────────────────────────────────────────────────────────────────
-SHORT_VOICE = "en-IN-NeerjaNeural"
-LONG_VOICE  = "en-IN-NeerjaNeural"
-VOICE       = "en-IN-NeerjaNeural"   # kept for legacy compat
+SHORT_VOICE         = "en-IN-NeerjaNeural"
+LONG_VOICE          = "en-IN-NeerjaNeural"
+VOICE               = "en-IN-NeerjaNeural"          # edge-tts fallback
+ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"       # Rachel — clear professional female
 
 # ── Canvas ────────────────────────────────────────────────────────────────────
 SHORT_WIDTH  = 1080
@@ -107,6 +108,14 @@ def bg_prompt(category: str, topic_name: str, portrait: bool) -> str:
         category,
         f"indian financial district dark cinematic gold green wealth {orientation} cinematic no text no people",
     )
+
+TRENDING_SEEDS = [
+    "mutual fund india 2025",
+    "income tax india 2025",
+    "stock market today india",
+    "best investment india 2025",
+    "SIP returns 2025",
+]
 
 # ── Short topics ──────────────────────────────────────────────────────────────
 

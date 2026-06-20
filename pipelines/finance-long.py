@@ -7,10 +7,11 @@ import asyncio, json, os, re, subprocess, sys, time, requests
 from pathlib import Path
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
-ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
-YT_TOKEN_JSON = os.environ["YOUTUBE_FINANCE_TOKEN_JSON"]
-GH_TOKEN      = os.environ["GH_TOKEN"]
-PEXELS_KEY    = os.environ["PEXELS_API_KEY"]
+ANTHROPIC_KEY  = os.environ["ANTHROPIC_API_KEY"]
+YT_TOKEN_JSON  = os.environ["YOUTUBE_FINANCE_TOKEN_JSON"]
+GH_TOKEN       = os.environ["GH_TOKEN"]
+PEXELS_KEY     = os.environ["PEXELS_API_KEY"]
+ELEVENLABS_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
 
 # ── Clone repo for configs + counter ─────────────────────────────────────────
 GH_REPO  = "vedantrungta1209/mahayukti-website"
@@ -84,12 +85,13 @@ sections = script["sections"]
 print(f"   title   : {script['youtube_title']}")
 print(f"   sections: {len(sections)}")
 
-# ── TTS — single event loop ───────────────────────────────────────────────────
-import edge_tts
+# ── TTS — ElevenLabs primary, edge-tts fallback ──────────────────────────────
 print("🎙️  Synthesising audio…")
 WORK      = Path("/tmp/finance_long")
 AUDIO_DIR = WORK / "audio"
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+EL_VOICE_ID = getattr(cfg, "ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
 
 def ffprobe_dur(path):
     r = subprocess.run([
@@ -98,14 +100,40 @@ def ffprobe_dur(path):
     ], capture_output=True, text=True)
     return float(r.stdout.strip())
 
-async def synth_all():
-    for i, sec in enumerate(sections):
-        ap = AUDIO_DIR / f"section_{i:02d}.mp3"
-        await edge_tts.Communicate(sec["narration"], cfg.VOICE).save(str(ap))
-        sec["audio_path"] = str(ap)
-        print(f"  section {i}: {sec['heading']}")
+def synth_elevenlabs(text, output_path):
+    r = requests.post(
+        f"https://api.elevenlabs.io/v1/text-to-speech/{EL_VOICE_ID}",
+        headers={"xi-api-key": ELEVENLABS_KEY, "Content-Type": "application/json",
+                 "Accept": "audio/mpeg"},
+        json={
+            "text": text,
+            "model_id": "eleven_turbo_v2_5",
+            "voice_settings": {"stability": 0.45, "similarity_boost": 0.80, "style": 0.15},
+        },
+        timeout=90,
+    )
+    r.raise_for_status()
+    Path(output_path).write_bytes(r.content)
 
-asyncio.run(synth_all())
+async def synth_edge(text, output_path):
+    import edge_tts
+    await edge_tts.Communicate(text, cfg.VOICE).save(str(output_path))
+
+use_elevenlabs = bool(ELEVENLABS_KEY)
+print(f"  TTS engine: {'ElevenLabs' if use_elevenlabs else 'edge-tts'}")
+
+for i, sec in enumerate(sections):
+    ap = AUDIO_DIR / f"section_{i:02d}.mp3"
+    if use_elevenlabs:
+        try:
+            synth_elevenlabs(sec["narration"], ap)
+        except Exception as e:
+            print(f"  EL failed ({e}), falling back to edge-tts")
+            asyncio.run(synth_edge(sec["narration"], ap))
+    else:
+        asyncio.run(synth_edge(sec["narration"], ap))
+    sec["audio_path"] = str(ap)
+    print(f"  section {i}: {sec['heading']}")
 for sec in sections:
     sec["dur"] = ffprobe_dur(sec["audio_path"])
     print(f"  dur: {sec['dur']:.0f}s — {sec['heading']}")

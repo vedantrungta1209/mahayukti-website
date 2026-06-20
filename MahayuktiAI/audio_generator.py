@@ -1,5 +1,5 @@
 """
-Audio generator — TTS voice + ambient background music synthesised via ffmpeg.
+Audio generator — ElevenLabs TTS primary (edge-tts fallback) + ambient background music.
 Music mixed at 8% volume under voice for professional feel. No external URLs needed.
 """
 import asyncio
@@ -8,13 +8,15 @@ import os
 import subprocess
 from pathlib import Path
 
-import edge_tts
+# ElevenLabs voice IDs — human-quality, much better than edge-tts
+SHORT_VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # Adam — energetic, clear male (great for AI tech)
+LONG_VOICE_ID  = "pNInz6obpgDQGcFmaJgB"  # Adam — same for consistency
 
-SHORT_VOICE = "en-IN-NeerjaNeural"   # female, Indian English — energetic for Shorts
-LONG_VOICE  = "en-IN-PrabhatNeural"  # male, Indian English — authoritative for long-form
+# edge-tts fallbacks (used only when ELEVENLABS_API_KEY is not set)
+SHORT_VOICE_EDGE = "en-IN-NeerjaNeural"
+LONG_VOICE_EDGE  = "en-IN-PrabhatNeural"
 
-# Ambient chord presets — layered sine waves synthesised via ffmpeg (no external dependency)
-# Each tuple is (bass_hz, mid_hz, high_hz, pulse_bpm) defining a unique mood
+# Ambient chord presets — layered sine waves synthesised via ffmpeg
 _AMBIENT_PRESETS = [
     (110.0, 146.8, 220.0, 70),   # A minor — calm tech
     (130.8, 196.0, 261.6, 80),   # C major — upbeat positive
@@ -24,7 +26,36 @@ _AMBIENT_PRESETS = [
 ]
 
 
-async def _stream(text: str, audio_path: str, voice: str) -> list[dict]:
+def _synth_elevenlabs(text: str, audio_path: str, voice_id: str) -> bool:
+    """Generate audio via ElevenLabs API. Returns True on success."""
+    api_key = os.environ.get("ELEVENLABS_API_KEY", "")
+    if not api_key:
+        return False
+    try:
+        import requests
+        r = requests.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+            headers={"xi-api-key": api_key, "Content-Type": "application/json",
+                     "Accept": "audio/mpeg"},
+            json={
+                "text": text,
+                "model_id": "eleven_turbo_v2_5",
+                "voice_settings": {"stability": 0.45, "similarity_boost": 0.80, "style": 0.15},
+            },
+            timeout=60,
+        )
+        r.raise_for_status()
+        Path(audio_path).write_bytes(r.content)
+        print(f"  ElevenLabs: {audio_path}")
+        return True
+    except Exception as e:
+        print(f"  ElevenLabs error: {e}")
+        return False
+
+
+async def _stream_edge(text: str, audio_path: str, voice: str) -> list[dict]:
+    """edge-tts fallback — streams audio + captures word boundaries for SRT."""
+    import edge_tts
     communicate = edge_tts.Communicate(text, voice)
     words: list[dict] = []
     with open(audio_path, "wb") as f:
@@ -50,10 +81,8 @@ def _audio_duration(audio_path: str) -> float:
 
 
 def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> bool:
-    """Synthesise ambient background music via ffmpeg — no external dependency, always works."""
     preset = _AMBIENT_PRESETS[seed % len(_AMBIENT_PRESETS)]
     bass, mid, high, bpm = preset
-    # Pulse envelope: slow AM at bpm/60 Hz gives a gentle breathing effect
     pulse = bpm / 60.0
     expr = (
         f"0.18*sin({bass}*2*PI*t)*sin({pulse}*2*PI*t+0.1)+"
@@ -63,11 +92,8 @@ def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> b
     )
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
-        "-f", "lavfi",
-        "-i", f"aevalsrc={expr}:s=44100",
-        "-t", str(duration),
-        "-c:a", "aac", "-b:a", "128k",
-        output_path,
+        "-f", "lavfi", "-i", f"aevalsrc={expr}:s=44100",
+        "-t", str(duration), "-c:a", "aac", "-b:a", "128k", output_path,
     ]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -81,24 +107,19 @@ def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> b
 
 
 def _mix_audio(voice_path: str, music_path: str, output_path: str, music_volume: float = 0.08) -> bool:
-    """Mix voice (100%) with background music (8% volume) using ffmpeg."""
     try:
         cmd = [
             "ffmpeg", "-y", "-loglevel", "error",
-            "-i", voice_path,
-            "-i", music_path,
+            "-i", voice_path, "-i", music_path,
             "-filter_complex",
             f"[1:a]volume={music_volume},aloop=loop=-1:size=2e+09[music];[0:a][music]amix=inputs=2:duration=first:dropout_transition=3[out]",
-            "-map", "[out]",
-            "-c:a", "aac", "-b:a", "192k",
-            output_path,
+            "-map", "[out]", "-c:a", "aac", "-b:a", "192k", output_path,
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
             print("  Background music mixed.")
             return True
-        else:
-            print(f"  Music mix warning: {result.stderr[:200]}")
+        print(f"  Music mix warning: {result.stderr[:200]}")
     except Exception as e:
         print(f"  Music mix error: {e}")
     return False
@@ -142,15 +163,21 @@ def _save_srt(chunks: list[tuple], srt_path: str) -> None:
 
 
 def generate_audio(text: str, output_path: str, srt_path: str | None = None,
-                   voice: str = SHORT_VOICE, music_seed: int = 0) -> str:
+                   voice: str = SHORT_VOICE_ID, music_seed: int = 0) -> str:
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-
-    # Generate TTS
     raw_audio = output_path.replace(".mp3", "_voice_raw.mp3")
-    words = asyncio.run(_stream(text, raw_audio, voice))
-    print(f"  Voice audio: {raw_audio}")
 
-    # Generate and mix ambient background music
+    # Try ElevenLabs first (human-quality)
+    words = []
+    el_ok = _synth_elevenlabs(text, raw_audio, SHORT_VOICE_ID)
+
+    if not el_ok:
+        # Fall back to edge-tts
+        edge_voice = SHORT_VOICE_EDGE if "Neural" in voice or "en-" in voice else LONG_VOICE_EDGE
+        words = asyncio.run(_stream_edge(text, raw_audio, edge_voice))
+        print(f"  edge-tts fallback: {raw_audio}")
+
+    # Mix background music
     music_path = output_path.replace(".mp3", "_music.aac")
     mixed = False
     voice_duration = _audio_duration(raw_audio)
@@ -158,11 +185,9 @@ def generate_audio(text: str, output_path: str, srt_path: str | None = None,
         mixed = _mix_audio(raw_audio, music_path, output_path)
 
     if not mixed:
-        # Fall back to voice only
         import shutil
         shutil.copy2(raw_audio, output_path)
 
-    # Cleanup temp files
     for p in [raw_audio, music_path]:
         try:
             if os.path.exists(p):
