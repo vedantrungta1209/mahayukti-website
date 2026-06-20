@@ -16,7 +16,10 @@ from urllib.parse import quote
 
 import numpy as np
 import requests
-import edge_tts
+try:
+    import edge_tts as _edge_tts
+except ImportError:
+    _edge_tts = None
 
 import PIL.Image
 if not hasattr(PIL.Image, "ANTIALIAS"):
@@ -355,9 +358,43 @@ def _make_cta_slide(post_type: str, domain: str, bg: Image.Image) -> np.ndarray:
 
 # ── Audio helpers ──────────────────────────────────────────────────────────
 
-async def _tts(text: str, path: str):
-    comm = edge_tts.Communicate(text, voice="en-IN-NeerjaNeural", rate="+5%")
+_EL_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"   # Sarah — warm, clear, professional female
+
+
+def _tts_elevenlabs(text: str, path: str) -> bool:
+    api_key = os.environ.get("ELEVENLABS_API_KEY", "")
+    if not api_key:
+        return False
+    try:
+        r = requests.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
+            headers={"xi-api-key": api_key, "Content-Type": "application/json",
+                     "Accept": "audio/mpeg"},
+            json={
+                "text": text,
+                "model_id": "eleven_turbo_v2_5",
+                "voice_settings": {"stability": 0.50, "similarity_boost": 0.75, "style": 0.10},
+            },
+            timeout=60,
+        )
+        r.raise_for_status()
+        with open(path, "wb") as f:
+            f.write(r.content)
+        print("  ElevenLabs voiceover generated.")
+        return True
+    except Exception as e:
+        print(f"  ElevenLabs error: {e} — falling back to edge-tts")
+        return False
+
+
+async def _tts_edge(text: str, path: str):
+    comm = _edge_tts.Communicate(text, voice="en-IN-NeerjaNeural", rate="+5%")
     await comm.save(path)
+
+
+def _tts(text: str, path: str):
+    if not _tts_elevenlabs(text, path):
+        asyncio.run(_tts_edge(text, path))
 
 
 def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> bool:
@@ -490,7 +527,7 @@ def generate_reel(content: dict, post_id: str, gh_token: str) -> tuple:
 
         print("  Generating voiceover...")
         script = _build_reel_script(content)
-        asyncio.run(_tts(script, voice_raw))
+        _tts(script, voice_raw)
 
         print("  Synthesising background music...")
         seed = _seed(post_id)
