@@ -14,7 +14,7 @@ from pathlib import Path
 from config import OUTPUT_DIR, TOKEN_FILE
 from tools_list import get_short_tool, get_long_tools
 from script_generator import generate_short_script, generate_long_script
-from audio_generator import generate_audio, SHORT_VOICE, LONG_VOICE
+from audio_generator import generate_audio, SHORT_VOICE_ID as SHORT_VOICE, LONG_VOICE_ID as LONG_VOICE
 from video_composer import compose_short, compose_long, generate_thumbnail
 from youtube_uploader import upload_video
 

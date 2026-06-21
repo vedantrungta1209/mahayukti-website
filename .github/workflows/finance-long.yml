@@ -51,6 +51,14 @@ jobs:
             google-api-python-client google-auth \
             google-auth-oauthlib google-auth-httplib2
 
+
+      - name: Notify Jarvis on failure
+        if: failure()
+        run: |
+          ERROR=$(tail -5 /tmp/step_error.log 2>/dev/null || echo "Step failed — check run logs")
+          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"$(echo $GITHUB_JOB failed | head -c 300)\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true
       - name: Run pipeline
         if: steps.guard.outputs.skip != 'true'
         env:
