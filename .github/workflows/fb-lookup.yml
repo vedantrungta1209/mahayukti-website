@@ -11,7 +11,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install requests -q
-      - name: Get page info
+      - name: Get FB page info
         env:
           FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
