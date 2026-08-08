@@ -23,6 +23,8 @@ X_API_KEY                 = os.environ.get("X_API_KEY", "")
 X_API_SECRET              = os.environ.get("X_API_SECRET", "")
 X_ACCESS_TOKEN            = os.environ.get("X_ACCESS_TOKEN", "")
 X_ACCESS_TOKEN_SECRET     = os.environ.get("X_ACCESS_TOKEN_SECRET", "")
+TELEGRAM_BOT_TOKEN        = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHANNEL_ID       = os.environ.get("TELEGRAM_CHANNEL_ID", "")
 
 NAVY  = (11, 27, 58)
 GOLD  = (201, 148, 58)
@@ -574,6 +576,17 @@ def main():
 
     print("\n⏳ Waiting 120s for CDN propagation...")
     time.sleep(120)
+
+    # Telegram
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
+        try:
+            import sys as _sys; _sys.path.insert(0, str(Path(__file__).parent))
+            from telegram_post import post_photo as tg_photo
+            tg_caption = f"<b>{theme['title']}</b>\n\n{content.get('excerpt', '')[:300]}\n\nmahayukti.com"
+            if sq_path and os.path.exists(sq_path):
+                tg_photo(tg_caption, sq_path)
+        except Exception as e:
+            print(f"⚠️  Telegram failed (non-fatal): {e}")
 
     _only = [p.strip().lower() for p in ONLY_PLATFORMS.split(",") if p.strip()]
     print("\n📣 Posting..." + (f" (only: {', '.join(_only)})" if _only else ""))

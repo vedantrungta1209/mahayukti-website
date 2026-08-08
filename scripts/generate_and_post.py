@@ -26,6 +26,8 @@ IG_USER_ID            = os.environ.get("IG_USER_ID", "")
 YOUTUBE_TOKEN_JSON    = os.environ.get("YOUTUBE_TOKEN_JSON", "")
 X_API_KEY             = os.environ.get("X_API_KEY", "")
 X_API_SECRET          = os.environ.get("X_API_SECRET", "")
+TELEGRAM_BOT_TOKEN    = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHANNEL_ID   = os.environ.get("TELEGRAM_CHANNEL_ID", "")
 X_ACCESS_TOKEN        = os.environ.get("X_ACCESS_TOKEN", "")
 X_ACCESS_TOKEN_SECRET = os.environ.get("X_ACCESS_TOKEN_SECRET", "")
 
@@ -1178,6 +1180,19 @@ def main():
 
     _only = [p.strip().lower() for p in ONLY_PLATFORMS.split(",") if p.strip()]
     print("\n📣 Posting to social platforms..." + (f" (only: {', '.join(_only)})" if _only else ""))
+    # Telegram — fire-and-forget, no CDN wait needed (binary upload)
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
+        try:
+            import sys as _sys; _sys.path.insert(0, str(Path(__file__).parent))
+            from telegram_post import post_photo as tg_photo
+            os.environ["TELEGRAM_BOT_TOKEN"]  = TELEGRAM_BOT_TOKEN
+            os.environ["TELEGRAM_CHANNEL_ID"] = TELEGRAM_CHANNEL_ID
+            tg_caption = f"<b>{content['title']}</b>\n\n{content['excerpt']}\n\nmahayukti.com"
+            if sq_path and os.path.exists(sq_path):
+                tg_photo(tg_caption, sq_path)
+        except Exception as e:
+            print(f"⚠️  Telegram failed (non-fatal): {e}")
+
     for name, fn, args in [
         ("LinkedIn",          post_to_linkedin,        (content, sq_path, sq_url)),
         ("Facebook photo",    post_to_facebook,        (content, sq_path)),   # binary upload — no CDN issues

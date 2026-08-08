@@ -13,6 +13,8 @@ X_API_KEY             = os.environ["X_API_KEY"]
 X_API_SECRET          = os.environ["X_API_SECRET"]
 X_ACCESS_TOKEN        = os.environ["X_ACCESS_TOKEN"]
 X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
+TELEGRAM_BOT_TOKEN    = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHANNEL_ID   = os.environ.get("TELEGRAM_CHANNEL_ID", "")
 
 _SCRIPTS_DIR   = Path(__file__).parent
 _LOG_FILE      = _SCRIPTS_DIR / "x_news_pulse_log.json"
@@ -387,6 +389,14 @@ def main():
     if post_to_x(text):
         seen.add(story["id"])
         _save_log(seen)
+        # Mirror to Telegram (plain text, no image)
+        if TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
+            try:
+                import sys as _sys; _sys.path.insert(0, str(Path(__file__).parent))
+                from telegram_post import post_text as tg_text
+                tg_text(text[:4096])
+            except Exception as e:
+                print(f"⚠️  Telegram mirror failed (non-fatal): {e}")
 
 
 if __name__ == "__main__":
