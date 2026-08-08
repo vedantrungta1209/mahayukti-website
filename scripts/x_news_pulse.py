@@ -72,6 +72,36 @@ LOW_WEIGHT = [
     "accident", "fire", "flood local", "murder",
 ]
 
+# ── Domain hashtags ───────────────────────────────────────────────────────
+DOMAIN_HASHTAGS = {
+    "legal":       ["#LokSabha", "#IndiaLaw", "#Parliament"],
+    "finance":     ["#IndiaEconomy", "#Budget", "#RBI"],
+    "technology":  ["#DigitalIndia", "#TechIndia", "#ISRO"],
+    "security":    ["#NationalSecurity", "#IndiaDefence"],
+    "geopolitics": ["#IndiaFirst", "#Geopolitics", "#BharatMatters"],
+    "crisis":      ["#IndiaResilient", "#CrisisManagement"],
+    "governance":  ["#GoodGovernance", "#NewIndia", "#Bharat"],
+}
+
+# ── Handles to tag by domain (official/verified only — no politicians) ─────
+DOMAIN_HANDLES = {
+    "legal":       ["@LokSabhaSectt", "@RajyaSabha", "@SupremeCourtofIndia"],
+    "finance":     ["@RBI", "@FinMinIndia", "@PIB_India"],
+    "technology":  ["@isro", "@MeitY_India", "@_DPIIT"],
+    "security":    ["@SpokespersonMoD", "@PIB_India"],
+    "geopolitics": ["@MEAIndia", "@PIB_India"],
+    "crisis":      ["@NDRFHQ", "@PIB_India"],
+    "governance":  ["@PMOIndia", "@rashtrapatibhvn", "@PIB_India"],
+}
+
+# ── Cross-post footer (rotates) ────────────────────────────────────────────
+FOOTER_LINKS = [
+    "\n\nFollow our journey: mahayukti.com",
+    "\n\nConnect with India's experts: mahayukti.com",
+    "\n\nIndia's vetted advisory network: mahayukti.com",
+    "\n\nFor deep expertise on this and more: mahayukti.com",
+]
+
 # ── Mahayukti domain tags ──────────────────────────────────────────────────
 DOMAIN_MAP = {
     "legal":       ["supreme court", "high court", "tribunal", "law", "bill", "legislation", "judiciary", "constitutional", "lok sabha", "rajya sabha", "parliament"],
@@ -197,7 +227,20 @@ def pick_story(stories: list[dict], seen: set) -> dict | None:
     return None
 
 
-def generate_post(story: dict) -> str:
+def _build_footer(story: dict, post_count: int) -> str:
+    hashtags = " ".join(DOMAIN_HASHTAGS.get(story["domain"], ["#India", "#Bharat"])[:2])
+    hashtags += " #Mahayukti"
+    handles  = DOMAIN_HANDLES.get(story["domain"], [])
+    handle_str = " ".join(handles[:2]) if handles else ""
+    footer_link = FOOTER_LINKS[post_count % len(FOOTER_LINKS)]
+    parts = [footer_link]
+    if handle_str:
+        parts.append(f"\n{handle_str}")
+    parts.append(f"\n{hashtags}")
+    return "".join(parts)
+
+
+def generate_post(story: dict, post_count: int = 0) -> str:
     system = """\
 You write for @wearemahayukti — an Indian account that posts sharp, balanced commentary on news affecting India.
 
@@ -236,6 +279,8 @@ Domain: {story['domain']}
 Follow the identity and tone rules strictly. Make it feel like a real, thoughtful Indian
 observing this news — not a bot summarising it."""
 
+    footer = _build_footer(story, post_count)
+
     for attempt in range(3):
         try:
             r = requests.post(
@@ -254,7 +299,8 @@ observing this news — not a bot summarising it."""
                 timeout=60,
             )
             r.raise_for_status()
-            return r.json()["content"][0]["text"].strip()
+            body = r.json()["content"][0]["text"].strip()
+            return body + footer
         except Exception as e:
             print(f"  Generation attempt {attempt+1}/3 failed: {e}")
             if attempt < 2:
@@ -292,6 +338,7 @@ def main():
     print(f"  {len(stories)} stories fetched, top score: {stories[0]['score'] if stories else 0}")
 
     seen = _load_log()
+    post_count = len(seen)
     story = pick_story(stories, seen)
 
     if not story:
@@ -300,7 +347,7 @@ def main():
 
     print(f"\n📰 Selected: [{story['source']}] {story['title']} (score: {story['score']}, domain: {story['domain']})")
 
-    text = generate_post(story)
+    text = generate_post(story, post_count)
     if not text:
         print("❌ Content generation failed — skipping.")
         sys.exit(1)
