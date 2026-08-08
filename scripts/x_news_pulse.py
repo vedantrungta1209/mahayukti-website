@@ -97,7 +97,7 @@ DOMAIN_HANDLES = {
 # ── Cross-post footer (rotates) ────────────────────────────────────────────
 LINKEDIN_URL  = "linkedin.com/company/mahayukti"
 INSTAGRAM_URL = "instagram.com/mahayukti.advisory"
-FACEBOOK_URL  = "facebook.com/profile.php?id=61589228920401"  # update once vanity URL is set
+FACEBOOK_URL  = "facebook.com/MahaYuktiAdvisory"
 WEBSITE_URL   = "mahayukti.com"
 
 FOOTER_LINKS = [
@@ -106,7 +106,9 @@ FOOTER_LINKS = [
     f"\n\nIndia's expert network: {WEBSITE_URL} | LinkedIn: {LINKEDIN_URL}",
     f"\n\nConnect with India's best: {WEBSITE_URL}",
     f"\n\nFollow our journey: {LINKEDIN_URL}",
-    f"\n\nOn Instagram too: {INSTAGRAM_URL}",
+    f"\n\nFind us on Instagram: {INSTAGRAM_URL}",
+    f"\n\nFind us on Facebook: {FACEBOOK_URL}",
+    f"\n\n{WEBSITE_URL} | Instagram: {INSTAGRAM_URL} | Facebook: {FACEBOOK_URL}",
 ]
 
 # ── Mahayukti domain tags ──────────────────────────────────────────────────

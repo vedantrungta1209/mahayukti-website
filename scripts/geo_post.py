@@ -228,8 +228,8 @@ Cross-platform link strategy — follow this exactly:
 Return this exact JSON:
 {{
   "linkedin_text": "LinkedIn post 180-240 words. Conversational and real — like a smart colleague sharing something worth knowing. Short paragraphs, varied length. No bullet points. Specific India context. End with mahayukti.com. Max 2 hashtags.",
-  "instagram_caption": "Instagram caption 70-90 words. One punchy hook. 3-4 short sentences — one clear thought, not a lecture. End with: Follow us on X @wearemahayukti | linkedin.com/company/mahayukti | mahayukti.com. 5-6 hashtags.",
-  "facebook_text": "Facebook post 100-140 words. Feels like someone in your network shared something worth reading. Warm, grounded, not preachy. End with: Find us on X @wearemahayukti | linkedin.com/company/mahayukti | mahayukti.com.",
+  "instagram_caption": "Instagram caption 70-90 words. One punchy hook. 3-4 short sentences — one clear thought, not a lecture. End with: Follow us on X @wearemahayukti | linkedin.com/company/mahayukti | facebook.com/MahaYuktiAdvisory | mahayukti.com. 5-6 hashtags.",
+  "facebook_text": "Facebook post 100-140 words. Feels like someone in your network shared something worth reading. Warm, grounded, not preachy. End with: Find us on X @wearemahayukti | linkedin.com/company/mahayukti | facebook.com/MahaYuktiAdvisory | mahayukti.com.",
   "twitter_text": "X post — genuine thought, 200-600 chars (Premium long-form). Real and specific. End with mahayukti.com or linkedin.com/company/mahayukti — whichever fits. 1-2 hashtags max or none.",
   "image_headline": "5-6 words max. The one thing to remember. Not a tagline — a thought.",
   "image_subtext": "One line under 10 words. Specific, includes mahayukti.com"
