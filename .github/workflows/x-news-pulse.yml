@@ -1,0 +1,65 @@
+name: MahaYukti X News Pulse (Hourly)
+
+on:
+  schedule:
+    # Runs every hour — GitHub may delay up to 10 min, that's fine for news rhythm
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force post even if nothing scores high enough'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: x-news-pulse
+  cancel-in-progress: true   # if last hour's run is still going, cancel it
+
+jobs:
+  pulse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+          token: ${{ secrets.GH_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests anthropic requests-oauthlib
+
+      - name: Run news pulse
+        env:
+          ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
+          X_API_KEY:             ${{ secrets.X_API_KEY }}
+          X_API_SECRET:          ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN:        ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          FORCE:                 ${{ github.event.inputs.force }}
+        run: python scripts/x_news_pulse.py
+
+      - name: Commit updated log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/x_news_pulse_log.json
+          git diff --staged --quiet || (git commit -m "chore: update news pulse log" && git pull --rebase origin main && git push)
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"News pulse failed\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true
