@@ -50,12 +50,12 @@ jobs:
           FORCE:                 ${{ github.event.inputs.force }}
         run: python scripts/x_news_pulse.py
 
-      - name: Commit updated log
+      - name: Commit log and heartbeat
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/x_news_pulse_log.json
-          git diff --staged --quiet || (git commit -m "chore: update news pulse log" && git pull --rebase origin main && git push)
+          git add scripts/x_news_pulse_log.json scripts/x_news_pulse_heartbeat.txt
+          git diff --staged --quiet || (git commit -m "chore: news pulse run" && git pull --rebase origin main && git push)
 
       - name: Notify on failure
         if: failure()

@@ -1,0 +1,40 @@
+name: Cross-post X Launch to LinkedIn/FB/IG
+
+# One-shot: run manually via workflow_dispatch to announce @wearemahayukti across all platforms.
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  crosspost:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests pillow requests-oauthlib
+
+      - name: Run cross-post script
+        env:
+          ANTHROPIC_API_KEY:        ${{ secrets.ANTHROPIC_API_KEY }}
+          MAKE_LINKEDIN_WEBHOOK_URL: ${{ secrets.MAKE_LINKEDIN_WEBHOOK_URL }}
+          LINKEDIN_ACCESS_TOKEN:    ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN:      ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          FB_PAGE_ACCESS_TOKEN:     ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+          FB_PAGE_ID:               ${{ secrets.FB_PAGE_ID }}
+          IG_USER_ID:               ${{ secrets.IG_USER_ID }}
+          IMGBB_API_KEY:            ${{ secrets.IMGBB_API_KEY }}
+          X_API_KEY:                ${{ secrets.X_API_KEY }}
+          X_API_SECRET:             ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN:           ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET:    ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+        run: python scripts/x_announcement_crosspost.py

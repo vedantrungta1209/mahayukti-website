@@ -153,21 +153,23 @@ jobs:
             echo "✅ AI Shorts on track ($SHORT_COUNT done)"
           fi
 
-          # ── X News Pulse (every ~2 hours — fires if no pulse in last 2 hrs) ───
-          # Uses the log file commit timestamp as the last-posted signal.
-          PULSE_LAST_TS=$(git log -1 --format="%ct" -- "scripts/x_news_pulse_log.json" 2>/dev/null || echo "")
+          # ── X News Pulse (every ~2 hours — fires if heartbeat is stale) ─────
+          # Heartbeat is written every run (even "nothing to post"), so this
+          # correctly detects when the workflow itself has stopped running —
+          # not just when there was nothing newsworthy enough to post.
+          PULSE_LAST_TS=$(git log -1 --format="%ct" -- "scripts/x_news_pulse_heartbeat.txt" 2>/dev/null || echo "")
           NOW_TS=$(date +%s)
           if [ -z "$PULSE_LAST_TS" ]; then
             PULSE_AGE=9999
           else
             PULSE_AGE=$(( (NOW_TS - PULSE_LAST_TS) / 3600 ))
           fi
-          echo "News Pulse: last posted ${PULSE_AGE}h ago"
+          echo "News Pulse: last ran ${PULSE_AGE}h ago"
           if [ "$PULSE_AGE" -ge 2 ]; then
-            echo "⚠️  News Pulse overdue — triggering now"
+            echo "⚠️  News Pulse stale — triggering now"
             trigger_workflow "x-news-pulse.yml" ""
           else
-            echo "✅ News Pulse posted within last 2 hours"
+            echo "✅ News Pulse ran within last 2 hours"
           fi
 
           # ── Geo/Strategic awareness post (2 PM IST target, every day) ────────

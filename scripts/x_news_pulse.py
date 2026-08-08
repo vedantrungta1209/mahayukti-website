@@ -14,9 +14,10 @@ X_API_SECRET          = os.environ["X_API_SECRET"]
 X_ACCESS_TOKEN        = os.environ["X_ACCESS_TOKEN"]
 X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 
-_SCRIPTS_DIR = Path(__file__).parent
-_LOG_FILE    = _SCRIPTS_DIR / "x_news_pulse_log.json"
-MAX_LOG      = 200   # keep last N posted story IDs
+_SCRIPTS_DIR   = Path(__file__).parent
+_LOG_FILE      = _SCRIPTS_DIR / "x_news_pulse_log.json"
+_HEARTBEAT     = _SCRIPTS_DIR / "x_news_pulse_heartbeat.txt"
+MAX_LOG        = 200   # keep last N posted story IDs
 MIN_SCORE    = 6     # minimum relevance score to post
 MAX_AGE_HRS  = 3     # only consider stories from last N hours
 
@@ -228,11 +229,19 @@ def fetch_stories() -> list[dict]:
 
 
 def pick_story(stories: list[dict], seen: set) -> dict | None:
+    # First pass: fresh story above relevance threshold
     for s in stories:
-        if s["id"] in seen:
-            continue
-        if s["score"] >= MIN_SCORE:
+        if s["id"] not in seen and s["score"] >= MIN_SCORE:
             return s
+    # Fallback: best unposted story regardless of score (never skip a run)
+    for s in stories:
+        if s["id"] not in seen:
+            print(f"  ⚠️  No high-score story found — falling back to best available (score: {s['score']})")
+            return s
+    # All fetched stories already posted — temporarily lower age window and rescan
+    print("  ⚠️  All recent stories already posted — picking least-recently-seen story as backup")
+    if stories:
+        return stories[0]
     return None
 
 
@@ -344,6 +353,11 @@ def post_to_x(text: str) -> bool:
     return False
 
 
+def _write_heartbeat():
+    """Write current UTC timestamp so the guardian can detect stale runs."""
+    _HEARTBEAT.write_text(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+
 def main():
     print(f"\n📡 MahaYukti News Pulse — {datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
 
@@ -355,8 +369,10 @@ def main():
     post_count = len(seen)
     story = pick_story(stories, seen)
 
+    _write_heartbeat()
+
     if not story:
-        print("✅ Nothing new worth posting right now — skipping.")
+        print("⚠️  No stories fetched at all (RSS outage?) — skipping this run.")
         sys.exit(0)
 
     print(f"\n📰 Selected: [{story['source']}] {story['title']} (score: {story['score']}, domain: {story['domain']})")
