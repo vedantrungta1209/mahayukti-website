@@ -1,0 +1,49 @@
+name: MahaYukti Reddit Posts (3x Weekly)
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Monday 11:30 AM IST
+    - cron: '0 6 * * 3'   # Wednesday 11:30 AM IST
+    - cron: '0 6 * * 5'   # Friday 11:30 AM IST
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: reddit-post
+  cancel-in-progress: true
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+          token: ${{ secrets.GH_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests anthropic
+
+      - name: Run Reddit post
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REDDIT_CLIENT_ID:  ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_SECRET:     ${{ secrets.REDDIT_SECRET }}
+          REDDIT_USERNAME:   ${{ secrets.REDDIT_USERNAME }}
+          REDDIT_PASSWORD:   ${{ secrets.REDDIT_PASSWORD }}
+        run: python scripts/reddit_post.py
+
+      - name: Commit log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/reddit_post_log.json 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "chore: reddit post log" && git pull --rebase origin main && git push)
