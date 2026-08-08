@@ -24,6 +24,10 @@ FB_PAGE_ACCESS_TOKEN  = os.environ.get("FB_PAGE_ACCESS_TOKEN", "")
 FB_PAGE_ID            = os.environ.get("FB_PAGE_ID", "")
 IG_USER_ID            = os.environ.get("IG_USER_ID", "")
 YOUTUBE_TOKEN_JSON    = os.environ.get("YOUTUBE_TOKEN_JSON", "")
+X_API_KEY             = os.environ.get("X_API_KEY", "")
+X_API_SECRET          = os.environ.get("X_API_SECRET", "")
+X_ACCESS_TOKEN        = os.environ.get("X_ACCESS_TOKEN", "")
+X_ACCESS_TOKEN_SECRET = os.environ.get("X_ACCESS_TOKEN_SECRET", "")
 
 # ── Brand ──────────────────────────────────────────────────────────────────
 NAVY  = (11, 27, 58)
@@ -366,6 +370,7 @@ Return this exact JSON:
   "linkedin_text": "LinkedIn post (180-220 words). FIRST LINE must be a scroll-stopper stat or provocative truth about {subdomain} in India — NOT 'I' and NOT generic. Short paragraphs (1-2 lines, lots of white space). Explain the gap Mahayukti fills. End with a genuine question inviting comments. CTA: 'Describe your problem at mahayukti.com'. Use max 3 hashtags at end. Sound like a real founding team member sharing a genuine observation — not a brand.",
   "instagram_caption": "Instagram caption (90-110 words). Hook in first line. Explain Mahayukti in 2 sentences. Specific scenario. CTA: mahayukti.com. 8-10 relevant hashtags at end.",
   "facebook_text": "Facebook post (120-160 words). Conversational and relatable. Specific Indian scenario. Explain what Mahayukti does. Clear CTA at end.",
+  "twitter_text": "X/Twitter post (max 240 chars). One punchy sentence that names the specific {subdomain} problem in India. Then one line on how Mahayukti fixes it. End with mahayukti.com. Max 2 hashtags. No fluff. Count carefully — must be under 240 characters.",
   "image_headline": "Bold image headline (max 7 words, specific to the problem — not generic)",
   "image_subtext": "One supporting line (max 10 words, includes mahayukti.com)",
   "post_type": "client",
@@ -404,6 +409,7 @@ Return this exact JSON:
   "linkedin_text": "LinkedIn post (180-220 words). FIRST LINE must be an identity-affirming truth or uncomfortable observation about being a top {subdomain} professional in India — NOT 'I' and NOT generic. Short paragraphs, lots of white space. End with a question that makes {subdomain} professionals want to comment. CTA: 'Apply to join at mahayukti.com'. Max 3 hashtags. Sound like a respected peer sharing a real insight.",
   "instagram_caption": "Instagram caption (90-110 words). Identity-affirming hook. 2-sentence Mahayukti explanation. What they gain. CTA: mahayukti.com. 8-10 hashtags.",
   "facebook_text": "Facebook post (120-160 words). Community feel — belonging and opportunity. Specific to {subdomain}. Explain Mahayukti clearly. CTA to apply.",
+  "twitter_text": "X/Twitter post (max 240 chars). One punchy identity-affirming line for a {subdomain} professional. One line on what joining Mahayukti means for them. End with mahayukti.com. Max 2 hashtags. No fluff. Count carefully — must be under 240 characters.",
   "image_headline": "Bold image headline (max 7 words, speaks to the professional — identity-affirming)",
   "image_subtext": "One supporting line (max 10 words, includes mahayukti.com)",
   "post_type": "member",
@@ -1061,6 +1067,69 @@ def upload_to_youtube(content, reel_path):
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# X (Twitter)
+# ══════════════════════════════════════════════════════════════════════════
+
+def _x_oauth() -> "OAuth1 | None":
+    if not all([X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET]):
+        return None
+    try:
+        from requests_oauthlib import OAuth1
+        return OAuth1(X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET)
+    except ImportError:
+        print("⚠️  requests-oauthlib not installed — X post skipped")
+        return None
+
+
+def _x_upload_media(image_path: str, auth) -> str | None:
+    """Upload image via Twitter v1.1 media/upload and return media_id_string."""
+    with open(image_path, "rb") as f:
+        data = f.read()
+    r = requests.post(
+        "https://upload.twitter.com/1.1/media/upload.json",
+        files={"media": data},
+        auth=auth,
+        timeout=60,
+    )
+    if r.ok:
+        return r.json().get("media_id_string")
+    print(f"  X media upload failed ({r.status_code}): {r.text[:200]}")
+    return None
+
+
+def post_to_twitter(content: dict, sq_path: str):
+    if not all([X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET]):
+        print("⚠️  X credentials missing — skipping")
+        return
+    auth = _x_oauth()
+    if auth is None:
+        return
+
+    tweet_text = content.get("twitter_text", "")
+    # Hard-trim to 280 chars as a safety net
+    if len(tweet_text) > 280:
+        tweet_text = tweet_text[:277] + "..."
+
+    payload: dict = {"text": tweet_text}
+
+    media_id = _x_upload_media(sq_path, auth)
+    if media_id:
+        payload["media"] = {"media_ids": [media_id]}
+
+    r = requests.post(
+        "https://api.twitter.com/2/tweets",
+        json=payload,
+        auth=auth,
+        timeout=30,
+    )
+    if r.ok:
+        tweet_id = r.json().get("data", {}).get("id", "")
+        print(f"✅ X posted: https://x.com/i/web/status/{tweet_id}")
+    else:
+        print(f"⚠️  X post failed ({r.status_code}): {r.text[:200]}")
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════
 def main():
@@ -1134,6 +1203,7 @@ def main():
         ("Facebook Reel",     post_to_facebook_reel,   (content, reel_url) if reel_url else None),
         ("Instagram image",   post_to_instagram_image, (content, sq_url)),
         ("Instagram Reel",    post_to_instagram_reel,  (content, reel_url) if reel_url else None),
+        ("X (Twitter)",       post_to_twitter,         (content, sq_path)),
     ]:
         if args is None:
             print(f"   {name}: skipped (no reel)")

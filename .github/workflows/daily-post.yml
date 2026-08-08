@@ -107,7 +107,7 @@ jobs:
           pip install \
             requests Pillow edge-tts "moviepy==1.0.3" numpy \
             google-auth google-auth-httplib2 google-auth-oauthlib \
-            google-api-python-client anthropic
+            google-api-python-client anthropic requests-oauthlib
 
       - name: Refresh LinkedIn token (auto, if > 50 days old)
         if: steps.guard.outputs.skip != 'true'
@@ -135,6 +135,10 @@ jobs:
           YOUTUBE_TOKEN_JSON:           ${{ secrets.YOUTUBE_MARKETING_TOKEN_JSON }}
           ONLY_PLATFORMS:               ${{ github.event.inputs.only_platforms }}
           ELEVENLABS_API_KEY:           ${{ secrets.ELEVENLABS_API_KEY }}
+          X_API_KEY:                    ${{ secrets.X_API_KEY }}
+          X_API_SECRET:                 ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN:               ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET:        ${{ secrets.X_ACCESS_TOKEN_SECRET }}
         run: python scripts/generate_and_post.py
 
       - name: Commit topic counter
