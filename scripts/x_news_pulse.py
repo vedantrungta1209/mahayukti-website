@@ -97,6 +97,7 @@ DOMAIN_HANDLES = {
 # ── Cross-post footer (rotates) ────────────────────────────────────────────
 LINKEDIN_URL  = "linkedin.com/company/mahayukti"
 INSTAGRAM_URL = "instagram.com/mahayukti.advisory"
+FACEBOOK_URL  = "facebook.com/profile.php?id=61589228920401"  # update once vanity URL is set
 WEBSITE_URL   = "mahayukti.com"
 
 FOOTER_LINKS = [
