@@ -1,0 +1,97 @@
+name: MahaYukti Strategic Awareness Post (2 PM IST)
+
+on:
+  workflow_dispatch:
+    inputs:
+      only_platforms:
+        description: 'Only post to these platforms (comma-separated). Empty = all.'
+        required: false
+        default: ''
+      force:
+        description: 'Force run even if already posted today'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  geo-post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 5
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Idempotency check
+        id: guard
+        run: |
+          FORCE="${{ github.event.inputs.force }}"
+          if [ "$FORCE" = "true" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          COUNTER_FILE="scripts/topic_counter_geo.txt"
+          LAST_TS=$(git log -1 --format="%ct" -- "$COUNTER_FILE" 2>/dev/null || echo "")
+          if [ -n "$LAST_TS" ]; then
+            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
+            if [ "$LAST_IST" = "$TODAY_IST" ]; then
+              echo "⏭️  Geo post already done today. Skipping."
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.guard.outputs.skip != 'true'
+        run: pip install requests Pillow anthropic requests-oauthlib
+
+      - name: Run geo post
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN:                  ${{ secrets.GH_TOKEN }}
+          MAKE_LINKEDIN_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+          LINKEDIN_ACCESS_TOKEN:     ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN:       ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          IMGBB_API_KEY:             ${{ secrets.IMGBB_API_KEY }}
+          FB_PAGE_ACCESS_TOKEN:      ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+          FB_PAGE_ID:                ${{ secrets.FB_PAGE_ID }}
+          IG_USER_ID:                ${{ secrets.IG_USER_ID }}
+          X_API_KEY:                 ${{ secrets.X_API_KEY }}
+          X_API_SECRET:              ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN:            ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET:     ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          ONLY_PLATFORMS:            ${{ github.event.inputs.only_platforms }}
+        run: python scripts/geo_post.py
+
+      - name: Commit geo counter
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/topic_counter_geo.txt
+          git diff --staged --quiet || git commit -m "chore: update geo topic counter"
+          git pull --rebase origin main
+          git push
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"Geo post failed\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true

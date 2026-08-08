@@ -148,6 +148,16 @@ jobs:
             echo "✅ AI Shorts on track ($SHORT_COUNT done)"
           fi
 
+          # ── Geo/Strategic awareness post (2 PM IST target, every day) ────────
+          if [ "$IST_HOUR" -ge 14 ]; then
+            if [ "$(was_posted_today scripts/topic_counter_geo.txt)" = "false" ]; then
+              echo "⚠️  Geo post MISSING — triggering now"
+              trigger_workflow "geo-post.yml" ""
+            else
+              echo "✅ Geo post already done today"
+            fi
+          fi
+
           # ── Evening social post (6:30 PM IST target, every day) ─────────────
           if [ "$IST_HOUR" -ge 18 ]; then
             if [ "$(was_posted_today scripts/topic_counter_evening.txt)" = "false" ]; then
