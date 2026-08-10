@@ -1,21 +1,24 @@
-name: MahaYukti X Engagement (Every 3 Hours)
+name: MahaYukti Viral Thread Engine
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   # every 3 hours
+    # 10:00 AM IST = 4:30 AM UTC — morning India peak
+    - cron: '30 4 * * *'
+    # 7:30 PM IST = 2:00 PM UTC — evening India peak
+    - cron: '0 14 * * *'
   workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
-  group: x-engage
-  cancel-in-progress: true
+  group: x-viral-thread
+  cancel-in-progress: false   # never cancel a posting run mid-thread
 
 jobs:
-  engage:
+  thread:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     permissions:
       contents: write
 
@@ -31,18 +34,18 @@ jobs:
       - name: Install dependencies
         run: pip install requests anthropic requests-oauthlib
 
-      - name: Run engagement
+      - name: Run viral thread engine
         env:
           ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
           X_API_KEY:             ${{ secrets.X_API_KEY }}
           X_API_SECRET:          ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN:        ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
-        run: python scripts/x_engage.py
+        run: python scripts/x_viral_thread.py
 
-      - name: Commit engage log
+      - name: Commit thread log
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/x_engage_log.json 2>/dev/null || true
-          git diff --staged --quiet || (git commit -m "chore: x engage log" && git pull --rebase origin main && git push)
+          git add scripts/x_viral_thread_log.json 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "chore: viral thread log" && git pull --rebase origin main && git push)

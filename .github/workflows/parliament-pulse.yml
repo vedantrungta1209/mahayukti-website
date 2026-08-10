@@ -18,9 +18,13 @@ jobs:
   pulse:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:

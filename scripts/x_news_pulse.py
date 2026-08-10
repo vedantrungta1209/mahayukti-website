@@ -7,6 +7,7 @@ Neither left nor right. India first. No political allegiance.
 
 import os, json, re, hashlib, datetime, requests, sys, xml.etree.ElementTree as ET
 from pathlib import Path
+from requests_oauthlib import OAuth1
 
 ANTHROPIC_API_KEY     = os.environ["ANTHROPIC_API_KEY"]
 X_API_KEY             = os.environ["X_API_KEY"]
@@ -247,9 +248,49 @@ def pick_story(stories: list[dict], seen: set) -> dict | None:
     return None
 
 
+_TRENDING_CACHE: list[str] = []
+_TRENDING_FETCHED_AT: datetime.datetime | None = None
+
+def _fetch_trending_hashtags() -> list[str]:
+    """Get real-time trending hashtags for India. Cached for 1h per process."""
+    global _TRENDING_CACHE, _TRENDING_FETCHED_AT
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if _TRENDING_FETCHED_AT and (now - _TRENDING_FETCHED_AT).seconds < 3600 and _TRENDING_CACHE:
+        return _TRENDING_CACHE
+    try:
+        auth = OAuth1(X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET)
+        r = requests.get(
+            "https://api.twitter.com/1.1/trends/place.json",
+            params={"id": 23424848},  # India WOEID
+            auth=auth, timeout=10,
+        )
+        if r.ok:
+            trends = r.json()[0].get("trends", [])
+            tags = [t["name"] for t in trends if t["name"].startswith("#")]
+            # Filter to India-relevant ones
+            india_tags = [h for h in tags if any(
+                kw in h.lower() for kw in [
+                    "india", "bharat", "modi", "lok", "rajya", "parliament", "sansad",
+                    "session", "fcra", "viksit", "isro", "rbi", "defence", "amrit",
+                    "pakistan", "china", "startup", "budget", "rupee", "monsoon",
+                ]
+            )]
+            result = india_tags[:2] or tags[:2]
+            _TRENDING_CACHE = result
+            _TRENDING_FETCHED_AT = now
+            print(f"  Trending tags: {result}")
+            return result
+    except Exception as e:
+        print(f"  Trending fetch skipped: {e}")
+    return []
+
+
 def _build_footer(story: dict, post_count: int) -> str:
-    hashtags = " ".join(DOMAIN_HASHTAGS.get(story["domain"], ["#India", "#Bharat"])[:2])
-    hashtags += " #Mahayukti"
+    domain_tags = DOMAIN_HASHTAGS.get(story["domain"], ["#India", "#Bharat"])[:2]
+    trending    = _fetch_trending_hashtags()
+    # Use 1 trending tag if available, then fill with domain tags
+    combined = list(dict.fromkeys(trending[:1] + domain_tags))[:2]
+    hashtags = " ".join(combined) + " #Mahayukti"
     handles  = DOMAIN_HANDLES.get(story["domain"], [])
     handle_str = " ".join(handles[:2]) if handles else ""
     footer_link = FOOTER_LINKS[post_count % len(FOOTER_LINKS)]
@@ -280,16 +321,25 @@ HARD RULES — never break:
 - No religious, caste, or regional angle. India is one.
 - Constructive always. Never cynical. Never despairing.
 
+THE FIRST LINE IS EVERYTHING:
+X is a scroll. You have 0.3 seconds. If the first line doesn't stop the thumb, nobody reads the rest.
+Proven first-line patterns:
+- Data bomb: "India just crossed [X]. It took China [Y] years. It took us [Z]."
+- Counterintuitive: "Everyone is calling [X] a [Y]. They're looking at it wrong."
+- Incomplete tension: "The [topic] story isn't about [obvious thing]. It's about [hidden thing]."
+- Stark contrast: "[Situation in 2014]. [Situation now]. That's not [word]. That's [stronger word]."
+NEVER start with: "India's", "The government", "Today", "Breaking", "Important update", or any news-anchor opener.
+
 WRITING — what makes it human and shareable:
-- VARY length. Sometimes 3 sentences. Sometimes 600 words. Match what the story deserves.
-- VARY structure. Don't always open with the bold statement. Sometimes mid-thought. Sometimes a question. Sometimes just react.
+- VARY length. Sometimes 3 punchy sentences. Sometimes 500 words. Match what the story deserves.
+- VARY structure. Sometimes mid-thought. Sometimes a question. Sometimes just a sharp reaction.
 - USE contractions. "isn't", "we've", "can't" — always.
 - HAVE a point of view. Not partisan, but not a weather report either.
 - OCCASIONALLY use "I" — it makes it human.
 - SHORT SENTENCES when something matters. Long ones when building.
 - NEVER: "It's important to note", "In conclusion", "Let's delve", "Navigate", "Landscape", "Robust", "Tapestry", "Shed light", "Pivotal", "In today's world". Instant AI giveaways.
 - DON'T over-explain. Trust the reader.
-- END naturally — not always with a question or CTA.
+- END with a statement, not always a question.
 - Mahayukti: only when it genuinely fits. Never as an ad.
 
 Respond with ONLY the post text. Nothing else.\
