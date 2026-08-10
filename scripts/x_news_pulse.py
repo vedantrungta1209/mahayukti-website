@@ -267,15 +267,16 @@ def _fetch_trending_hashtags() -> list[str]:
         if r.ok:
             trends = r.json()[0].get("trends", [])
             tags = [t["name"] for t in trends if t["name"].startswith("#")]
-            # Filter to India-relevant ones
+            # Prefer India-relevant tags but always return something
             india_tags = [h for h in tags if any(
                 kw in h.lower() for kw in [
                     "india", "bharat", "modi", "lok", "rajya", "parliament", "sansad",
                     "session", "fcra", "viksit", "isro", "rbi", "defence", "amrit",
                     "pakistan", "china", "startup", "budget", "rupee", "monsoon",
+                    "national", "independence", "digital", "make", "swachh",
                 ]
             )]
-            result = india_tags[:2] or tags[:2]
+            result = india_tags[:2] if india_tags else tags[:2]
             _TRENDING_CACHE = result
             _TRENDING_FETCHED_AT = now
             print(f"  Trending tags: {result}")
@@ -288,8 +289,8 @@ def _fetch_trending_hashtags() -> list[str]:
 def _build_footer(story: dict, post_count: int) -> str:
     domain_tags = DOMAIN_HASHTAGS.get(story["domain"], ["#India", "#Bharat"])[:2]
     trending    = _fetch_trending_hashtags()
-    # Use 1 trending tag if available, then fill with domain tags
-    combined = list(dict.fromkeys(trending[:1] + domain_tags))[:2]
+    # 1 trending tag + 2 domain tags, always at least 3 hashtags total
+    combined = list(dict.fromkeys(trending[:1] + domain_tags + ["#India"]))[:3]
     hashtags = " ".join(combined) + " #Mahayukti"
     handles  = DOMAIN_HANDLES.get(story["domain"], [])
     handle_str = " ".join(handles[:2]) if handles else ""

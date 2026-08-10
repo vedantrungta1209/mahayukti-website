@@ -139,21 +139,24 @@ HARD RULES:
 - Sound like a real, well-read Indian — not a brand bot
 
 STYLE:
-- Max 240 characters — must work as a standalone post if needed (not just as a reply)
+- Max 230 characters (leave room for hashtags at the end)
+- Must make sense as a standalone post — not just as a reply
 - Direct, specific to the topic — not generic
 - Add perspective or forward-looking India context, not just agreement
 - Contractions: "isn't", "we've", "can't"
 - NEVER: "Great point!", "Indeed", "Absolutely", "Totally agree", "Well said"
-- 1-2 relevant hashtags are OK for standalone posts
 - One emoji max if it genuinely fits; skip otherwise
+- MANDATORY: End with 2-3 hashtags. Always include #India plus 1-2 topic-relevant tags.
+  Choose from: #India #Bharat #ViksitBharat #IndiaRising #IndiaEconomy #IndiaDefence
+  #DigitalIndia #IndiaGeopolitics #MakeIndiaGreatest #IndiaFirst #Sansad
 
-Respond with ONLY the post text. Nothing else."""
+Respond with ONLY the post text (including hashtags). Nothing else."""
 
     prompt = f"""Write a post engaging with this topic raised by @{tweet['username']} ({tweet['followers']:,} followers):
 
 "{tweet['text']}"
 
-Your perspective on this. Specific, forward-looking, India-first. Must make sense as a standalone post even without context. Under 240 chars."""
+Your perspective on this. Specific, forward-looking, India-first. Standalone post under 230 chars + 2-3 hashtags."""
 
     for attempt in range(2):
         try:

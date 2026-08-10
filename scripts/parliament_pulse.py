@@ -42,8 +42,10 @@ Mahayukti believes: strong democratic institutions + legislative ambition = Indi
 HASHTAG_POOL = [
     "#MonsoonSession2026", "#LokSabha", "#RajyaSabha",
     "#ViksitBharat", "#India2047", "#FCRABill",
-    "#TribunalReformsBill", "#MakeIndiGreatest",
+    "#TribunalReformsBill", "#MakeIndiaGreatest", "#India", "#Bharat",
 ]
+
+ALWAYS_HASHTAGS = "#MonsoonSession2026 #India"  # guaranteed in every parliament post
 
 
 def _oauth():
@@ -132,17 +134,18 @@ HARD RULES:
 - Do NOT directly quote or attribute the source tweets — write as original thought
 
 POST STYLE:
-- This is a standalone original tweet (280 chars max)
+- This is a standalone original tweet (max 260 chars so hashtags fit)
 - Must read as YOUR original perspective, not a news summary
 - Frame through India 2047 / long-term development lens
 - Sharp, specific, well-read Indian analyst voice — not PR bot
 - NEVER start with: "Great", "Important", "Crucial", "Today", "Breaking"
-- Can use 1-2 hashtags from: {' '.join(HASHTAG_POOL)}
 - One relevant emoji max (skip if forced)
 - Contractions are fine; don't be stiff
 - Make it punchy enough to stop a scroll
+- MANDATORY: End the tweet with exactly: {ALWAYS_HASHTAGS}
+  You may also add 1 more relevant hashtag from: {' '.join(HASHTAG_POOL[:6])}
 
-Respond with ONLY the tweet text. Nothing else."""
+Respond with ONLY the tweet text (including the mandatory hashtags). Nothing else."""
 
     prompt = f"""These are live parliament/India events happening right now:
 

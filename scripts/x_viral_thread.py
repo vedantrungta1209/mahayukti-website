@@ -136,16 +136,35 @@ def generate_thread(seed: dict, trending: list[str], news: list[dict]) -> list[s
     trending_str = ", ".join(trending[:5]) if trending else "#India #MonsoonSession2026"
     news_str = "\n".join(f"- [{s['source']}] {s['title']}" for s in news[:5])
 
-    # Pick the 2 most relevant trending hashtags to include in thread
-    # Filter out non-India / entertainment ones
+    # Take top trending hashtags — don't over-filter, any trending tag gets discovery
+    # Prefer India-relevant ones but fall back to top trending if none match
     india_hashtags = [h for h in trending if any(
         kw in h.lower() for kw in [
             "india", "bharat", "lok", "rajya", "modi", "parliament", "sansad",
             "monsoon", "session", "fcra", "viksit", "isro", "rbi", "rupee",
             "budget", "defence", "pakistan", "china", "amrit", "kaal",
+            "startup", "digital", "make", "national", "independence",
         ]
     )]
-    hashtag_footer = " ".join(india_hashtags[:2]) if india_hashtags else "#India #ViksitBharat"
+    # Always have at least 3 hashtags — use trending if available, else topic defaults
+    trending_tags = (india_hashtags[:2] or trending[:2] or [])
+    topic_tags = {
+        "geopolitical": ["#India", "#IndiaGeopolitics"],
+        "economic":     ["#IndiaEconomy", "#ViksitBharat"],
+        "parliament":   ["#MonsoonSession2026", "#LokSabha"],
+        "tech":         ["#DigitalIndia", "#TechIndia"],
+        "defence":      ["#IndiaDefence", "#MakeInIndia"],
+        "economy_data": ["#IndiaGDP", "#ViksitBharat"],
+        "diplomacy":    ["#IndiaForeignPolicy", "#India"],
+    }.get(seed["angle"], ["#India", "#Bharat"])
+    all_tags = list(dict.fromkeys(trending_tags + topic_tags))  # deduplicate, trending first
+    # Distribute across thread: tweet1 gets 1, tweets 3+5 get 1 each, tweet6 gets 2
+    tag1  = all_tags[0] if len(all_tags) > 0 else "#India"
+    tag3  = all_tags[1] if len(all_tags) > 1 else "#Bharat"
+    tag5  = all_tags[2] if len(all_tags) > 2 else "#ViksitBharat"
+    tags6 = " ".join(all_tags[3:5]) if len(all_tags) > 3 else " ".join(all_tags[:2])
+    if not tags6:
+        tags6 = "#India #MakeIndiaGreatest"
 
     system = """\
 You are a founding member of Mahayukti writing a viral tweetstorm as @wearemahayukti.
@@ -156,30 +175,36 @@ HARD RULES:
 - No religious or caste angle. India is one.
 - No partisan politics. Policy yes, parties no.
 - Never cynical — always constructive and forward-looking.
+- FACTUAL ACCURACY IS NON-NEGOTIABLE: Only cite facts you are highly confident about.
+  Use well-known, widely-reported facts. For specific numbers (trade figures, weapons transfers,
+  project counts) use approximate round figures or skip the number. NEVER fabricate statistics,
+  weapon system names, or specific project counts. If unsure, say "significantly" not a made-up figure.
 
 THREAD FORMAT (this is a tweetstorm, not a single post):
 You must write a numbered thread of exactly 6 tweets.
 
 Tweet 1 — THE HOOK (most important):
-- Must be a SCROLL-STOPPER. The first line determines if anyone reads the rest.
-- Use one of these patterns:
-  * A surprising fact or number: "India just crossed X. Nobody is talking about this."
-  * A counterintuitive angle: "Everyone is calling this [X]. They're looking at it wrong."
-  * A tension opener: "The [TOPIC] situation is more serious than the headlines suggest."
-  * A data bomb: "[Specific number] in [year]. [Specific number] in 2026. That's not growth. That's a transformation."
-- End tweet 1 with: "🧵"
+- The VERY FIRST SENTENCE must be a jaw-dropper that stops a scroll cold.
+- Proven patterns:
+  * Stark contrast: "[X in 2014]. [X in 2026]. That's not progress. That's a different country."
+  * Counterintuitive: "Everyone reads [X] as [Y]. The real story is the opposite."
+  * Uncomfortable truth: "India is the only [category] in the world doing [X]. And most people don't realise the full weight of that."
+  * Incomplete reveal: "The [topic] shift nobody's connecting the dots on. Here's the full picture. 🧵"
+- End with 🧵
+- Include {tag1} somewhere in tweet 1
 
 Tweets 2-5 — THE BODY:
-- Each tweet = one specific point with a concrete fact, number, or insight
-- Build a clear argument across the 5 tweets
-- Short punchy sentences. No fluff.
-- Vary length — some tweets can be 2 lines, some 4.
-- Each tweet should stand alone if quoted
+- Tweet 2: The evidence. Concrete, verifiable, broad strokes (not made-up specifics).
+- Tweet 3: The angle others miss. Include {tag3} at the end.
+- Tweet 4: India's strategic response or opportunity.
+- Tweet 5: The counterargument addressed + India's structural advantage. Include {tag5} at the end.
+- Each tweet should stand alone if someone quotes it.
+- Short punchy sentences. No filler.
 
 Tweet 6 — THE CLOSE:
-- Land the argument. What does this mean for India's future?
-- Strong, declarative ending — not a question
-- Include 2 relevant hashtags at the end
+- Land the argument with a strong declarative statement, not a question.
+- End with: {tags6}
+- Do NOT use "Watch this space" or "The journey has just begun" or similar clichés.
 
 FORMAT YOUR RESPONSE EXACTLY AS:
 TWEET1: [text]
@@ -195,15 +220,15 @@ Each tweet must be under 280 characters. No exceptions."""
 
 TOPIC: {seed['prompt_seed']}
 
-LIVE INDIA NEWS CONTEXT (weave in if relevant):
+LIVE INDIA NEWS CONTEXT (weave in if relevant — only if confident the fact is accurate):
 {news_str}
 
-CURRENTLY TRENDING IN INDIA:
+CURRENTLY TRENDING IN INDIA (context only):
 {trending_str}
 
-Use these hashtags in tweet 6 if they fit the topic: {hashtag_footer}
+Hashtags to distribute across the thread as instructed: {tag1} {tag3} {tag5} {tags6}
 
-Write the 6-tweet thread now. Make tweet 1 impossible to scroll past."""
+Write the 6-tweet thread now. Make tweet 1's first sentence impossible to scroll past."""
 
     for attempt in range(2):
         try:
