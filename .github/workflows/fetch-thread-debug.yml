@@ -1,0 +1,25 @@
+name: Fetch Thread Content (one-off)
+on:
+  workflow_dispatch:
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pip install requests requests-oauthlib
+      - run: |
+          python3 - <<'PYEOF'
+          import os, requests
+          from requests_oauthlib import OAuth1
+          auth = OAuth1(os.environ["X_API_KEY"], os.environ["X_API_SECRET"], os.environ["X_ACCESS_TOKEN"], os.environ["X_ACCESS_TOKEN_SECRET"])
+          ids = ["2086751642083303474","2086751655907713290","2086751669816115383","2086751683623764002","2086751697699790871","2086751711733989449"]
+          r = requests.get("https://api.twitter.com/2/tweets", params={"ids": ",".join(ids), "tweet.fields": "text,public_metrics"}, auth=auth, timeout=20)
+          for t in sorted(r.json().get("data",[]), key=lambda x: ids.index(x["id"])):
+              m = t.get("public_metrics",{})
+              print(f"\n--- Tweet ID {t['id']} | likes={m.get('like_count',0)} RT={m.get('retweet_count',0)}")
+              print(t["text"])
+          PYEOF
+        env:
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
