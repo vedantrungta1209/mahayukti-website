@@ -31,11 +31,11 @@ HIGH_VALUE_HANDLES = [
 SEARCH_QUERIES = [
     '(from:ANI OR from:ndtv OR from:TOIIndiaNews OR from:HTTweets) (parliament OR "lok sabha" OR "rajya sabha") lang:en -is:retweet -is:reply',
     '(from:PIB_India OR from:MEAIndia OR from:PMOIndia OR from:adgpi) lang:en -is:retweet -is:reply',
-    '("india economy" OR "india gdp" OR "rbi india" OR "budget india") lang:en -is:retweet -is:reply min_faves:10',
-    '(ISRO OR "india defence" OR "india security" OR "make in india") lang:en -is:retweet -is:reply min_faves:10',
-    '("india china" OR "india pakistan" OR "india diplomacy" OR "india geopolit") lang:en -is:retweet -is:reply min_faves:10',
-    '("digital india" OR "india startup" OR "india tech" OR "india infrastructure") lang:en -is:retweet -is:reply min_faves:10',
-    '("india 2047" OR "amrit kaal" OR "viksit bharat" OR "new india") lang:en -is:retweet -is:reply min_faves:5',
+    '("india economy" OR "india gdp" OR "rbi india" OR "budget india") lang:en -is:retweet -is:reply',
+    '(ISRO OR "india defence" OR "india security" OR "make in india") lang:en -is:retweet -is:reply',
+    '("india china" OR "india pakistan" OR "india diplomacy" OR "india geopolit") lang:en -is:retweet -is:reply',
+    '("digital india" OR "india startup" OR "india tech" OR "india infrastructure") lang:en -is:retweet -is:reply',
+    '("india 2047" OR "amrit kaal" OR "viksit bharat" OR "new india") lang:en -is:retweet -is:reply',
 ]
 
 BLOCKED_TERMS = [
