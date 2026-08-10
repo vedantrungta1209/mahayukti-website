@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 MahaYukti Parliament Pulse — runs every 2h during session hours (9AM–7PM IST).
-Monitors official Sansad/government handles and high-engagement media accounts.
-Quote-tweets with constructive India-first commentary.
+Monitors official Sansad/govt handles for live events, then posts ORIGINAL
+commentary tweets (not replies/QTs — new account restriction on both).
+Original posts get full impressions vs buried replies.
 """
 
 import os, json, datetime, requests, time
@@ -17,28 +18,32 @@ X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 _DIR      = Path(__file__).parent
 _LOG_FILE = _DIR / "parliament_pulse_log.json"
 MAX_LOG   = 300
-MAX_PER_RUN = 2
+MAX_PER_RUN = 1   # 1 original post per 2h run — quality over volume
 
-# Official government and Sansad handles — always priority
 OFFICIAL_HANDLES = [
     "PIB_India", "mpa_india", "LokSabhaSectt", "SansadTV",
     "MEAIndia", "PMOIndia", "rashtrapatibhvn", "MIB_India",
 ]
 
-# High-reach media handles for parliament coverage
 MEDIA_HANDLES = [
     "ANI", "ndtv", "TOIIndiaNews", "HTTweets", "IndianExpress",
     "the_hindu", "ZeeNews", "republic", "DDNewslive",
 ]
 
 SESSION_CONTEXT = """\
-India Parliament Monsoon Session 2026 (July 20 – August 13, 2026).
-Bills in focus: Tribunal Reforms Bill, Mines & Minerals (D&R) Amendment,
-Kerala (Alteration of Name) Bill, Bankers' Books Evidence Bill,
-FCRA Amendment Bill (debate Aug 12), Delimitation Bill.
-Session is in its final days — high legislative intensity.
-Mahayukti believes: strong democratic institutions + legislative ambition = India's greatest decade ahead.
+India Parliament Monsoon Session 2026 (July 20 – August 13, 2026) — final days.
+Bills passed/in-progress: Tribunals Reforms Bill (just passed Lok Sabha today),
+Mines & Minerals (D&R) Amendment, Kerala (Alteration of Name) Bill,
+Bankers' Books Evidence Bill, FCRA Amendment Bill (debate Aug 12),
+Delimitation Bill.
+Mahayukti believes: strong democratic institutions + legislative ambition = India's greatest decade.
 """
+
+HASHTAG_POOL = [
+    "#MonsoonSession2026", "#LokSabha", "#RajyaSabha",
+    "#ViksitBharat", "#India2047", "#FCRABill",
+    "#TribunalReformsBill", "#MakeIndiGreatest",
+]
 
 
 def _oauth():
@@ -59,8 +64,11 @@ def _save_log(seen: set):
     _LOG_FILE.write_text(json.dumps(list(seen)[-MAX_LOG:]))
 
 
-def _search(query: str, sort_by_recency: bool = False) -> list[dict]:
+def _search_handles(handles: list[str], extra_filter: str = "", sort_by_recency: bool = True) -> list[dict]:
     auth = _oauth()
+    handles_q = " OR ".join(f"from:{h}" for h in handles)
+    query = f"({handles_q}) {extra_filter} -is:retweet lang:en".strip()
+
     r = requests.get(
         "https://api.twitter.com/2/tweets/search/recent",
         params={
@@ -90,7 +98,6 @@ def _search(query: str, sort_by_recency: bool = False) -> list[dict]:
             "id":         t["id"],
             "text":       t["text"],
             "username":   user.get("username", ""),
-            "followers":  user.get("public_metrics", {}).get("followers_count", 0),
             "likes":      metrics.get("like_count", 0),
             "retweets":   metrics.get("retweet_count", 0),
             "created_at": t.get("created_at", ""),
@@ -103,19 +110,13 @@ def _search(query: str, sort_by_recency: bool = False) -> list[dict]:
     return results
 
 
-def get_official_tweets() -> list[dict]:
-    query = "(" + " OR ".join(f"from:{h}" for h in OFFICIAL_HANDLES) + ") -is:retweet lang:en"
-    return _search(query, sort_by_recency=True)
+def generate_original_post(source_tweets: list[dict]) -> str:
+    """Generate a standalone original tweet informed by live parliament events."""
+    context_snippets = "\n".join(
+        f"- @{t['username']}: {t['text'][:200]}"
+        for t in source_tweets[:5]
+    )
 
-
-def get_media_parliament_tweets() -> list[dict]:
-    handles_q = " OR ".join(f"from:{h}" for h in MEDIA_HANDLES)
-    query = f"({handles_q}) (parliament OR \"lok sabha\" OR \"rajya sabha\" OR \"monsoon session\" OR #MonsoonSession2026) -is:retweet lang:en"
-    return _search(query, sort_by_recency=False)
-
-
-def generate_commentary(tweet: dict, is_official: bool) -> str:
-    source_type = "official government/Sansad account" if is_official else "media account"
     system = f"""\
 You are a founding member of Mahayukti posting on X as @wearemahayukti.
 Movement: "Make India Greatest" — positive, constructive, India-first.
@@ -124,27 +125,31 @@ Parliament context:
 {SESSION_CONTEXT}
 
 HARD RULES:
-- Never attack any politician, party, minister, or official
-- PM Modi, President Murmu, Lok Sabha Speaker Om Birla, Rajya Sabha Chairman — always respectful
+- Never attack any politician, party, minister, official, or party by name
+- PM Modi, President Murmu, Lok Sabha Speaker, Rajya Sabha Chairman — always respectful
 - No religious or caste angle
 - Never cynical — always constructive and forward-looking
-- Frame through India 2047 lens: what does this bill/development mean long-term?
+- Do NOT directly quote or attribute the source tweets — write as original thought
 
-STYLE (this will be a quote-tweet of a {source_type}):
-- Max 230 characters (tweet attachment uses extra space)
-- Add genuine insight or historical/policy context — not cheerleading
-- Can use 1-2 hashtags from: #MonsoonSession2026 #LokSabha #RajyaSabha #ViksitBharat #India2047 #FCRABill
-- Sound like a sharp, well-read Indian policy analyst
-- NEVER start with "Great", "Important", "Crucial", "Key"
+POST STYLE:
+- This is a standalone original tweet (280 chars max)
+- Must read as YOUR original perspective, not a news summary
+- Frame through India 2047 / long-term development lens
+- Sharp, specific, well-read Indian analyst voice — not PR bot
+- NEVER start with: "Great", "Important", "Crucial", "Today", "Breaking"
+- Can use 1-2 hashtags from: {' '.join(HASHTAG_POOL)}
+- One relevant emoji max (skip if forced)
 - Contractions are fine; don't be stiff
+- Make it punchy enough to stop a scroll
 
-Respond with ONLY the commentary text. Nothing else."""
+Respond with ONLY the tweet text. Nothing else."""
 
-    prompt = f"""Quote-tweet this post from @{tweet['username']}:
+    prompt = f"""These are live parliament/India events happening right now:
 
-"{tweet['text']}"
+{context_snippets}
 
-Add insight or context specific to this. Frame through India's long-term development. Under 230 chars."""
+Write ONE original tweet (your own voice and perspective) informed by these events.
+Frame it around what this means for India's future. Under 280 chars."""
 
     for attempt in range(2):
         try:
@@ -157,7 +162,7 @@ Add insight or context specific to this. Frame through India's long-term develop
                 },
                 json={
                     "model":      "claude-sonnet-4-6",
-                    "max_tokens":  120,
+                    "max_tokens":  150,
                     "system":      system,
                     "messages":   [{"role": "user", "content": prompt}],
                 },
@@ -165,80 +170,85 @@ Add insight or context specific to this. Frame through India's long-term develop
             )
             r.raise_for_status()
             text = r.json()["content"][0]["text"].strip().strip('"')
-            if len(text) > 260:
-                text = text[:257] + "..."
+            if len(text) > 280:
+                text = text[:277] + "..."
             return text
         except Exception as e:
-            print(f"  Commentary generation attempt {attempt+1} failed: {e}")
+            print(f"  Generation attempt {attempt+1} failed: {e}")
             if attempt == 0:
                 time.sleep(5)
     return ""
 
 
-def post_quote_tweet(tweet_id: str, text: str) -> bool:
+def post_tweet(text: str) -> bool:
     auth = _oauth()
     r = requests.post(
         "https://api.twitter.com/2/tweets",
-        json={"text": text, "quote_tweet_id": tweet_id},
+        json={"text": text},
         auth=auth,
         timeout=30,
     )
     if r.ok:
         new_id = r.json().get("data", {}).get("id", "")
-        print(f"  ✅ Quote-tweeted: https://x.com/wearemahayukti/status/{new_id}")
+        print(f"  ✅ Posted: https://x.com/wearemahayukti/status/{new_id}")
         return True
-    print(f"  ❌ Quote-tweet failed ({r.status_code}): {r.text[:300]}")
+    print(f"  ❌ Post failed ({r.status_code}): {r.text[:300]}")
     return False
 
 
-def _process_batch(tweets: list[dict], seen: set, posted: int, is_official: bool, min_likes: int = 0) -> tuple[set, int]:
-    for tweet in tweets:
-        if posted >= MAX_PER_RUN:
-            break
-        if tweet["id"] in seen:
-            continue
-        if tweet["username"].lower() == "wearemahayukti":
-            continue
-        if tweet["likes"] < min_likes:
-            continue
-
-        print(f"\n→ @{tweet['username']} ({tweet['likes']} likes): {tweet['text'][:100]}...")
-        commentary = generate_commentary(tweet, is_official=is_official)
-        if not commentary:
-            continue
-        print(f"  Commentary: {commentary}")
-        if post_quote_tweet(tweet["id"], commentary):
-            seen.add(tweet["id"])
-            posted += 1
-            time.sleep(10)
-
-    return seen, posted
+def _make_batch_key(tweets: list[dict]) -> str:
+    """Fingerprint a batch of source tweets so we don't re-generate for same content."""
+    ids = sorted(t["id"] for t in tweets[:5])
+    return "batch_" + "_".join(ids)
 
 
 def main():
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     print(f"\n🏛️  MahaYukti Parliament Pulse — {now}")
 
-    seen   = _load_log()
-    posted = 0
+    seen = _load_log()
 
-    # Priority 1: Official government/Sansad handles (no min_likes — authority matters more than engagement)
-    print("\nSearching official government/Sansad handles...")
-    official = get_official_tweets()
+    # Gather live context from official handles
+    print("\nFetching official handle tweets...")
+    official = _search_handles(OFFICIAL_HANDLES, sort_by_recency=True)
     print(f"Found {len(official)} official tweets")
-    seen, posted = _process_batch(official, seen, posted, is_official=True, min_likes=0)
 
-    # Priority 2: High-engagement media parliament tweets
-    if posted < MAX_PER_RUN:
-        print("\nSearching media parliament coverage...")
-        media = get_media_parliament_tweets()
-        print(f"Found {len(media)} media tweets")
-        seen, posted = _process_batch(media, seen, posted, is_official=False, min_likes=15)
+    # Also grab media parliament coverage for added context
+    print("Fetching media parliament coverage...")
+    media = _search_handles(
+        MEDIA_HANDLES,
+        extra_filter='(parliament OR "lok sabha" OR "rajya sabha" OR monsoon)',
+        sort_by_recency=False,
+    )
+    print(f"Found {len(media)} media tweets")
+
+    # Combine: official first (freshest), media by engagement
+    source_pool = official[:8] + media[:4]
+
+    if not source_pool:
+        print("No source tweets found — skipping this run")
+        _save_log(seen)
+        return
+
+    batch_key = _make_batch_key(source_pool)
+    if batch_key in seen:
+        print("Same parliament events as last run — skipping to avoid repetition")
+        _save_log(seen)
+        return
+
+    print(f"\nGenerating original post from {len(source_pool)} source tweets...")
+    tweet_text = generate_original_post(source_pool)
+    if not tweet_text:
+        print("Generation failed")
+        _save_log(seen)
+        return
+
+    print(f"  Post ({len(tweet_text)} chars): {tweet_text}")
+    if post_tweet(tweet_text):
+        seen.add(batch_key)
 
     _save_log(seen)
-    print(f"\n✅ Done — {posted} quote-tweet{'s' if posted != 1 else ''} posted")
-    if posted == 0:
-        print("  (no new tweets to quote this run)")
+    print("\n✅ Done")
 
 
 if __name__ == "__main__":

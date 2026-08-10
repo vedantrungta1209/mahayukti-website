@@ -138,22 +138,22 @@ HARD RULES:
 - Do not promote Mahayukti unless it genuinely fits
 - Sound like a real, well-read Indian — not a brand bot
 
-STYLE (reply or quote-tweet):
-- Max 220 characters
-- Direct, specific to what they said — not generic
-- Add perspective, not just agreement
+STYLE:
+- Max 240 characters — must work as a standalone post if needed (not just as a reply)
+- Direct, specific to the topic — not generic
+- Add perspective or forward-looking India context, not just agreement
 - Contractions: "isn't", "we've", "can't"
 - NEVER: "Great point!", "Indeed", "Absolutely", "Totally agree", "Well said"
-- No hashtags (looks spammy)
+- 1-2 relevant hashtags are OK for standalone posts
 - One emoji max if it genuinely fits; skip otherwise
 
-Respond with ONLY the reply text. Nothing else."""
+Respond with ONLY the post text. Nothing else."""
 
-    prompt = f"""Engage with this tweet by @{tweet['username']} ({tweet['followers']:,} followers):
+    prompt = f"""Write a post engaging with this topic raised by @{tweet['username']} ({tweet['followers']:,} followers):
 
 "{tweet['text']}"
 
-Add genuine perspective specific to what they said. Under 220 chars."""
+Your perspective on this. Specific, forward-looking, India-first. Must make sense as a standalone post even without context. Under 240 chars."""
 
     for attempt in range(2):
         try:
@@ -185,7 +185,10 @@ Add genuine perspective specific to what they said. Under 220 chars."""
 
 
 def post_engagement(tweet_id: str, reply_text: str) -> bool:
-    """Try reply first; fall back to quote-tweet if author has restricted replies."""
+    """
+    Try reply → quote-tweet → standalone post.
+    New accounts are restricted from replying/quoting; standalone posts always work.
+    """
     auth = _oauth()
 
     r = requests.post(
@@ -211,7 +214,23 @@ def post_engagement(tweet_id: str, reply_text: str) -> bool:
             new_id = r2.json().get("data", {}).get("id", "")
             print(f"  ✅ Quote-tweeted: https://x.com/wearemahayukti/status/{new_id}")
             return True
-        print(f"  ❌ Quote-tweet also failed ({r2.status_code}): {r2.text[:200]}")
+
+        if r2.status_code == 403:
+            print(f"  Quote also restricted — posting as standalone original tweet...")
+            r3 = requests.post(
+                "https://api.twitter.com/2/tweets",
+                json={"text": reply_text},
+                auth=auth,
+                timeout=30,
+            )
+            if r3.ok:
+                new_id = r3.json().get("data", {}).get("id", "")
+                print(f"  ✅ Standalone posted: https://x.com/wearemahayukti/status/{new_id}")
+                return True
+            print(f"  ❌ Standalone also failed ({r3.status_code}): {r3.text[:200]}")
+            return False
+
+        print(f"  ❌ Quote-tweet failed ({r2.status_code}): {r2.text[:200]}")
         return False
 
     print(f"  ❌ Reply failed ({r.status_code}): {r.text[:300]}")
