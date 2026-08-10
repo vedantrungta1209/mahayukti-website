@@ -1,0 +1,46 @@
+name: MahaYukti Parliament Pulse
+
+on:
+  schedule:
+    # Every 2 hours during session hours: 3:30AM–1:30PM UTC = 9AM–7PM IST
+    # Mon–Sat (parliament sits Mon–Fri, occasional Sat)
+    - cron: '30 3,5,7,9,11,13 * * 1-6'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: parliament-pulse
+  cancel-in-progress: true
+
+jobs:
+  pulse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests anthropic requests-oauthlib
+
+      - name: Run parliament pulse
+        env:
+          ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
+          X_API_KEY:             ${{ secrets.X_API_KEY }}
+          X_API_SECRET:          ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN:        ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+        run: python scripts/parliament_pulse.py
+
+      - name: Commit pulse log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/parliament_pulse_log.json 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "chore: parliament pulse log" && git pull --rebase origin main && git push)
