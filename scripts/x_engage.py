@@ -48,7 +48,10 @@ def _oauth():
 def _load_log() -> dict:
     if _LOG_FILE.exists():
         try:
-            return json.loads(_LOG_FILE.read_text())
+            data = json.loads(_LOG_FILE.read_text())
+            if isinstance(data, dict):
+                return data
+            # Old format was a bare list of tweet IDs — discard, start fresh
         except Exception:
             pass
     return {"posted_urls": [], "posted_texts": []}
