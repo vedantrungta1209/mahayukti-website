@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 MahaYukti X Engagement Loop — runs every 3 hours.
-Finds high-relevance India tweets, generates a sharp reply, posts it.
-Falls back to quote-tweet when the author has restricted replies.
+News discovery: free RSS feeds + Claude API (zero X API read credits).
+Posting: X API write only.
 """
 
-import os, json, datetime, requests, time
+import os, json, datetime, requests, time, xml.etree.ElementTree as ET
 from pathlib import Path
 
 ANTHROPIC_API_KEY     = os.environ["ANTHROPIC_API_KEY"]
@@ -16,32 +16,28 @@ X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 
 _DIR      = Path(__file__).parent
 _LOG_FILE = _DIR / "x_engage_log.json"
-MAX_LOG   = 500
-MAX_REPLIES_PER_RUN = 2
-MIN_LIKES           = 2   # lowered from 5 — new account, targets are not viral
+MAX_LOG        = 500
+POSTS_PER_RUN  = 2   # posts per 3-hour run = ~16/day
+MAX_AGE_HOURS  = 18  # ignore articles older than this
 
-# Prioritise tweets from known high-follower handles so we borrow their audience
-HIGH_VALUE_HANDLES = [
-    "ANI", "ndtv", "TOIIndiaNews", "HTTweets", "IndianExpress",
-    "the_hindu", "ZeeNews", "republic", "timesofindia",
-    "PIB_India", "MEAIndia", "PMOIndia", "adgpi",
+# Free RSS feeds — no API key, no credits
+RSS_FEEDS = [
+    # Major Indian news
+    "https://feeds.feedburner.com/ndtvnews-india-news",
+    "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms",
+    "https://www.thehindu.com/news/national/feeder/default.rss",
+    "https://economictimes.indiatimes.com/rssfeeds/1977021501.cms",
+    # Government / official
+    "https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3",
+    # Google News topic clusters (free, no key)
+    "https://news.google.com/rss/search?q=india+defence+military+ISRO&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=india+economy+RBI+budget+manufacturing&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=india+china+pakistan+geopolitics+diplomacy&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=viksit+bharat+make+in+india+PLI+startup&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=Jaishankar+MEA+india+foreign+policy&hl=en-IN&gl=IN&ceid=IN:en",
 ]
 
-# Search queries — rotate hourly
-SEARCH_QUERIES = [
-    '(from:ANI OR from:ndtv OR from:TOIIndiaNews OR from:HTTweets) (parliament OR "lok sabha" OR "rajya sabha") lang:en -is:retweet -is:reply',
-    '(from:PIB_India OR from:MEAIndia OR from:PMOIndia OR from:adgpi) lang:en -is:retweet -is:reply',
-    '("india economy" OR "india gdp" OR "rbi india" OR "budget india") lang:en -is:retweet -is:reply',
-    '(ISRO OR "india defence" OR "india security" OR "make in india") lang:en -is:retweet -is:reply',
-    '("india china" OR "india pakistan" OR "india diplomacy" OR "india geopolit") lang:en -is:retweet -is:reply',
-    '("digital india" OR "india startup" OR "india tech" OR "india infrastructure") lang:en -is:retweet -is:reply',
-    '("india 2047" OR "amrit kaal" OR "viksit bharat" OR "new india") lang:en -is:retweet -is:reply',
-]
-
-BLOCKED_TERMS = [
-    "bjp4india", "incIndia", "aap party", "aam aadmi party",
-    "anti-modi", "anti-india",
-]
+SKIP_DOMAINS = ["thewire.in", "scroll.in", "theprint.in/opinion"]
 
 
 def _oauth():
@@ -49,114 +45,122 @@ def _oauth():
     return OAuth1(X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET)
 
 
-def _load_log() -> set:
+def _load_log() -> dict:
     if _LOG_FILE.exists():
         try:
-            return set(json.loads(_LOG_FILE.read_text()))
+            return json.loads(_LOG_FILE.read_text())
         except Exception:
             pass
-    return set()
+    return {"posted_urls": [], "posted_texts": []}
 
 
-def _save_log(seen: set):
-    _LOG_FILE.write_text(json.dumps(list(seen)[-MAX_LOG:]))
+def _save_log(log: dict):
+    log["posted_urls"]  = log["posted_urls"][-MAX_LOG:]
+    log["posted_texts"] = log["posted_texts"][-MAX_LOG:]
+    _LOG_FILE.write_text(json.dumps(log))
 
 
-def _pick_query(seen: set) -> str:
-    hour = datetime.datetime.now(datetime.timezone.utc).hour
-    return SEARCH_QUERIES[hour % len(SEARCH_QUERIES)]
+def _parse_rfc2822(date_str: str):
+    """Parse RSS pubDate to datetime (best-effort)."""
+    import email.utils
+    try:
+        return datetime.datetime(*email.utils.parsedate(date_str)[:6],
+                                  tzinfo=datetime.timezone.utc)
+    except Exception:
+        return None
 
 
-def search_tweets(query: str) -> list[dict]:
-    auth = _oauth()
-    r = requests.get(
-        "https://api.twitter.com/2/tweets/search/recent",
-        params={
-            "query":        query,
-            "max_results":  20,
-            "tweet.fields": "public_metrics,author_id,created_at,text",
-            "expansions":   "author_id",
-            "user.fields":  "username,verified,public_metrics",
-        },
-        auth=auth,
-        timeout=30,
-    )
-    if not r.ok:
-        print(f"  Search failed ({r.status_code}): {r.text[:300]}")
+def fetch_headlines() -> list[dict]:
+    """Pull recent headlines from all RSS feeds."""
+    cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=MAX_AGE_HOURS)
+    seen_titles: set[str] = set()
+    articles: list[dict] = []
+
+    for url in RSS_FEEDS:
+        try:
+            r = requests.get(url, timeout=12,
+                             headers={"User-Agent": "Mozilla/5.0 (Mahayukti RSS reader)"})
+            if not r.ok:
+                print(f"  RSS {url[:60]}... → {r.status_code}")
+                continue
+            root = ET.fromstring(r.content)
+            ns   = {"atom": "http://www.w3.org/2005/Atom"}
+            items = root.findall(".//item") or root.findall(".//atom:entry", ns)
+            for item in items:
+                title = (item.findtext("title") or "").strip()
+                link  = (item.findtext("link")  or "").strip()
+                desc  = (item.findtext("description") or "").strip()
+                pub   = item.findtext("pubDate") or item.findtext("atom:published", namespaces=ns) or ""
+
+                if not title or title.lower() in seen_titles:
+                    continue
+                if any(d in link for d in SKIP_DOMAINS):
+                    continue
+
+                pub_dt = _parse_rfc2822(pub)
+                if pub_dt and pub_dt < cutoff:
+                    continue
+
+                seen_titles.add(title.lower())
+                articles.append({
+                    "title": title,
+                    "link":  link,
+                    "desc":  desc[:300],
+                    "pub":   pub,
+                })
+        except Exception as e:
+            print(f"  RSS error ({url[:60]}...): {e}")
+
+    print(f"  Fetched {len(articles)} fresh headlines from RSS")
+    return articles
+
+
+def generate_posts(articles: list[dict], n: int, already_posted: list[str]) -> list[str]:
+    """Ask Claude to pick n engaging topics and write one post each."""
+    if not articles:
         return []
 
-    data   = r.json()
-    tweets = data.get("data", [])
-    users  = {u["id"]: u for u in data.get("includes", {}).get("users", [])}
+    headline_block = "\n".join(
+        f"{i+1}. {a['title']}" + (f" — {a['desc'][:120]}" if a['desc'] else "")
+        for i, a in enumerate(articles[:40])
+    )
 
-    results = []
-    for t in tweets:
-        uid     = t.get("author_id", "")
-        user    = users.get(uid, {})
-        metrics = t.get("public_metrics", {})
-        results.append({
-            "id":        t["id"],
-            "text":      t["text"],
-            "username":  user.get("username", ""),
-            "followers": user.get("public_metrics", {}).get("followers_count", 0),
-            "likes":     metrics.get("like_count", 0),
-            "retweets":  metrics.get("retweet_count", 0),
-            "replies":   metrics.get("reply_count", 0),
-        })
+    posted_block = ""
+    if already_posted:
+        posted_block = "\n\nALREADY POSTED TODAY (do not repeat these topics):\n" + \
+                       "\n".join(f"- {t}" for t in already_posted[-10:])
 
-    # Sort: high-value handles first, then by engagement
-    def _score(t):
-        handle_bonus = 1000 if t["username"] in HIGH_VALUE_HANDLES else 0
-        return handle_bonus + t["likes"] + t["retweets"] * 2
-
-    results.sort(key=_score, reverse=True)
-    return results
-
-
-def _is_safe(tweet: dict) -> bool:
-    text_lower   = tweet["text"].lower()
-    handle_lower = tweet["username"].lower()
-    if handle_lower == "wearemahayukti":
-        return False
-    if any(b in text_lower or b in handle_lower for b in BLOCKED_TERMS):
-        return False
-    if tweet["likes"] < MIN_LIKES:
-        return False
-    return True
-
-
-def generate_reply(tweet: dict) -> str:
     system = """\
-You are a founding member of Mahayukti engaging on X as @wearemahayukti.
-Movement: Make India Greatest. Positive, warm, India-first.
+You are a sharp India analyst posting as @wearemahayukti on X.
+Mission: Make India Greatest. India-first, constructive, globally literate.
 
 HARD RULES:
-- Never attack any politician, party, minister, or official
+- Never attack any politician, party, minister, or official by name
 - PM Modi, President Murmu, constitutional bodies — always respectful
-- No religious or caste angle
-- Never cynical or despairing — always constructive
-- Do not promote Mahayukti unless it genuinely fits
-- Sound like a real, well-read Indian — not a brand bot
+- No religious, caste, or communal angle
+- Never cynical or despairing — always forward-looking
+- Sound like a credible, well-read Indian — not a PR bot
 
-STYLE:
-- Max 230 characters (leave room for hashtags at the end)
-- Must make sense as a standalone post — not just as a reply
-- Direct, specific to the topic — not generic
-- Add perspective or forward-looking India context, not just agreement
-- Contractions: "isn't", "we've", "can't"
-- NEVER: "Great point!", "Indeed", "Absolutely", "Totally agree", "Well said"
-- One emoji max if it genuinely fits; skip otherwise
-- MANDATORY: End with 2-3 hashtags. Always include #India plus 1-2 topic-relevant tags.
-  Choose from: #India #Bharat #ViksitBharat #IndiaRising #IndiaEconomy #IndiaDefence
-  #DigitalIndia #IndiaGeopolitics #MakeIndiaGreatest #IndiaFirst #Sansad
+POST STYLE (each post must follow this exactly):
+- 200-230 characters of substance + hashtags at the end
+- Take a clear position or add a specific insight — not just restating the headline
+- Add a number, comparison, or forward-looking point when the topic allows
+- Contractions: "isn't", "we've", "India's"
+- AVOID: "Great!", "Indeed", "Absolutely", "Well said", "Impressive"
+- One emoji max if it adds energy — skip otherwise
+- MANDATORY: End with exactly 2-3 hashtags. Always #India + 1-2 topic-specific.
+  Pool: #India #Bharat #ViksitBharat #IndiaRising #IndiaEconomy #IndiaDefence
+        #DigitalIndia #IndiaGeopolitics #MakeIndiaGreatest #ISRO #MakeInIndia
+        #IndiaManufacturing #IndiaFirst #IndiaLeads #Sansad
 
-Respond with ONLY the post text (including hashtags). Nothing else."""
+OUTPUT FORMAT — return ONLY a JSON array of strings, one per post, no commentary:
+["post text here", "post text here"]"""
 
-    prompt = f"""Write a post engaging with this topic raised by @{tweet['username']} ({tweet['followers']:,} followers):
+    prompt = f"""Here are today's top India headlines:\n\n{headline_block}{posted_block}
 
-"{tweet['text']}"
-
-Your perspective on this. Specific, forward-looking, India-first. Standalone post under 230 chars + 2-3 hashtags."""
+Pick the {n} most engaging topics for an India-forward audience.
+Write one sharp, original post for each — NOT just the headline reworded.
+Return as a JSON array of {n} strings."""
 
     for attempt in range(2):
         try:
@@ -168,113 +172,74 @@ Your perspective on this. Specific, forward-looking, India-first. Standalone pos
                     "content-type":        "application/json",
                 },
                 json={
-                    "model":     "claude-sonnet-4-6",
-                    "max_tokens": 100,
+                    "model":      "claude-sonnet-4-6",
+                    "max_tokens": 600,
                     "system":     system,
-                    "messages":  [{"role": "user", "content": prompt}],
+                    "messages":   [{"role": "user", "content": prompt}],
                 },
                 timeout=30,
             )
             r.raise_for_status()
-            text = r.json()["content"][0]["text"].strip().strip('"')
-            if len(text) > 250:
-                text = text[:247] + "..."
-            return text
+            raw = r.json()["content"][0]["text"].strip()
+            # Extract JSON array even if Claude wraps it in markdown
+            start, end = raw.find("["), raw.rfind("]")
+            if start != -1 and end != -1:
+                posts = json.loads(raw[start:end+1])
+                return [p.strip().strip('"')[:280] for p in posts if p.strip()]
         except Exception as e:
             print(f"  Generation attempt {attempt+1} failed: {e}")
             if attempt == 0:
                 time.sleep(5)
-    return ""
+    return []
 
 
-def post_engagement(tweet_id: str, reply_text: str) -> bool:
-    """
-    Try reply → quote-tweet → standalone post.
-    New accounts are restricted from replying/quoting; standalone posts always work.
-    """
+def post_tweet(text: str) -> bool:
+    """Post as standalone original tweet — X write API only."""
     auth = _oauth()
-
     r = requests.post(
         "https://api.twitter.com/2/tweets",
-        json={"text": reply_text, "reply": {"in_reply_to_tweet_id": tweet_id}},
+        json={"text": text},
         auth=auth,
         timeout=30,
     )
     if r.ok:
         new_id = r.json().get("data", {}).get("id", "")
-        print(f"  ✅ Replied: https://x.com/wearemahayukti/status/{new_id}")
+        print(f"  ✅ Posted: https://x.com/wearemahayukti/status/{new_id}")
         return True
-
-    if r.status_code == 403:
-        print(f"  Reply restricted — trying quote-tweet...")
-        r2 = requests.post(
-            "https://api.twitter.com/2/tweets",
-            json={"text": reply_text, "quote_tweet_id": tweet_id},
-            auth=auth,
-            timeout=30,
-        )
-        if r2.ok:
-            new_id = r2.json().get("data", {}).get("id", "")
-            print(f"  ✅ Quote-tweeted: https://x.com/wearemahayukti/status/{new_id}")
-            return True
-
-        if r2.status_code == 403:
-            print(f"  Quote also restricted — posting as standalone original tweet...")
-            r3 = requests.post(
-                "https://api.twitter.com/2/tweets",
-                json={"text": reply_text},
-                auth=auth,
-                timeout=30,
-            )
-            if r3.ok:
-                new_id = r3.json().get("data", {}).get("id", "")
-                print(f"  ✅ Standalone posted: https://x.com/wearemahayukti/status/{new_id}")
-                return True
-            print(f"  ❌ Standalone also failed ({r3.status_code}): {r3.text[:200]}")
-            return False
-
-        print(f"  ❌ Quote-tweet failed ({r2.status_code}): {r2.text[:200]}")
-        return False
-
-    print(f"  ❌ Reply failed ({r.status_code}): {r.text[:300]}")
+    print(f"  ❌ Post failed ({r.status_code}): {r.text[:300]}")
     return False
 
 
 def main():
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    print(f"\n💬 MahaYukti X Engagement — {now}")
+    print(f"\n📰 MahaYukti X Engagement — {now}")
+    print("  [News via RSS — zero X read credits used]")
 
-    seen   = _load_log()
-    query  = _pick_query(seen)
-    print(f"Query: {query}")
+    log = _load_log()
 
-    tweets = search_tweets(query)
-    print(f"Found {len(tweets)} tweets")
+    articles = fetch_headlines()
+    if not articles:
+        print("  No fresh headlines found — exiting")
+        return
 
-    engaged = 0
-    for tweet in tweets:
-        if engaged >= MAX_REPLIES_PER_RUN:
-            break
-        if tweet["id"] in seen:
+    posts = generate_posts(articles, POSTS_PER_RUN, log["posted_texts"])
+    if not posts:
+        print("  No posts generated — exiting")
+        return
+
+    posted = 0
+    for text in posts:
+        if text in log["posted_texts"]:
+            print(f"  Skipping duplicate post")
             continue
-        if not _is_safe(tweet):
-            continue
+        print(f"\n→ ({len(text)} chars): {text}")
+        if post_tweet(text):
+            log["posted_texts"].append(text)
+            posted += 1
+            time.sleep(10)
 
-        print(f"\n→ @{tweet['username']} ({tweet['likes']} likes, {tweet['followers']:,} followers): {tweet['text'][:100]}...")
-        reply = generate_reply(tweet)
-        if not reply:
-            continue
-
-        print(f"  Text ({len(reply)} chars): {reply}")
-        if post_engagement(tweet["id"], reply):
-            seen.add(tweet["id"])
-            engaged += 1
-            time.sleep(8)
-
-    _save_log(seen)
-    print(f"\n✅ Done — {engaged} engagement{'s' if engaged != 1 else ''} posted")
-    if engaged == 0:
-        print("  (nothing suitable found this run)")
+    _save_log(log)
+    print(f"\n✅ Done — {posted} post{'s' if posted != 1 else ''} published")
 
 
 if __name__ == "__main__":

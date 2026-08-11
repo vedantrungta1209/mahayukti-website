@@ -252,35 +252,42 @@ _TRENDING_CACHE: list[str] = []
 _TRENDING_FETCHED_AT: datetime.datetime | None = None
 
 def _fetch_trending_hashtags() -> list[str]:
-    """Get real-time trending hashtags for India. Cached for 1h per process."""
+    """Get India trending topics via Google Trends RSS — zero X API credits."""
     global _TRENDING_CACHE, _TRENDING_FETCHED_AT
     now = datetime.datetime.now(datetime.timezone.utc)
     if _TRENDING_FETCHED_AT and (now - _TRENDING_FETCHED_AT).seconds < 3600 and _TRENDING_CACHE:
         return _TRENDING_CACHE
     try:
-        auth = OAuth1(X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET)
+        import xml.etree.ElementTree as _ET
         r = requests.get(
-            "https://api.twitter.com/1.1/trends/place.json",
-            params={"id": 23424848},  # India WOEID
-            auth=auth, timeout=10,
+            "https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN",
+            timeout=10, headers={"User-Agent": "Mozilla/5.0"},
         )
         if r.ok:
-            trends = r.json()[0].get("trends", [])
-            tags = [t["name"] for t in trends if t["name"].startswith("#")]
-            # Prefer India-relevant tags but always return something
-            india_tags = [h for h in tags if any(
-                kw in h.lower() for kw in [
-                    "india", "bharat", "modi", "lok", "rajya", "parliament", "sansad",
-                    "session", "fcra", "viksit", "isro", "rbi", "defence", "amrit",
-                    "pakistan", "china", "startup", "budget", "rupee", "monsoon",
-                    "national", "independence", "digital", "make", "swachh",
-                ]
-            )]
-            result = india_tags[:2] if india_tags else tags[:2]
-            _TRENDING_CACHE = result
-            _TRENDING_FETCHED_AT = now
-            print(f"  Trending tags: {result}")
-            return result
+            root  = _ET.fromstring(r.content)
+            items = root.findall(".//item")
+            india_kw = [
+                "india", "bharat", "modi", "parliament", "sansad", "isro", "rbi",
+                "rupee", "budget", "defence", "pakistan", "china", "viksit",
+                "startup", "manufacturing", "digital", "monsoon",
+            ]
+            tags: list[str] = []
+            for item in items[:30]:
+                title = (item.findtext("title") or "").strip()
+                if not title:
+                    continue
+                tl = title.lower()
+                if any(kw in tl for kw in india_kw):
+                    # Convert multi-word trend to hashtag
+                    tag = "#" + "".join(w.capitalize() for w in title.split()[:3])
+                    tags.append(tag)
+                if len(tags) >= 2:
+                    break
+            if tags:
+                _TRENDING_CACHE = tags
+                _TRENDING_FETCHED_AT = now
+                print(f"  Trending (Google): {tags}")
+                return tags
     except Exception as e:
         print(f"  Trending fetch skipped: {e}")
     return []

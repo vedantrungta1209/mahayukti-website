@@ -82,23 +82,35 @@ def _save_log(log: dict):
 
 
 def fetch_trending_hashtags() -> list[str]:
-    """Get real-time trending hashtags for India via X API v1.1."""
+    """Get India trending topics via Google Trends RSS — zero X API credits."""
     try:
-        auth = _oauth()
         r = requests.get(
-            "https://api.twitter.com/1.1/trends/place.json",
-            params={"id": 23424848},  # India WOEID
-            auth=auth,
-            timeout=15,
+            "https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN",
+            timeout=12, headers={"User-Agent": "Mozilla/5.0"},
         )
         if r.ok:
-            trends = r.json()[0].get("trends", [])
-            # Prioritise hashtags; also grab text topics as context
-            hashtags = [t["name"] for t in trends if t["name"].startswith("#")]
-            print(f"  Trending hashtags: {hashtags[:8]}")
-            return hashtags[:8]
+            root  = ET.fromstring(r.content)
+            items = root.findall(".//item")
+            india_kw = [
+                "india", "bharat", "modi", "parliament", "sansad", "isro", "rbi",
+                "rupee", "budget", "defence", "pakistan", "china", "viksit",
+                "startup", "manufacturing", "digital", "monsoon",
+            ]
+            tags: list[str] = []
+            for item in items[:30]:
+                title = (item.findtext("title") or "").strip()
+                if not title:
+                    continue
+                if any(kw in title.lower() for kw in india_kw):
+                    tag = "#" + "".join(w.capitalize() for w in title.split()[:3])
+                    tags.append(tag)
+                if len(tags) >= 4:
+                    break
+            if tags:
+                print(f"  Trending (Google): {tags}")
+                return tags
     except Exception as e:
-        print(f"  Trending fetch failed: {e}")
+        print(f"  Trending fetch skipped: {e}")
     return []
 
 

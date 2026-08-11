@@ -6,7 +6,7 @@ commentary tweets (not replies/QTs — new account restriction on both).
 Original posts get full impressions vs buried replies.
 """
 
-import os, json, datetime, requests, time
+import os, json, datetime, requests, time, xml.etree.ElementTree as ET
 from pathlib import Path
 
 ANTHROPIC_API_KEY     = os.environ["ANTHROPIC_API_KEY"]
@@ -66,50 +66,48 @@ def _save_log(seen: set):
     _LOG_FILE.write_text(json.dumps(list(seen)[-MAX_LOG:]))
 
 
-def _search_handles(handles: list[str], extra_filter: str = "", sort_by_recency: bool = True) -> list[dict]:
-    auth = _oauth()
-    handles_q = " OR ".join(f"from:{h}" for h in handles)
-    query = f"({handles_q}) {extra_filter} -is:retweet lang:en".strip()
+PARLIAMENT_RSS_FEEDS = [
+    # Official government press releases
+    ("PIB",        "https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3"),
+    # Google News: parliament + legislation
+    ("GoogleNews", "https://news.google.com/rss/search?q=india+parliament+lok+sabha+rajya+sabha+bill&hl=en-IN&gl=IN&ceid=IN:en"),
+    # Google News: India governance & policy
+    ("GoogleNews", "https://news.google.com/rss/search?q=india+government+policy+legislation+2026&hl=en-IN&gl=IN&ceid=IN:en"),
+]
 
-    r = requests.get(
-        "https://api.twitter.com/2/tweets/search/recent",
-        params={
-            "query":        query,
-            "max_results":  15,
-            "tweet.fields": "public_metrics,author_id,created_at,text",
-            "expansions":   "author_id",
-            "user.fields":  "username,public_metrics",
-        },
-        auth=auth,
-        timeout=30,
-    )
-    if not r.ok:
-        print(f"  Search failed ({r.status_code}): {r.text[:300]}")
-        return []
+def _fetch_parliament_news() -> list[dict]:
+    """Fetch latest parliament/governance headlines via free RSS — zero X credits."""
+    cutoff  = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=12)
+    seen_t: set[str] = set()
+    articles: list[dict] = []
 
-    data   = r.json()
-    tweets = data.get("data", [])
-    users  = {u["id"]: u for u in data.get("includes", {}).get("users", [])}
+    for source, url in PARLIAMENT_RSS_FEEDS:
+        try:
+            r = requests.get(url, timeout=12,
+                             headers={"User-Agent": "Mozilla/5.0 (Mahayukti)"})
+            if not r.ok:
+                continue
+            root  = ET.fromstring(r.content)
+            items = root.findall(".//item")
+            for item in items:
+                title = (item.findtext("title") or "").strip()
+                desc  = (item.findtext("description") or "").strip()
+                if not title or title.lower() in seen_t:
+                    continue
+                seen_t.add(title.lower())
+                articles.append({
+                    "id":       title[:40],   # fingerprint for dedup
+                    "text":     f"{title}. {desc[:200]}".strip(),
+                    "username": source,
+                    "likes":    0,
+                    "retweets": 0,
+                    "created_at": "",
+                })
+        except Exception as e:
+            print(f"  RSS error ({source}): {e}")
 
-    results = []
-    for t in tweets:
-        uid     = t.get("author_id", "")
-        user    = users.get(uid, {})
-        metrics = t.get("public_metrics", {})
-        results.append({
-            "id":         t["id"],
-            "text":       t["text"],
-            "username":   user.get("username", ""),
-            "likes":      metrics.get("like_count", 0),
-            "retweets":   metrics.get("retweet_count", 0),
-            "created_at": t.get("created_at", ""),
-        })
-
-    if sort_by_recency:
-        results.sort(key=lambda x: x["created_at"], reverse=True)
-    else:
-        results.sort(key=lambda x: x["likes"] + x["retweets"] * 2, reverse=True)
-    return results
+    print(f"  Fetched {len(articles)} parliament/governance headlines via RSS")
+    return articles[:12]
 
 
 def generate_original_post(source_tweets: list[dict]) -> str:
@@ -211,22 +209,9 @@ def main():
 
     seen = _load_log()
 
-    # Gather live context from official handles
-    print("\nFetching official handle tweets...")
-    official = _search_handles(OFFICIAL_HANDLES, sort_by_recency=True)
-    print(f"Found {len(official)} official tweets")
-
-    # Also grab media parliament coverage for added context
-    print("Fetching media parliament coverage...")
-    media = _search_handles(
-        MEDIA_HANDLES,
-        extra_filter='(parliament OR "lok sabha" OR "rajya sabha" OR monsoon)',
-        sort_by_recency=False,
-    )
-    print(f"Found {len(media)} media tweets")
-
-    # Combine: official first (freshest), media by engagement
-    source_pool = official[:8] + media[:4]
+    # Gather live parliament/governance context via RSS (zero X read credits)
+    print("\nFetching parliament headlines via RSS...")
+    source_pool = _fetch_parliament_news()
 
     if not source_pool:
         print("No source tweets found — skipping this run")
