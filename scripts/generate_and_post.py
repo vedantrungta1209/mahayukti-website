@@ -32,11 +32,17 @@ X_ACCESS_TOKEN        = os.environ.get("X_ACCESS_TOKEN", "")
 X_ACCESS_TOKEN_SECRET = os.environ.get("X_ACCESS_TOKEN_SECRET", "")
 
 # ── Brand ──────────────────────────────────────────────────────────────────
-NAVY  = (11, 27, 58)
-GOLD  = (201, 148, 58)
-WHITE = (255, 255, 255)
-LIGHT = (220, 220, 230)
-DARK  = (6, 15, 35)
+# Editorial identity — NOT corporate navy/gold
+CHARCOAL = (12,  12,  12)   # near-black background
+SAFFRON  = (228, 71,  26)   # India saffron — single accent, used minimally
+WHITE    = (255, 255, 255)
+MUTED    = (160, 160, 155)  # secondary text
+OFFWHITE = (235, 232, 226)  # warm off-white for body text
+# Legacy aliases (used only where not yet replaced)
+NAVY  = CHARCOAL
+GOLD  = SAFFRON
+LIGHT = OFFWHITE
+DARK  = CHARCOAL
 
 TODAY    = datetime.date.today()
 DATE_STR = TODAY.strftime("%Y-%m-%d")
@@ -498,145 +504,116 @@ def _fetch_pollinations_img(domain_key: str, post_id: str, width: int, height: i
     return None
 
 
+def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
+    paths = [
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/System/Library/Fonts/Helvetica.ttc",
+    ]
+    for p in paths:
+        try:
+            return ImageFont.truetype(p, size)
+        except Exception:
+            continue
+    return ImageFont.load_default()
+
+
+def _wrap_text(text: str, font, max_px: int, draw) -> list[str]:
+    words = text.split()
+    lines, cur = [], []
+    for w in words:
+        test = " ".join(cur + [w])
+        if draw.textbbox((0, 0), test, font=font)[2] > max_px and cur:
+            lines.append(" ".join(cur))
+            cur = [w]
+        else:
+            cur.append(w)
+    if cur:
+        lines.append(" ".join(cur))
+    return lines
+
+
 def generate_image(content, width, height, filepath):
+    """
+    Editorial design — clean charcoal, saffron accent, left-aligned.
+    Typography-first. No gold bars, no navy overlay, no ALL CAPS, no pills.
+    """
     domain_key = content.get("domain", domain)
-    accent     = _DOMAIN_ACCENT_COLORS.get(domain_key, GOLD)
 
-    # Fetch Pollinations background
-    bg = _fetch_pollinations_img(domain_key, POST_ID, width, height)
-    if bg is None:
-        bg = Image.new("RGB", (width, height), NAVY)
-        draw_bg = ImageDraw.Draw(bg)
-        for y_px in range(height):
-            t = y_px / height
-            draw_bg.line([(0, y_px), (width, y_px)], fill=(
-                int(NAVY[0] + (DARK[0] - NAVY[0]) * t),
-                int(NAVY[1] + (DARK[1] - NAVY[1]) * t),
-                int(NAVY[2] + (DARK[2] - NAVY[2]) * t),
-            ))
+    # ── Background: clean charcoal + very faint Pollinations texture ──────
+    img = Image.new("RGB", (width, height), CHARCOAL)
 
-    # Navy gradient overlay so text stays readable
-    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    draw_ov = ImageDraw.Draw(overlay)
-    for y_px in range(height):
-        t = y_px / height
-        alpha = int(80 + 120 * t)
-        r_c = int(NAVY[0] * (0.3 + 0.7 * t))
-        g_c = int(NAVY[1] * (0.3 + 0.7 * t))
-        b_c = int(NAVY[2] * (0.3 + 0.7 * t))
-        draw_ov.line([(0, y_px), (width, y_px)], fill=(r_c, g_c, b_c, alpha))
-    img = bg.convert("RGBA")
-    img.alpha_composite(overlay)
-    img = img.convert("RGB")
+    bg_photo = _fetch_pollinations_img(domain_key, POST_ID, width, height)
+    if bg_photo:
+        # Blend photo in at low opacity — texture not template
+        dark = Image.new("RGB", (width, height), CHARCOAL)
+        img = Image.blend(dark, bg_photo, alpha=0.18)
+
     draw = ImageDraw.Draw(img)
 
-    # Load fonts
-    font_sizes = {
-        "logo":  int(height * 0.040),
-        "big":   int(height * 0.086),
-        "med":   int(height * 0.048),
-        "small": int(height * 0.032),
-        "tag":   int(height * 0.028),
-    }
-    fonts = {}
-    for name, size in font_sizes.items():
-        bold = name in ("logo", "big", "tag")
-        paths = [
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        ]
-        fonts[name] = ImageFont.load_default()
-        for p in paths:
-            try:
-                fonts[name] = ImageFont.truetype(p, size)
-                break
-            except Exception:
-                continue
+    # ── Single saffron left border — the only decoration ──────────────────
+    border_w = max(6, int(width * 0.006))
+    draw.rectangle([(0, 0), (border_w, height)], fill=SAFFRON)
 
-    # Brand bars
-    draw.rectangle([(0, 0), (width, 6)], fill=GOLD)
-    draw.rectangle([(0, height - 6), (width, height)], fill=GOLD)
-    draw.rectangle([(0, 0), (5, height)], fill=accent)
+    # ── Font scale (proportional to image height) ─────────────────────────
+    pad_l  = border_w + int(width * 0.055)   # left margin after border
+    pad_r  = int(width * 0.06)               # right margin
+    max_w  = width - pad_l - pad_r
 
-    # Header area
-    draw.rectangle([(0, 6), (width, int(height * 0.18))], fill=(6, 15, 35, 220))
-    draw.rectangle([(0, int(height * 0.18) - 3), (width, int(height * 0.18))], fill=accent)
+    f_wordmark = _load_font(int(height * 0.038), bold=True)
+    f_domain   = _load_font(int(height * 0.026), bold=False)
+    f_headline = _load_font(int(height * 0.082), bold=True)
+    f_body     = _load_font(int(height * 0.040), bold=False)
+    f_url      = _load_font(int(height * 0.030), bold=True)
 
-    draw.text((40, int(height * 0.025)), "MAHAYUKTI", fill=GOLD, font=fonts["logo"])
-    draw.text((40, int(height * 0.080)), "India's Expert Advisory Network", fill=LIGHT, font=fonts["small"])
+    # ── Wordmark — top left ───────────────────────────────────────────────
+    wm_y = int(height * 0.055)
+    draw.text((pad_l, wm_y), "MAHAYUKTI", fill=WHITE, font=f_wordmark)
 
-    # Domain pill
-    tag_text = domain_key.upper()
-    tag_bbox = draw.textbbox((0, 0), tag_text, font=fonts["tag"])
-    tw, th = tag_bbox[2] - tag_bbox[0] + 28, tag_bbox[3] - tag_bbox[1] + 14
-    tag_y = int(height * 0.22)
-    draw.rounded_rectangle([(40, tag_y), (40 + tw, tag_y + th)], radius=th // 2, fill=accent)
-    draw.text((54, tag_y + 7), tag_text, fill=(0, 0, 0), font=fonts["tag"])
+    # Domain / category — top right, saffron, small
+    dom_text = domain_key.upper()
+    dom_bbox = draw.textbbox((0, 0), dom_text, font=f_domain)
+    dom_x = width - pad_r - (dom_bbox[2] - dom_bbox[0])
+    dom_y = wm_y + (draw.textbbox((0, 0), "MAHAYUKTI", font=f_wordmark)[3] - (dom_bbox[3] - dom_bbox[1])) // 2
+    draw.text((dom_x, dom_y), dom_text, fill=SAFFRON, font=f_domain)
 
-    # Post-type badge
-    badge = "FOR CLIENTS" if POST_TYPE == "morning" else "JOIN US"
-    b_bbox = draw.textbbox((0, 0), badge, font=fonts["tag"])
-    bw = b_bbox[2] - b_bbox[0] + 28
-    bx = width - 40 - bw
-    draw.rounded_rectangle([(bx, tag_y), (bx + bw, tag_y + th)], radius=th // 2, outline=GOLD, width=2)
-    draw.text((bx + 14, tag_y + 7), badge, fill=GOLD, font=fonts["tag"])
+    # ── Thin saffron rule under wordmark ─────────────────────────────────
+    rule_y = wm_y + int(height * 0.065)
+    draw.rectangle([(pad_l, rule_y), (pad_l + int(width * 0.07), rule_y + 2)], fill=SAFFRON)
 
-    # Headline
-    headline_text = content["image_headline"].upper()
-    h_font = fonts["big"]
-    words = headline_text.split()
-    lines, line = [], ""
-    for word in words:
-        test = (line + " " + word).strip()
-        bbox = draw.textbbox((0, 0), test, font=h_font)
-        if bbox[2] - bbox[0] > width - 100 and line:
-            lines.append(line)
-            line = word
-        else:
-            line = test
-    if line:
-        lines.append(line)
+    # ── Headline — large, sentence case, left-aligned ────────────────────
+    headline = content["image_headline"]   # sentence case — NOT uppercased
+    h_lines  = _wrap_text(headline, f_headline, max_w, draw)
 
-    y = int(height * 0.44)
-    for ln in lines:
-        bbox = draw.textbbox((0, 0), ln, font=h_font)
-        x = (width - (bbox[2] - bbox[0])) // 2
-        draw.text((x + 2, y + 2), ln, fill=(0, 0, 0), font=h_font)
-        draw.text((x, y), ln, fill=WHITE, font=h_font)
-        y += int(height * 0.108)
+    h_line_h = int(height * 0.095)
+    h_y      = int(height * 0.24)
 
-    # Gold rule
-    draw.rectangle([(width // 2 - 60, y + 8), (width // 2 + 60, y + 12)], fill=GOLD)
-    y += 32
+    for ln in h_lines[:3]:   # cap at 3 lines
+        draw.text((pad_l, h_y), ln, fill=WHITE, font=f_headline)
+        h_y += h_line_h
 
-    # Subtext
-    subtext = content["image_subtext"]
-    sub_words = subtext.split()
-    sub_lines, sub_line = [], ""
-    for word in sub_words:
-        test = (sub_line + " " + word).strip()
-        bbox = draw.textbbox((0, 0), test, font=fonts["med"])
-        if bbox[2] - bbox[0] > width - 100 and sub_line:
-            sub_lines.append(sub_line)
-            sub_line = word
-        else:
-            sub_line = test
-    if sub_line:
-        sub_lines.append(sub_line)
+    # ── Thin saffron accent after headline ───────────────────────────────
+    draw.rectangle([(pad_l, h_y + 10), (pad_l + int(width * 0.12), h_y + 13)], fill=SAFFRON)
+    h_y += int(height * 0.055)
 
-    for ln in sub_lines:
-        bbox = draw.textbbox((0, 0), ln, font=fonts["med"])
-        x = (width - (bbox[2] - bbox[0])) // 2
-        draw.text((x, y), ln, fill=LIGHT, font=fonts["med"])
-        y += int(height * 0.068)
+    # ── Body subtext — left-aligned, muted ───────────────────────────────
+    subtext = content.get("image_subtext", "")
+    b_lines = _wrap_text(subtext, f_body, max_w, draw)
+    b_line_h = int(height * 0.052)
 
-    # Footer
-    footer_y = height - int(height * 0.06)
-    draw.text((40, footer_y), "mahayukti.com", fill=GOLD, font=fonts["small"])
-    rb = draw.textbbox((0, 0), DATE_STR, font=fonts["small"])
-    draw.text((width - 40 - (rb[2] - rb[0]), footer_y), DATE_STR, fill=LIGHT, font=fonts["small"])
+    for ln in b_lines[:3]:
+        draw.text((pad_l, h_y), ln, fill=OFFWHITE, font=f_body)
+        h_y += b_line_h
+
+    # ── Footer — mahayukti.com bottom-left in saffron ────────────────────
+    url_y = height - int(height * 0.075)
+    draw.text((pad_l, url_y), "mahayukti.com", fill=SAFFRON, font=f_url)
+
+    # Date — bottom right, muted
+    d_bbox = draw.textbbox((0, 0), DATE_STR, font=f_domain)
+    draw.text((width - pad_r - (d_bbox[2] - d_bbox[0]), url_y + 4), DATE_STR, fill=MUTED, font=f_domain)
 
     img.save(filepath, "JPEG", quality=95)
     print(f"✅ Image: {filepath}")
