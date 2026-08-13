@@ -1,20 +1,20 @@
-name: MahaYukti Parliament Pulse
+name: MahaYukti Morning Stat Shot
 
-# Parliament adjourned sine die Aug 13 2026 — schedule suspended.
-# Re-enable cron when next session begins (likely Budget Session Feb 2027).
-# New replacements: morning-statshot.yml (8 AM IST) + evening-debate-pulse.yml (9 PM IST)
 on:
+  schedule:
+    # 8:00 AM IST = 2:30 AM UTC daily
+    - cron: '30 2 * * *'
   workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
-  group: parliament-pulse
+  group: morning-statshot
   cancel-in-progress: true
 
 jobs:
-  pulse:
+  statshot:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -30,20 +30,20 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests anthropic requests-oauthlib
+        run: pip install requests requests-oauthlib
 
-      - name: Run parliament pulse
+      - name: Run morning stat shot
         env:
           ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
           X_API_KEY:             ${{ secrets.X_API_KEY }}
           X_API_SECRET:          ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN:        ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
-        run: python scripts/parliament_pulse.py
+        run: python scripts/morning_statshot.py
 
-      - name: Commit pulse log
+      - name: Commit log
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/parliament_pulse_log.json 2>/dev/null || true
-          git diff --staged --quiet || (git commit -m "chore: parliament pulse log" && git pull --rebase origin main && git push)
+          git add scripts/morning_statshot_log.json scripts/morning_statshot_daily.txt 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "chore: morning statshot log" && git pull --rebase origin main && git push)

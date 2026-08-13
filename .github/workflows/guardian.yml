@@ -192,6 +192,26 @@ jobs:
             fi
           fi
 
+          # ── Morning Stat Shot (8 AM IST — daily X post) ──────────────────────
+          if [ "$IST_HOUR" -ge 8 ]; then
+            if [ "$(was_posted_today scripts/morning_statshot_daily.txt)" = "false" ]; then
+              echo "⚠️  Morning Stat Shot MISSING — triggering now"
+              trigger_workflow "morning-statshot.yml" ""
+            else
+              echo "✅ Morning Stat Shot already done today"
+            fi
+          fi
+
+          # ── Evening Debate Pulse (9 PM IST — daily X post) ───────────────────
+          if [ "$IST_HOUR" -ge 21 ]; then
+            if [ "$(was_posted_today scripts/evening_debate_daily.txt)" = "false" ]; then
+              echo "⚠️  Evening Debate Pulse MISSING — triggering now"
+              trigger_workflow "evening-debate-pulse.yml" ""
+            else
+              echo "✅ Evening Debate Pulse already done today"
+            fi
+          fi
+
           # ── YouTube upload (7 PM IST target) ─────────────────────────────────
           if [ "$IST_HOUR" -ge 19 ]; then
             if [ "$(was_posted_today content-automation/topic_counter.txt)" = "false" ]; then
