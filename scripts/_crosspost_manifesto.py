@@ -11,8 +11,12 @@ from PIL import Image, ImageDraw, ImageFont
 ANTHROPIC_API_KEY         = os.environ["ANTHROPIC_API_KEY"]
 LINKEDIN_ACCESS_TOKEN     = os.environ.get("LINKEDIN_ACCESS_TOKEN", "")
 LINKEDIN_AUTHOR_URN       = os.environ.get("LINKEDIN_AUTHOR_URN", "")
-MAKE_LINKEDIN_WEBHOOK_URL = os.environ.get("MAKE_LINKEDIN_WEBHOOK_URL", "")
+# Accept both names — repo secret is MAKE_WEBHOOK_URL (set when Make.com was wired up)
+MAKE_LINKEDIN_WEBHOOK_URL = os.environ.get("MAKE_LINKEDIN_WEBHOOK_URL", "") or os.environ.get("MAKE_WEBHOOK_URL", "")
 IMGBB_API_KEY             = os.environ.get("IMGBB_API_KEY", "")
+# GitHub repo details for raw CDN fallback (used when imgbb key is absent)
+GITHUB_TOKEN              = os.environ.get("GH_TOKEN", "")
+GITHUB_REPO               = os.environ.get("GITHUB_REPO", "vedantrungta1209/mahayukti-website")
 FB_PAGE_ACCESS_TOKEN      = os.environ.get("FB_PAGE_ACCESS_TOKEN", "")
 FB_PAGE_ID                = os.environ.get("FB_PAGE_ID", "")
 IG_USER_ID                = os.environ.get("IG_USER_ID", "")
@@ -134,12 +138,12 @@ def generate_image() -> str:
     return IMG_PATH
 
 
-# ── imgbb upload ───────────────────────────────────────────────────────────────
+# ── Public image URL ─────────────────────────────────────────────────────────
 
-def upload_imgbb(path: str) -> str | None:
-    if not IMGBB_API_KEY:
-        print("⚠️  No IMGBB_API_KEY — Instagram will be skipped")
-        return None
+_REPO_IMG_PATH = "assets/manifesto_cover.jpg"  # committed to repo for raw CDN
+
+
+def _upload_imgbb(path: str) -> str | None:
     with open(path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
     r = requests.post("https://api.imgbb.com/1/upload",
@@ -150,6 +154,50 @@ def upload_imgbb(path: str) -> str | None:
         return url
     print(f"  imgbb failed: {r.status_code} {r.text[:200]}")
     return None
+
+
+def _upload_github_raw(path: str) -> str | None:
+    """Push image to repo and return the raw.githubusercontent.com URL."""
+    if not GITHUB_TOKEN:
+        return None
+    with open(path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    # Check if file already exists (need its SHA to update)
+    check = requests.get(
+        f"https://api.github.com/repos/{GITHUB_REPO}/contents/{_REPO_IMG_PATH}",
+        headers={"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"},
+        timeout=15,
+    )
+    sha = check.json().get("sha") if check.ok else None
+    payload: dict = {
+        "message": "chore: manifesto cover image for IG crosspost",
+        "content": b64,
+        "branch":  "main",
+    }
+    if sha:
+        payload["sha"] = sha
+    r = requests.put(
+        f"https://api.github.com/repos/{GITHUB_REPO}/contents/{_REPO_IMG_PATH}",
+        headers={"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json",
+                 "Content-Type": "application/json"},
+        json=payload,
+        timeout=30,
+    )
+    if r.ok:
+        url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{_REPO_IMG_PATH}"
+        print(f"  GitHub raw CDN: {url}")
+        return url
+    print(f"  GitHub upload failed: {r.status_code} {r.text[:200]}")
+    return None
+
+
+def get_public_image_url(path: str) -> str | None:
+    if IMGBB_API_KEY:
+        url = _upload_imgbb(path)
+        if url:
+            return url
+    print("  imgbb unavailable — trying GitHub raw CDN...")
+    return _upload_github_raw(path)
 
 
 # ── Caption generation ─────────────────────────────────────────────────────────
@@ -410,8 +458,8 @@ def main():
     print("\n[1/4] Generating branded image...")
     generate_image()
 
-    print("\n[2/4] Uploading to imgbb for public URL...")
-    image_url = upload_imgbb(IMG_PATH)
+    print("\n[2/4] Getting public image URL (imgbb or GitHub raw CDN)...")
+    image_url = get_public_image_url(IMG_PATH)
 
     print("\n[3/4] Generating platform captions via Claude...")
     captions = generate_captions()

@@ -26,21 +26,27 @@ jobs:
       - name: Install dependencies
         run: pip install requests pillow requests-oauthlib
 
+      - name: Remove guard to allow fresh run after credential fixes
+        run: rm -f scripts/_manifesto_crosspost_posted.txt
+
       - name: Cross-post manifesto
         env:
           ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
           LINKEDIN_ACCESS_TOKEN:     ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           LINKEDIN_AUTHOR_URN:       ${{ secrets.LINKEDIN_AUTHOR_URN }}
-          MAKE_LINKEDIN_WEBHOOK_URL: ${{ secrets.MAKE_LINKEDIN_WEBHOOK_URL }}
+          # Primary LinkedIn webhook — stored in repo as MAKE_WEBHOOK_URL
+          MAKE_WEBHOOK_URL:          ${{ secrets.MAKE_WEBHOOK_URL }}
           IMGBB_API_KEY:             ${{ secrets.IMGBB_API_KEY }}
           FB_PAGE_ACCESS_TOKEN:      ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
           FB_PAGE_ID:                ${{ secrets.FB_PAGE_ID }}
           IG_USER_ID:                ${{ secrets.IG_USER_ID }}
+          GH_TOKEN:                  ${{ secrets.GH_TOKEN }}
+          GITHUB_REPO:               ${{ github.repository }}
         run: python scripts/_crosspost_manifesto.py
 
-      - name: Commit guard file
+      - name: Commit guard + cover image
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/_manifesto_crosspost_posted.txt 2>/dev/null || true
+          git add scripts/_manifesto_crosspost_posted.txt assets/manifesto_cover.jpg 2>/dev/null || true
           git diff --staged --quiet || (git commit -m "chore: manifesto crosspost done" && git pull --rebase origin main && git push)
