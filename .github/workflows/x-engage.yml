@@ -1,8 +1,8 @@
-name: MahaYukti X Engagement (Every 3 Hours)
+name: MahaYukti X Engagement (Every 6 Hours)
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   # every 3 hours
+    - cron: '0 */6 * * *'   # every 6 hours = 4 posts/day max
   workflow_dispatch:
 
 env:

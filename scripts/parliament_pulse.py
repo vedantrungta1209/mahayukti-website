@@ -17,8 +17,9 @@ X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 
 _DIR      = Path(__file__).parent
 _LOG_FILE = _DIR / "parliament_pulse_log.json"
-MAX_LOG   = 300
-MAX_PER_RUN = 1   # 1 original post per 2h run — quality over volume
+MAX_LOG     = 300
+MAX_PER_RUN = 1   # 1 original post per run
+DAILY_CAP   = 1   # max 1 parliament post per day — quality beats volume
 
 OFFICIAL_HANDLES = [
     "PIB_India", "mpa_india", "LokSabhaSectt", "SansadTV",
@@ -203,9 +204,27 @@ def _make_batch_key(tweets: list[dict]) -> str:
     return "batch_" + "_".join(ids)
 
 
+def _posted_today() -> bool:
+    """Return True if we already posted today (IST)."""
+    today_ist = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=5, minutes=30))).strftime("%Y-%m-%d")
+    daily_file = _DIR / "parliament_pulse_daily.txt"
+    if daily_file.exists():
+        return daily_file.read_text().strip() == today_ist
+    return False
+
+
+def _mark_posted_today():
+    today_ist = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=5, minutes=30))).strftime("%Y-%m-%d")
+    (_DIR / "parliament_pulse_daily.txt").write_text(today_ist)
+
+
 def main():
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     print(f"\n🏛️  MahaYukti Parliament Pulse — {now}")
+
+    if _posted_today():
+        print("⏸️  Already posted today (1/day cap) — skipping.")
+        return
 
     seen = _load_log()
 
@@ -234,6 +253,7 @@ def main():
     print(f"  Post ({len(tweet_text)} chars): {tweet_text}")
     if post_tweet(tweet_text):
         seen.add(batch_key)
+        _mark_posted_today()
 
     _save_log(seen)
     print("\n✅ Done")

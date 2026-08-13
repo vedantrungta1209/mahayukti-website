@@ -23,6 +23,7 @@ _HEARTBEAT     = _SCRIPTS_DIR / "x_news_pulse_heartbeat.txt"
 MAX_LOG        = 200   # keep last N posted story IDs
 MIN_SCORE    = 6     # minimum relevance score to post
 MAX_AGE_HRS  = 3     # only consider stories from last N hours
+DAILY_X_CAP  = 3     # max X posts per day from this script (runs hourly, posts selectively)
 
 # ── News sources ───────────────────────────────────────────────────────────
 SOURCES = [
@@ -418,6 +419,32 @@ def _write_heartbeat():
     _HEARTBEAT.write_text(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
 
 
+def _posts_today(seen: set) -> int:
+    """Count how many stories were posted today (IST) by checking the log file mtime."""
+    today_ist = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=5, minutes=30))).date()
+    if not _LOG_FILE.exists():
+        return 0
+    mtime = datetime.datetime.fromtimestamp(_LOG_FILE.stat().st_mtime, tz=datetime.timezone.utc)
+    mtime_ist = mtime.astimezone(datetime.timezone(datetime.timedelta(hours=5, minutes=30))).date()
+    # Rough proxy: read the git-committed heartbeat file timestamps via log content
+    # Simpler: track via a daily counter file
+    counter_file = _SCRIPTS_DIR / "x_news_pulse_daily.json"
+    if counter_file.exists():
+        try:
+            data = json.loads(counter_file.read_text())
+            if data.get("date") == str(today_ist):
+                return data.get("count", 0)
+        except Exception:
+            pass
+    return 0
+
+
+def _increment_daily(count: int):
+    today_ist = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=5, minutes=30))).date()
+    counter_file = _SCRIPTS_DIR / "x_news_pulse_daily.json"
+    counter_file.write_text(json.dumps({"date": str(today_ist), "count": count}))
+
+
 def main():
     print(f"\n📡 MahaYukti News Pulse — {datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
 
@@ -426,6 +453,14 @@ def main():
     print(f"  {len(stories)} stories fetched, top score: {stories[0]['score'] if stories else 0}")
 
     seen = _load_log()
+    posts_today = _posts_today(seen)
+    print(f"  Posts to X today: {posts_today}/{DAILY_X_CAP}")
+
+    if posts_today >= DAILY_X_CAP:
+        print(f"⏸️  Daily X cap reached ({DAILY_X_CAP}) — skipping X post this run.")
+        _write_heartbeat()
+        sys.exit(0)
+
     post_count = len(seen)
     story = pick_story(stories, seen)
 
@@ -447,6 +482,7 @@ def main():
     if post_to_x(text):
         seen.add(story["id"])
         _save_log(seen)
+        _increment_daily(posts_today + 1)
         # Mirror to Telegram (plain text, no image)
         if TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
             try:

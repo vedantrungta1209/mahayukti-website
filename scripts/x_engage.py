@@ -17,7 +17,7 @@ X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 _DIR      = Path(__file__).parent
 _LOG_FILE = _DIR / "x_engage_log.json"
 MAX_LOG        = 500
-POSTS_PER_RUN  = 2   # posts per 3-hour run = ~16/day
+POSTS_PER_RUN  = 1   # 1 post per 3-hour run = ~8/day max
 MAX_AGE_HOURS  = 18  # ignore articles older than this
 
 # Free RSS feeds — no API key, no credits
