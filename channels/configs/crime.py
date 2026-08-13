@@ -130,7 +130,7 @@ Era: {era}
 Key figures/facts: {key_figures}
 
 Rules:
-- Total narration: 1200-1500 words (12-15 min at measured, dramatic pace)
+- Total narration: 900-1100 words (9-11 min at measured, dramatic pace)
 - Language: English with occasional Hindi phrases for drama
 - Structure: Cold open → Background → The Crime → Unraveling → Investigation → Verdict/Status → Impact
 - Use REAL names, dates, amounts, court judgements where available

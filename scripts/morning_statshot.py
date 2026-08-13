@@ -169,6 +169,22 @@ def main():
         log["domain_index"] = (domain_idx + 1) % len(STAT_DOMAINS)
         _save_log(log)
         _mark_today()
+
+        # Cross-post to LinkedIn via Make.com webhook (non-fatal)
+        make_url = os.environ.get("MAKE_WEBHOOK_URL", "")
+        if make_url:
+            try:
+                li_text = (
+                    f"Morning data point for India:\n\n"
+                    f"{text.split('#')[0].strip()}\n\n"
+                    f"— @wearemahayukti | Make India Greatest\n\n"
+                    f"#India #MakeIndiaGreatest #Mahayukti #IndiaData #IndiaFirst"
+                )
+                r = requests.post(make_url, json={"text": li_text[:3000]}, timeout=15)
+                print(f"  LinkedIn: {'✅ posted' if r.ok else f'⚠️ failed ({r.status_code})'}")
+            except Exception as e:
+                print(f"  LinkedIn: ⚠️ {e}")
+
         print("✅ Done")
 
 

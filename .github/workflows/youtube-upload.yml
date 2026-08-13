@@ -23,7 +23,7 @@ env:
 jobs:
   upload:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
 
     steps:
       - name: Checkout repository
@@ -37,17 +37,15 @@ jobs:
         run: |
           FORCE="${{ github.event.inputs.force }}"
           if [ "$FORCE" = "true" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
-            exit 0
+            echo "skip=false" >> $GITHUB_OUTPUT; exit 0
           fi
           TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
-          LAST_TS=$(git log -1 --format="%ct" -- "content-automation/topic_counter.txt" 2>/dev/null || echo "")
-          if [ -n "$LAST_TS" ]; then
-            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
-            if [ "$LAST_IST" = "$TODAY_IST" ]; then
+          STAMP="content-automation/upload_stamp.txt"
+          if [ -f "$STAMP" ]; then
+            LAST=$(cat "$STAMP" | tr -d '[:space:]')
+            if [ "$LAST" = "$TODAY_IST" ]; then
               echo "⏭️  YouTube upload already done today ($TODAY_IST). Skipping."
-              echo "skip=true" >> $GITHUB_OUTPUT
-              exit 0
+              echo "skip=true" >> $GITHUB_OUTPUT; exit 0
             fi
           fi
           echo "skip=false" >> $GITHUB_OUTPUT
@@ -93,12 +91,14 @@ jobs:
             echo "Token file not found — secret unchanged."
           fi
 
-      - name: Persist topic counter
+      - name: Persist topic counter and stamp
         if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add content-automation/topic_counter.txt
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          echo "$TODAY_IST" > content-automation/upload_stamp.txt
+          git add content-automation/topic_counter.txt content-automation/upload_stamp.txt
           git diff --staged --quiet || git commit -m "chore: update topic counter [skip ci]"
           git pull --rebase origin main
           git push

@@ -22,7 +22,7 @@ env:
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -36,11 +36,15 @@ jobs:
           if [ "${{ github.event.inputs.force }}" = "true" ]; then
             echo "skip=false" >> $GITHUB_OUTPUT; exit 0
           fi
-          COUNT=$(git log --since="$(date -u +%Y-%m-%dT00:00:00Z)" \
-            --format="%s" -- channels/counters/finance_long.txt \
-            | grep -c "counter" || echo 0)
-          [ "$COUNT" -ge 1 ] && echo "skip=true" >> $GITHUB_OUTPUT \
-                             || echo "skip=false" >> $GITHUB_OUTPUT
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          STAMP="channels/counters/finance_long_stamp.txt"
+          if [ -f "$STAMP" ]; then
+            LAST=$(cat "$STAMP" | tr -d '[:space:]')
+            if [ "$LAST" = "$TODAY_IST" ]; then
+              echo "skip=true" >> $GITHUB_OUTPUT; exit 0
+            fi
+          fi
+          echo "skip=false" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         if: steps.guard.outputs.skip != 'true'
@@ -52,19 +56,31 @@ jobs:
             google-auth-oauthlib google-auth-httplib2
 
 
-      - name: Notify Jarvis on failure
-        if: failure()
-        run: |
-          ERROR=$(tail -5 /tmp/step_error.log 2>/dev/null || echo "Step failed — check run logs")
-          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
-            -H "Content-Type: application/json" \
-            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"$(echo $GITHUB_JOB failed | head -c 300)\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true
       - name: Run pipeline
         if: steps.guard.outputs.skip != 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}
           YOUTUBE_FINANCE_TOKEN_JSON: ${{ secrets.YOUTUBE_FINANCE_TOKEN_JSON }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          GH_TOKEN:                   ${{ secrets.GH_TOKEN }}
+          PEXELS_API_KEY:             ${{ secrets.PEXELS_API_KEY }}
+          ELEVENLABS_API_KEY:         ${{ secrets.ELEVENLABS_API_KEY }}
+          MAKE_WEBHOOK_URL:           ${{ secrets.MAKE_WEBHOOK_URL }}
         run: python pipelines/finance-long.py
+
+      - name: Write date stamp
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          echo "$TODAY_IST" > channels/counters/finance_long_stamp.txt
+          git add channels/counters/
+          git diff --staged --quiet || git commit -m "chore: finance long counter [skip ci]"
+          git pull --rebase origin main && git push
+
+      - name: Notify Jarvis on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"finance-long failed\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true

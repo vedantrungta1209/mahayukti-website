@@ -189,7 +189,7 @@ def run_long(cfg, also_short: bool = False) -> None:
             **_el_params(cfg),
         )
         compose_short(t_audio, trailer, t_video, None, cfg)
-        upload_video(
+        trailer_yt_id = upload_video(
             video_path=t_video,
             title=trailer.get("title", f"Trailer: {topic['name']}"),
             description=trailer.get("description", ""),
@@ -197,6 +197,20 @@ def run_long(cfg, also_short: bool = False) -> None:
             is_short=True,
             cfg=cfg,
         )
+        # Cross-post trailer to Instagram + Facebook (non-fatal)
+        try:
+            from social_cross_poster import cross_post_short
+            episode = script.get("episode_title", topic["name"])
+            ig_cap = (
+                f"🔴 True crime: {episode}\n\n"
+                f"{trailer.get('script', '')[:200]}...\n\n"
+                f"Full story on @mahayuktikrime → YouTube\n\n"
+                f"#TrueCrimeIndia #IndianCrime #CrimeStory #CrimeDocumentary "
+                f"#Mahayukti #IndianScam #TrueCrime"
+            )
+            cross_post_short(t_video, ig_cap)
+        except Exception as _e:
+            print(f"  ⚠️  Trailer social cross-post failed (non-fatal): {_e}")
         print("  Trailer done ✓")
 
     _cleanup(cfg)

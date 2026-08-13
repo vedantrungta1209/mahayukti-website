@@ -261,6 +261,22 @@ def main():
         seen.add(topic_id)
         _save_log(seen)
         _mark_today()
+
+        # Cross-post to LinkedIn via Make.com webhook (non-fatal)
+        make_url = os.environ.get("MAKE_WEBHOOK_URL", "")
+        if make_url:
+            try:
+                li_text = (
+                    f"Tonight's take:\n\n"
+                    f"{post_text.split('#')[0].strip()}\n\n"
+                    f"— @wearemahayukti | India's geopolitical reality, decoded.\n\n"
+                    f"#India #IndiaFirst #HybridWarfare #NationalSecurity #Mahayukti"
+                )
+                r = requests.post(make_url, json={"text": li_text[:3000]}, timeout=15)
+                print(f"  LinkedIn: {'✅ posted' if r.ok else f'⚠️ failed ({r.status_code})'}")
+            except Exception as e:
+                print(f"  LinkedIn: ⚠️ {e}")
+
         print("✅ Done")
 
 

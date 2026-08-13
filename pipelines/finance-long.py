@@ -58,7 +58,7 @@ Topic: {topic['name']}
 Angle: {topic.get('angle', '')}
 Category: {topic.get('category', 'General')}
 
-Write a 12-15 minute video (1800-2200 words narration). Return ONLY valid JSON, no markdown fences:
+Write a 9-11 minute video (1200-1500 words narration). Return ONLY valid JSON, no markdown fences:
 {{
   "youtube_title": "Max 70 chars, keyword-rich, emoji",
   "youtube_description": "400-word description with timestamps and 12 hashtags",
@@ -353,6 +353,23 @@ while response is None:
     status, response = req.next_chunk()
     if status: print(f"  {int(status.progress()*100)}%")
 
-print(f"  ✓ https://youtu.be/{response['id']}")
+yt_id = response['id']
+print(f"  ✓ https://youtu.be/{yt_id}")
 push_counter(idx + 1)
+
+# Post LinkedIn teaser (non-fatal)
+make_url = os.environ.get("MAKE_WEBHOOK_URL", "")
+if make_url:
+    try:
+        li_text = (
+            f"Just published: {script['youtube_title']}\n\n"
+            f"{script.get('youtube_description', '')[:280].split('#')[0].strip()}\n\n"
+            f"Watch the full breakdown → https://youtu.be/{yt_id}\n\n"
+            f"#PersonalFinance #IndiaFinance #Investing #WealthBuilding #Mahayukti"
+        )
+        r = requests.post(make_url, json={"text": li_text[:3000]}, timeout=15)
+        print(f"  LinkedIn: {'✅ posted' if r.ok else f'⚠️ failed ({r.status_code})'}")
+    except Exception as _e:
+        print(f"  ⚠️  LinkedIn teaser failed (non-fatal): {_e}")
+
 print(f"\n✅  Done. Counter → {idx + 1}")

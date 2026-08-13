@@ -83,6 +83,23 @@ def run_short() -> None:
         is_short=True,
     )
 
+    # Cross-post short to Instagram Reels + Facebook Reels (non-fatal)
+    try:
+        from social_poster import post_to_social
+        ig_caption = (
+            f"{script.get('title', tool['name'])}\n\n"
+            f"{script.get('ig_caption', script.get('description', ''))[:300]}\n\n"
+            f"Follow @mahayuktiAI for daily AI tools 🤖\n\n"
+            f"#AI #ArtificialIntelligence #AITools #IndiaAI #Productivity #TechIndia #Mahayukti"
+        )
+        print("  Cross-posting to Instagram + Facebook...")
+        social_results = post_to_social(video_path, ig_caption)
+        for platform, result in social_results.items():
+            status = "✅" if result else "⚠️ failed"
+            print(f"    {platform}: {status}")
+    except Exception as e:
+        print(f"  ⚠️  Social cross-post failed (non-fatal): {e}")
+
     _push_token_secret("YOUTUBE_AI_TOKEN_JSON")
     _write_counter(COUNTER_SHORT, idx + 1)
     _cleanup()
@@ -126,6 +143,23 @@ def run_long() -> None:
         is_short=False,
         thumbnail_path=thumbnail_path,
     )
+
+    # Post LinkedIn teaser (non-fatal)
+    try:
+        import requests as _req
+        make_url = os.environ.get("MAKE_WEBHOOK_URL", "")
+        if make_url and yt_video_id:
+            tool_names = ", ".join(t["name"] for t in tools[:3])
+            li_text = (
+                f"Just dropped: {script.get('title', 'Top AI Tools')}\n\n"
+                f"This week I cover {tool_names} — tools that are actually useful for Indian professionals and creators.\n\n"
+                f"Watch on @mahayuktiAI → https://youtube.com/watch?v={yt_video_id}\n\n"
+                f"#AI #ArtificialIntelligence #IndiaAI #Productivity #AITools #Mahayukti"
+            )
+            _req.post(make_url, json={"text": li_text}, timeout=15)
+            print("  LinkedIn teaser posted ✅")
+    except Exception as e:
+        print(f"  ⚠️  LinkedIn teaser failed (non-fatal): {e}")
 
     _push_token_secret("YOUTUBE_AI_TOKEN_JSON")
     _write_counter(COUNTER_LONG, idx + 1)

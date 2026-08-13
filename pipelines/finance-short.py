@@ -376,6 +376,31 @@ while response is None:
     status, response = req.next_chunk()
     if status: print(f"  {int(status.progress()*100)}%")
 
-print(f"  ✓ https://youtu.be/{response['id']}")
+yt_id = response['id']
+print(f"  ✓ https://youtu.be/{yt_id}")
 push_counter(idx + 1)
+
+# Cross-post to Instagram Reels + Facebook Reels + LinkedIn (non-fatal)
+try:
+    import sys as _sys
+    _sys.path.insert(0, str(REPO_DIR))
+    from channels.social_cross_poster import cross_post_short
+
+    topic_name = script.get("youtube_title", cfg.SHORT_TOPICS[idx % len(cfg.SHORT_TOPICS)]["name"])
+    ig_cap = (
+        f"{script['youtube_title']}\n\n"
+        f"{script.get('youtube_description', '')[:250]}\n\n"
+        f"Follow @mahayuktifinance for daily finance tips 💰\n\n"
+        f"#PersonalFinance #IndiaFinance #MutualFunds #StockMarket #MoneyTips "
+        f"#FinanceIndia #WealthBuilding #Mahayukti #FinancialFreedom #Investing"
+    )
+    li_text = (
+        f"New short on @mahayuktifinance: {topic_name}\n\n"
+        f"Quick take for Indian investors — watch here: https://youtu.be/{yt_id}\n\n"
+        f"#PersonalFinance #IndiaFinance #Investing #Mahayukti"
+    )
+    cross_post_short(str(final_video), ig_cap, li_text)
+except Exception as _e:
+    print(f"⚠️  Social cross-post failed (non-fatal): {_e}")
+
 print(f"\n✅  Done. Counter → {idx + 1}")

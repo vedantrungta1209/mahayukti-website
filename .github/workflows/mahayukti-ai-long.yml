@@ -41,13 +41,12 @@ jobs:
             exit 0
           fi
           TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
-          LAST_TS=$(git log -1 --format="%ct" -- "MahayuktiAI/tool_counter_long.txt" 2>/dev/null || echo "")
-          if [ -n "$LAST_TS" ]; then
-            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
-            if [ "$LAST_IST" = "$TODAY_IST" ]; then
+          STAMP="MahayuktiAI/ai_long_stamp.txt"
+          if [ -f "$STAMP" ]; then
+            LAST=$(cat "$STAMP" | tr -d '[:space:]')
+            if [ "$LAST" = "$TODAY_IST" ]; then
               echo "⏭️  AI Long-form already done today ($TODAY_IST). Skipping."
-              echo "skip=true" >> $GITHUB_OUTPUT
-              exit 0
+              echo "skip=true" >> $GITHUB_OUTPUT; exit 0
             fi
           fi
           echo "skip=false" >> $GITHUB_OUTPUT
@@ -74,14 +73,17 @@ jobs:
           ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
           YOUTUBE_AI_TOKEN_JSON:  ${{ secrets.YOUTUBE_AI_TOKEN_JSON }}
           GH_TOKEN:               ${{ secrets.GH_TOKEN }}
+          MAKE_WEBHOOK_URL:       ${{ secrets.MAKE_WEBHOOK_URL }}
         run: python main.py --mode long
 
-      - name: Persist tool counter
+      - name: Persist tool counter and stamp
         if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add MahayuktiAI/tool_counter_long.txt
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          echo "$TODAY_IST" > MahayuktiAI/ai_long_stamp.txt
+          git add MahayuktiAI/tool_counter_long.txt MahayuktiAI/ai_long_stamp.txt
           git diff --staged --quiet || git commit -m "chore: update AI long tool counter [skip ci]"
           git pull --rebase origin main
           git push

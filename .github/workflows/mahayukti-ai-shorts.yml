@@ -40,15 +40,20 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-          # Allow 2 runs per day — check if we've already run twice today
+          # Allow 2 runs per day — use slot-based stamps (morning / evening)
           TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
-          COUNT=$(git log --since="$(TZ='Asia/Kolkata' date -d 'today 00:00' -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT00:00:00Z)" --format="%H" -- "MahayuktiAI/tool_counter_short.txt" 2>/dev/null | wc -l || echo "0")
-          if [ "$COUNT" -ge 2 ]; then
-            echo "⏭️  2 AI Shorts already done today. Skipping."
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
+          HOUR_IST=$(TZ="Asia/Kolkata" date +%H)
+          SLOT=$( [ "$HOUR_IST" -lt 14 ] && echo "morning" || echo "evening" )
+          STAMP="MahayuktiAI/ai_short_${SLOT}_stamp.txt"
+          if [ -f "$STAMP" ]; then
+            LAST=$(cat "$STAMP" | tr -d '[:space:]')
+            if [ "$LAST" = "$TODAY_IST" ]; then
+              echo "⏭️  AI Short ($SLOT slot) already done today. Skipping."
+              echo "skip=true" >> $GITHUB_OUTPUT; exit 0
+            fi
           fi
+          echo "SLOT=$SLOT" >> $GITHUB_ENV
+          echo "skip=false" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         if: steps.guard.outputs.skip != 'true'
@@ -72,15 +77,21 @@ jobs:
           ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
           YOUTUBE_AI_TOKEN_JSON:     ${{ secrets.YOUTUBE_AI_TOKEN_JSON }}
           GH_TOKEN:                  ${{ secrets.GH_TOKEN }}
+          FB_PAGE_ACCESS_TOKEN:      ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+          FB_PAGE_ID:                ${{ secrets.FB_PAGE_ID }}
+          IG_USER_ID:                ${{ secrets.IG_USER_ID }}
+          MAKE_WEBHOOK_URL:          ${{ secrets.MAKE_WEBHOOK_URL }}
           ELEVENLABS_API_KEY:        ${{ secrets.ELEVENLABS_API_KEY }}
         run: python main.py --mode short
 
-      - name: Persist tool counter
+      - name: Persist tool counter and stamp
         if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add MahayuktiAI/tool_counter_short.txt
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          echo "$TODAY_IST" > "MahayuktiAI/ai_short_${SLOT}_stamp.txt"
+          git add MahayuktiAI/tool_counter_short.txt "MahayuktiAI/ai_short_${SLOT}_stamp.txt"
           git diff --staged --quiet || git commit -m "chore: update AI short tool counter [skip ci]"
           git pull --rebase origin main
           git push

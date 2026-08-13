@@ -39,6 +39,7 @@ jobs:
           X_API_SECRET:          ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN:        ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          MAKE_WEBHOOK_URL:      ${{ secrets.MAKE_WEBHOOK_URL }}
         run: python scripts/evening_debate_pulse.py
 
       - name: Commit log
