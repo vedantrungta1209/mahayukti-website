@@ -45,7 +45,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 10   # enough to find recent counter commits
+          fetch-depth: 1    # idempotency now uses date-stamp files, not git log
           token: ${{ secrets.GH_TOKEN }}
 
       # Resolve post type before the idempotency check so we know which counter to read
@@ -63,7 +63,9 @@ jobs:
           echo "post_type=$POST_TYPE" >> $GITHUB_OUTPUT
 
       # Skip all expensive work if today's post already happened.
-      # Uses the git commit timestamp of the topic counter file (IST date comparison).
+      # Uses a date-stamp file (not git log) — immune to shallow-clone false positives.
+      # Root cause of old bug: fetch-depth:10 + 100+ commits since last counter update
+      # caused git to return today's boundary commit timestamp for unchanged files.
       - name: Idempotency check — skip if already posted today
         id: guard
         run: |
@@ -75,19 +77,18 @@ jobs:
           fi
 
           TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
-          COUNTER_FILE="scripts/topic_counter_${POST_TYPE}.txt"
+          STAMP_FILE="scripts/daily_post_stamp_${POST_TYPE}.txt"
 
-          LAST_TS=$(git log -1 --format="%ct" -- "$COUNTER_FILE" 2>/dev/null || echo "")
-          if [ -n "$LAST_TS" ]; then
-            LAST_IST=$(TZ="Asia/Kolkata" date -d "@$LAST_TS" +%Y-%m-%d)
-            if [ "$LAST_IST" = "$TODAY_IST" ]; then
+          if [ -f "$STAMP_FILE" ]; then
+            LAST_DATE=$(cat "$STAMP_FILE" | tr -d '[:space:]')
+            if [ "$LAST_DATE" = "$TODAY_IST" ]; then
               echo "⏭️  $POST_TYPE post already completed today ($TODAY_IST). Skipping."
               echo "skip=true" >> $GITHUB_OUTPUT
               exit 0
             fi
-            echo "▶️  Last $POST_TYPE post was $LAST_IST (not today $TODAY_IST). Proceeding."
+            echo "▶️  Last $POST_TYPE post was $LAST_DATE (not today $TODAY_IST). Proceeding."
           else
-            echo "▶️  No prior $POST_TYPE post found. Proceeding."
+            echo "▶️  No prior $POST_TYPE stamp found. Proceeding."
           fi
           echo "skip=false" >> $GITHUB_OUTPUT
 
@@ -143,12 +144,16 @@ jobs:
           TELEGRAM_CHANNEL_ID:          ${{ secrets.TELEGRAM_CHANNEL_ID }}
         run: python scripts/generate_and_post.py
 
-      - name: Commit topic counter
+      - name: Commit topic counter and stamp file
         if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/topic_counter_morning.txt scripts/topic_counter_evening.txt
+          # Write date-stamp file used by idempotency check on next run
+          TODAY_IST=$(TZ="Asia/Kolkata" date +%Y-%m-%d)
+          echo "$TODAY_IST" > "scripts/daily_post_stamp_${POST_TYPE}.txt"
+          git add scripts/topic_counter_morning.txt scripts/topic_counter_evening.txt \
+                  "scripts/daily_post_stamp_${POST_TYPE}.txt"
           git diff --staged --quiet || git commit -m "chore: update topic counter"
           git pull --rebase origin main
           git push

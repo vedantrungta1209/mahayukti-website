@@ -127,10 +127,9 @@ jobs:
           echo "Guardian running at: $IST_TIME (IST hour: $IST_HOUR, DOW: $IST_DOW)"
 
           # ── Morning social post (9 AM IST target, every day) ────────────────
-          # No upper bound: if it's past 9 AM and still unposted, trigger now.
-          # Idempotency check inside daily-post.yml prevents any double-posting.
+          # Uses stamp file (not git log) — immune to shallow-clone false positives.
           if [ "$IST_HOUR" -ge 9 ]; then
-            if [ "$(was_posted_today scripts/topic_counter_morning.txt)" = "false" ]; then
+            if [ "$(was_posted_today scripts/daily_post_stamp_morning.txt)" = "false" ]; then
               echo "⚠️  Morning post MISSING — triggering now"
               trigger_workflow "daily-post.yml" "-f post_type=morning"
             else
@@ -184,7 +183,7 @@ jobs:
 
           # ── Evening social post (6:30 PM IST target, every day) ─────────────
           if [ "$IST_HOUR" -ge 18 ]; then
-            if [ "$(was_posted_today scripts/topic_counter_evening.txt)" = "false" ]; then
+            if [ "$(was_posted_today scripts/daily_post_stamp_evening.txt)" = "false" ]; then
               echo "⚠️  Evening post MISSING — triggering now"
               trigger_workflow "daily-post.yml" "-f post_type=evening"
             else
