@@ -367,7 +367,7 @@ if make_url:
             f"Watch the full breakdown → https://youtu.be/{yt_id}\n\n"
             f"#PersonalFinance #IndiaFinance #Investing #WealthBuilding #Mahayukti"
         )
-        r = requests.post(make_url, json={"text": li_text[:3000]}, timeout=15)
+        r = requests.post(make_url, json={"content": li_text[:3000]}, timeout=15)
         print(f"  LinkedIn: {'✅ posted' if r.ok else f'⚠️ failed ({r.status_code})'}")
     except Exception as _e:
         print(f"  ⚠️  LinkedIn teaser failed (non-fatal): {_e}")

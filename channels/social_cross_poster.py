@@ -3,45 +3,52 @@ Cross-post a short video (MP4) to Instagram Reels + Facebook Reels + LinkedIn.
 Used by finance-short, crime trailer, and any future channel that produces a Short.
 No extra dependencies beyond `requests` (already in channels/requirements.txt).
 """
+import base64
 import os
 import time
+from pathlib import Path
 
 import requests
 
 _GRAPH_URL = "https://graph.facebook.com/v22.0"
+_GH_REPO   = "vedantrungta1209/mahayukti-website"
+_MAX_UPLOAD = 50 * 1024 * 1024   # 50 MB — GitHub Contents API practical limit
 
 
 def _upload_to_host(file_path: str) -> str | None:
+    """Upload video to GitHub repo; served publicly via mahayukti.com."""
+    gh_token = os.environ.get("GH_TOKEN", "")
+    if not gh_token:
+        print("  GH_TOKEN missing — cannot host video.")
+        return None
+
+    file_size = os.path.getsize(file_path)
+    if file_size > _MAX_UPLOAD:
+        print(f"  Video {file_size // 1024 // 1024}MB > 50MB limit — skipping IG/FB.")
+        return None
+
     filename = os.path.basename(file_path)
+    api_url  = f"https://api.github.com/repos/{_GH_REPO}/contents/images/shorts/{filename}"
+    headers  = {"Authorization": f"token {gh_token}",
+                "Accept": "application/vnd.github.v3+json"}
 
-    # Host 1: 0x0.st — 512 MB limit, no account needed
+    encoded = base64.b64encode(Path(file_path).read_bytes()).decode()
+    check   = requests.get(api_url, headers=headers, timeout=15)
+    sha     = check.json().get("sha") if check.status_code == 200 else None
+
+    payload = {"message": f"shorts: {filename}", "content": encoded, "branch": "main"}
+    if sha:
+        payload["sha"] = sha
+
     try:
-        with open(file_path, "rb") as f:
-            r = requests.post("https://0x0.st", files={"file": (filename, f)}, timeout=120)
-        if r.status_code == 200:
-            url = r.text.strip()
-            print(f"  Hosted (0x0.st): {url}")
-            return url
+        r = requests.put(api_url, headers=headers, json=payload, timeout=180)
+        r.raise_for_status()
+        url = f"https://mahayukti.com/images/shorts/{filename}"
+        print(f"  Hosted (GitHub): {url}")
+        return url
     except Exception as e:
-        print(f"  0x0.st failed: {e}")
-
-    # Host 2: transfer.sh fallback
-    try:
-        with open(file_path, "rb") as f:
-            r = requests.put(
-                f"https://transfer.sh/{filename}",
-                data=f,
-                headers={"Max-Downloads": "5", "Max-Days": "1"},
-                timeout=120,
-            )
-        if r.status_code == 200:
-            url = r.text.strip()
-            print(f"  Hosted (transfer.sh): {url}")
-            return url
-    except Exception as e:
-        print(f"  transfer.sh failed: {e}")
-
-    return None
+        print(f"  GitHub hosting failed: {e}")
+        return None
 
 
 def post_ig_reel(video_path: str, caption: str) -> bool:
@@ -124,7 +131,7 @@ def post_linkedin(text: str) -> bool:
         print("  LinkedIn: MAKE_WEBHOOK_URL not set — skipping.")
         return False
     try:
-        r = requests.post(make_url, json={"text": text[:3000]}, timeout=20)
+        r = requests.post(make_url, json={"content": text[:3000]}, timeout=20)
         ok = r.status_code < 300
         print(f"  LinkedIn: {'✅ posted' if ok else f'⚠️ failed ({r.status_code})'}")
         return ok

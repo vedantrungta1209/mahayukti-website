@@ -330,24 +330,27 @@ def _render_frame(phrases_shown: list[str], active_idx: int,
     return np.array(img)
 
 
-# ── Video writer using ffmpeg raw pipe ──────────────────────────────────────
+# ── Video writer — PNG frames then ffmpeg (reliable on CI runners) ───────────
 
 def _write_video(frames_iter, n_frames: int, fps: int, audio_path: str, out_path: str):
-    cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
-        "-f", "rawvideo", "-vcodec", "rawvideo",
-        "-s", f"{W}x{H}", "-pix_fmt", "rgb24",
-        "-r", str(fps), "-i", "pipe:0",
-        "-i", audio_path,
-        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-        "-c:a", "aac", "-b:a", "192k",
-        "-shortest", out_path,
-    ]
-    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    for frame in frames_iter:
-        proc.stdin.write(frame.tobytes())
-    proc.stdin.close()
-    proc.wait()
+    frame_dir = tempfile.mkdtemp(prefix="reel_frames_")
+    try:
+        for i, frame in enumerate(frames_iter):
+            Image.fromarray(frame.astype("uint8")).save(
+                os.path.join(frame_dir, f"{i:06d}.png")
+            )
+        cmd = [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-framerate", str(fps),
+            "-i", os.path.join(frame_dir, "%06d.png"),
+            "-i", audio_path,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "192k",
+            "-shortest", out_path,
+        ]
+        subprocess.run(cmd, check=True)
+    finally:
+        shutil.rmtree(frame_dir, ignore_errors=True)
 
 
 def _gen_frames(phrases: list[str], total_duration: float, fps: int):
