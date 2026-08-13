@@ -1,105 +1,48 @@
 """
-MahaYukti Advisory — reel generator.
-Unique Pollinations AI background per domain, overlaid with brand navy/gold treatment.
-Output: 1080×1920 MP4 for Instagram Reels / Facebook Reels / YouTube Shorts
+MahaYukti — Kinetic Text Reel Generator (v2)
+BBC-style: pure black, large white text, saffron accent, phrases appear progressively.
+No slideshows. No navy/gold. Phrases animate in, voices sound human.
+Output: 1080×1920 MP4 — Instagram Reels / Facebook Reels / YouTube Shorts
 """
 import asyncio
-import base64
-import hashlib
-import io
+import json
 import os
 import shutil
 import subprocess
 import tempfile
-import time
-from urllib.parse import quote
+from pathlib import Path
 
 import numpy as np
 import requests
-try:
-    import edge_tts as _edge_tts
-except ImportError:
-    _edge_tts = None
-
-import PIL.Image
-if not hasattr(PIL.Image, "ANTIALIAS"):
-    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
-
-try:
-    from moviepy.editor import AudioFileClip, ImageClip, concatenate_videoclips
-except ImportError:
-    from moviepy import AudioFileClip, ImageClip, concatenate_videoclips
 
 from PIL import Image, ImageDraw, ImageFont
 
-# ── Brand constants ────────────────────────────────────────────────────────
-NAVY  = (11,  27,  58)
-GOLD  = (201, 148, 58)
-WHITE = (255, 255, 255)
-LIGHT = (220, 220, 230)
-DARK  = (6,   15,  35)
+# ── Brand (NOT navy/gold — new identity) ───────────────────────────────────
+BG      = (8,   8,   8)       # near-black, slightly warm
+WHITE   = (255, 255, 255)
+SAFFRON = (255, 107,  53)     # India saffron — vibrant, not corporate
+DIM     = (160, 160, 160)     # dimmed text for previous phrases
+HANDLE_COLOR = (120, 120, 120)
 
-REEL_W, REEL_H = 1080, 1920
+W, H    = 1080, 1920
+FPS     = 30
+FADE_FRAMES = 12   # 0.4s fade-in per phrase at 30fps
 
-# Domain-specific accent colors (used as pill + highlight, inside the navy brand)
-_DOMAIN_ACCENTS = {
-    "Legal & Judiciary":         (212, 175, 55),   # deep gold
-    "Finance & Banking":         (16,  185, 129),  # emerald
-    "Technology":                (56,  189, 248),  # sky blue
-    "Cybersecurity":             (239, 68,  68),   # red alert
-    "Medicine & Healthcare":     (52,  211, 153),  # mint green
-    "Intelligence & Research":   (148, 163, 184),  # silver
-    "Crisis Management":         (251, 146, 60),   # orange
-    # Member domains
-    "Senior Lawyers & Advocates":         (212, 175, 55),
-    "Finance & Banking Professionals":    (16,  185, 129),
-    "Technology Leaders":                 (56,  189, 248),
-    "Cybersecurity Experts":              (239, 68,  68),
-    "Medical & Healthcare Professionals": (52,  211, 153),
-    "Intelligence & Research Professionals": (148, 163, 184),
-}
-
-# Domain-specific Pollinations background prompts — professional, cinematic
-_DOMAIN_PROMPTS = {
-    "Legal & Judiciary":         "supreme court india law books scales justice dark dramatic vertical no text no people",
-    "Finance & Banking":         "india stock exchange financial charts trading floor dark dramatic vertical no text no people",
-    "Technology":                "server room data center blue neon india tech futuristic dark vertical no text no people",
-    "Cybersecurity":             "cyber security dark matrix red neon threat intelligence india vertical no text no people",
-    "Medicine & Healthcare":     "modern hospital india medical laboratory healthcare dark teal vertical no text no people",
-    "Intelligence & Research":   "intelligence analysis dark room india map geopolitical dramatic vertical no text no people",
-    "Crisis Management":         "crisis management india corporate boardroom dramatic tension dark vertical no text no people",
-    "Senior Lawyers & Advocates": "supreme court advocate india law dark gold dramatic vertical no text no people",
-    "Finance & Banking Professionals": "chartered accountant office india finance emerald dark vertical no text no people",
-    "Technology Leaders":        "cto tech leader india digital transformation dark blue vertical no text no people",
-    "Cybersecurity Experts":     "ciso security expert india dark cyber operations vertical no text no people",
-    "Medical & Healthcare Professionals": "senior doctor specialist india hospital dark mint vertical no text no people",
-    "Intelligence & Research Professionals": "intelligence analyst india research dark silver dramatic vertical no text no people",
-}
-
-_FONT_PATHS_BOLD = [
+_FONT_BOLD = [
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    "/System/Library/Fonts/Helvetica.ttc",       # macOS
-    "/System/Library/Fonts/Arial Bold.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+    "/System/Library/Fonts/Helvetica.ttc",
 ]
-_FONT_PATHS_REG = [
+_FONT_REG = [
     "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/System/Library/Fonts/Helvetica.ttc",       # macOS
-    "/System/Library/Fonts/Arial.ttf",
-]
-_AMBIENT_PRESETS = [
-    (110.0, 146.8, 220.0, 55),
-    (130.8, 174.6, 261.6, 60),
-    (98.0,  130.8, 196.0, 58),
-    (146.8, 220.0, 293.7, 62),
-    (123.5, 185.0, 246.9, 57),
+    "/System/Library/Fonts/Helvetica.ttc",
 ]
 
 
 def _font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
-    paths = _FONT_PATHS_BOLD if bold else _FONT_PATHS_REG
-    for p in paths:
+    for p in (_FONT_BOLD if bold else _FONT_REG):
         try:
             return ImageFont.truetype(p, size)
         except Exception:
@@ -107,289 +50,65 @@ def _font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default()
 
 
-def _seed(text: str) -> int:
-    return int(hashlib.md5(text.encode()).hexdigest()[:8], 16) % 1_000_000
-
-
-def _accent(domain: str) -> tuple:
-    return _DOMAIN_ACCENTS.get(domain, GOLD)
-
-
-def _fetch_bg(domain: str, post_id: str) -> Image.Image | None:
-    prompt = _DOMAIN_PROMPTS.get(
-        domain,
-        "professional india advisory network dark dramatic cinematic vertical no text no people",
-    )
-    seed = _seed(f"{domain}:{post_id}")
-    encoded = quote(prompt)
-    url = f"https://image.pollinations.ai/prompt/{encoded}?width={REEL_W}&height={REEL_H}&seed={seed}&nologo=true&model=flux"
-    for attempt in range(3):
-        try:
-            r = requests.get(url, timeout=50)
-            if r.status_code == 200:
-                img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                return img.resize((REEL_W, REEL_H), Image.LANCZOS)
-        except Exception as e:
-            print(f"  Pollinations attempt {attempt + 1}: {e}")
-            if attempt < 2:
-                time.sleep(3)
-    return None
-
-
-def _navy_overlay(img: Image.Image, opacity: int = 130) -> tuple[Image.Image, ImageDraw.ImageDraw]:
-    """Deep navy gradient overlay preserving the AI background underneath."""
-    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw_ov = ImageDraw.Draw(overlay)
-    w, h = img.size
-    for y in range(h):
-        t = y / h
-        # Strong navy at bottom, lighter at top
-        alpha = int(100 + 100 * t)
-        r = int(NAVY[0] * (0.4 + 0.6 * t))
-        g = int(NAVY[1] * (0.4 + 0.6 * t))
-        b = int(NAVY[2] * (0.4 + 0.6 * t))
-        draw_ov.line([(0, y), (w, y)], fill=(r, g, b, alpha))
-    base = img.convert("RGBA")
-    base.alpha_composite(overlay)
-    result = base.convert("RGB")
-    return result, ImageDraw.Draw(result)
-
-
 def _wrap(text: str, font, max_w: int, draw) -> list[str]:
     words = text.split()
-    lines, current = [], []
-    for word in words:
-        test = " ".join(current + [word])
-        if draw.textbbox((0, 0), test, font=font)[2] > max_w and current:
-            lines.append(" ".join(current))
-            current = [word]
+    lines, cur = [], []
+    for w in words:
+        test = " ".join(cur + [w])
+        if draw.textbbox((0, 0), test, font=font)[2] > max_w and cur:
+            lines.append(" ".join(cur))
+            cur = [w]
         else:
-            current.append(word)
-    if current:
-        lines.append(" ".join(current))
+            cur.append(w)
+    if cur:
+        lines.append(" ".join(cur))
     return lines
 
 
-def _pill(draw, x, y, text, font, bg_color, text_color=(0, 0, 0)):
-    bbox = draw.textbbox((0, 0), text, font=font)
-    pw, ph = bbox[2] - bbox[0] + 28, bbox[3] - bbox[1] + 14
-    draw.rounded_rectangle([x, y, x + pw, y + ph], radius=ph // 2, fill=bg_color)
-    draw.text((x + 14, y + 7), text, font=font, fill=text_color)
-    return pw, ph
-
-
-def _brand_header(draw, accent_color):
-    """Compact brand header — logo left, domain tag right."""
-    # Top gold bar
-    draw.rectangle([(0, 0), (REEL_W, 5)], fill=GOLD)
-    # Header area
-    draw.rectangle([(0, 5), (REEL_W, 120)], fill=DARK)
-    draw.rectangle([(0, 118), (REEL_W, 122)], fill=accent_color)
-    # Brand name
-    draw.text((40, 18), "MAHAYUKTI", fill=GOLD, font=_font(60, bold=True))
-    draw.text((40, 82), "India's Expert Advisory Network", fill=LIGHT, font=_font(24, bold=False))
-
-
-def _brand_footer(draw):
-    """Footer with CTA and handle."""
-    draw.rectangle([(0, REEL_H - 145), (REEL_W, REEL_H - 5)], fill=DARK)
-    draw.rectangle([(0, REEL_H - 147), (REEL_W, REEL_H - 143)], fill=GOLD)
-    draw.rectangle([(0, REEL_H - 5), (REEL_W, REEL_H)], fill=GOLD)
-    cta_font = _font(48, bold=True)
-    bbox = draw.textbbox((0, 0), "mahayukti.com", font=cta_font)
-    draw.text(((REEL_W - (bbox[2] - bbox[0])) // 2, REEL_H - 128), "mahayukti.com", fill=GOLD, font=cta_font)
-    h_font = _font(30, bold=False)
-    bbox = draw.textbbox((0, 0), "@WeAreMahayukti", font=h_font)
-    draw.text(((REEL_W - (bbox[2] - bbox[0])) // 2, REEL_H - 68), "@WeAreMahayukti", fill=LIGHT, font=h_font)
-
-
-def _content_zone() -> tuple[int, int]:
-    """Returns (top_y, bottom_y) of usable content area between header and footer."""
-    return 140, REEL_H - 160
-
-
-# ── Slide builders ─────────────────────────────────────────────────────────
-
-def _make_hook_slide(headline: str, domain: str, bg: Image.Image) -> np.ndarray:
-    img, draw = _navy_overlay(bg.copy())
-    accent = _accent(domain)
-    _brand_header(draw, accent)
-    _brand_footer(draw)
-
-    # Domain pill
-    _pill(draw, 40, 136, domain.upper(), _font(22, bold=True), accent, (0, 0, 0))
-
-    top, bot = 200, REEL_H - 180
-    zone_mid = (top + bot) // 2
-
-    h_font = _font(90, bold=True)
-    lines = _wrap(headline, h_font, REEL_W - 80, draw)[:4]
-    line_h = 108
-    total_h = len(lines) * line_h
-    y = zone_mid - total_h // 2
-
-    for ln in lines:
-        bbox = draw.textbbox((0, 0), ln, font=h_font)
-        x = (REEL_W - (bbox[2] - bbox[0])) // 2
-        draw.text((x + 2, y + 2), ln, font=h_font, fill=(0, 0, 0))
-        draw.text((x, y), ln, font=h_font, fill=WHITE)
-        y += line_h
-
-    return np.array(img)
-
-
-def _make_body_slide(headline: str, body: str, domain: str, bg: Image.Image) -> np.ndarray:
-    img, draw = _navy_overlay(bg.copy())
-    accent = _accent(domain)
-    _brand_header(draw, accent)
-    _brand_footer(draw)
-
-    top, bot = 140, REEL_H - 160
-    zone_mid = (top + bot) // 2
-
-    h_font = _font(68, bold=True)
-    b_font = _font(44, bold=False)
-
-    h_lines = _wrap(headline, h_font, REEL_W - 80, draw)[:3]
-    b_lines = _wrap(body, b_font, REEL_W - 80, draw)[:5]
-    line_h, gap, b_line_h = 84, 32, 56
-
-    total_h = len(h_lines) * line_h + (gap + len(b_lines) * b_line_h if b_lines else 0)
-    y = zone_mid - total_h // 2
-
-    for ln in h_lines:
-        bbox = draw.textbbox((0, 0), ln, font=h_font)
-        x = (REEL_W - (bbox[2] - bbox[0])) // 2
-        draw.text((x + 2, y + 2), ln, font=h_font, fill=(0, 0, 0))
-        draw.text((x, y), ln, font=h_font, fill=WHITE)
-        y += line_h
-
-    if b_lines:
-        draw.rectangle([(REEL_W // 2 - 80, y + 8), (REEL_W // 2 + 80, y + 13)], fill=accent)
-        y += gap
-        for ln in b_lines:
-            bbox = draw.textbbox((0, 0), ln, font=b_font)
-            x = (REEL_W - (bbox[2] - bbox[0])) // 2
-            draw.text((x, y), ln, font=b_font, fill=LIGHT)
-            y += b_line_h
-
-    return np.array(img)
-
-
-def _make_steps_slide(title: str, steps: list[str], domain: str, bg: Image.Image) -> np.ndarray:
-    img, draw = _navy_overlay(bg.copy())
-    accent = _accent(domain)
-    _brand_header(draw, accent)
-    _brand_footer(draw)
-
-    t_font = _font(52, bold=True)
-    s_font = _font(42, bold=False)
-    n_font = _font(72, bold=True)
-
-    bbox = draw.textbbox((0, 0), title.upper(), font=t_font)
-    draw.text(((REEL_W - (bbox[2] - bbox[0])) // 2, 165), title.upper(), fill=accent, font=t_font)
-    draw.rectangle([(REEL_W // 2 - 80, 230), (REEL_W // 2 + 80, 235)], fill=accent)
-
-    y = 268
-    for i, step in enumerate(steps[:3], 1):
-        draw.ellipse([(44, y), (128, y + 84)], fill=accent)
-        n_bbox = draw.textbbox((0, 0), str(i), font=n_font)
-        draw.text((86 - (n_bbox[2] - n_bbox[0]) // 2, y + 4), str(i), fill=DARK, font=n_font)
-        step_y = y + 12
-        for line in _wrap(step, s_font, REEL_W - 170, draw)[:2]:
-            draw.text((154, step_y), line, font=s_font, fill=WHITE)
-            step_y += 52
-        y += 190
-
-    return np.array(img)
-
-
-def _make_cta_slide(post_type: str, domain: str, bg: Image.Image) -> np.ndarray:
-    img, draw = _navy_overlay(bg.copy(), opacity=155)
-    accent = _accent(domain)
-    _brand_header(draw, accent)
-    _brand_footer(draw)
-
-    top, bot = 140, REEL_H - 160
-    zone_mid = (top + bot) // 2
-
-    if post_type == "morning":
-        line1, line2 = "HAVE A COMPLEX", "PROBLEM?"
-        sub1 = "Describe it at mahayukti.com"
-        sub2 = "Get matched to the exact expert."
-        cta  = "Sign up FREE →"
-    else:
-        line1, line2 = "YOUR EXPERTISE", "HAS VALUE."
-        sub1 = "Apply to join at mahayukti.com"
-        sub2 = "Get matched with clients who need you."
-        cta  = "Apply now →"
-
-    h_font   = _font(88, bold=True)
-    s_font   = _font(44, bold=False)
-    cta_font = _font(50, bold=True)
-
-    y = zone_mid - 280
-    for line in [line1, line2]:
-        bbox = draw.textbbox((0, 0), line, font=h_font)
-        x = (REEL_W - (bbox[2] - bbox[0])) // 2
-        draw.text((x + 2, y + 2), line, font=h_font, fill=(0, 0, 0))
-        draw.text((x, y), line, font=h_font, fill=WHITE)
-        y += 108
-
-    y += 16
-    draw.rectangle([(REEL_W // 2 - 80, y), (REEL_W // 2 + 80, y + 5)], fill=accent)
-    y += 36
-
-    for line in [sub1, sub2]:
-        bbox = draw.textbbox((0, 0), line, font=s_font)
-        x = (REEL_W - (bbox[2] - bbox[0])) // 2
-        draw.text((x, y), line, font=s_font, fill=LIGHT)
-        y += 60
-
-    y += 24
-    bbox = draw.textbbox((0, 0), cta, font=cta_font)
-    bw = bbox[2] - bbox[0] + 60
-    bx = (REEL_W - bw) // 2
-    draw.rounded_rectangle([(bx, y), (bx + bw, y + 74)], radius=37, fill=accent)
-    draw.text((bx + 30, y + 12), cta, fill=DARK, font=cta_font)
-
-    return np.array(img)
-
-
-# ── Audio helpers ──────────────────────────────────────────────────────────
-
-_EL_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"   # Sarah — warm, clear, professional female
+def _audio_dur(path: str) -> float:
+    r = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "json", path],
+        capture_output=True, text=True,
+    )
+    try:
+        return float(json.loads(r.stdout)["format"]["duration"])
+    except Exception:
+        return 25.0
 
 
 def _tts_elevenlabs(text: str, path: str) -> bool:
-    api_key = os.environ.get("ELEVENLABS_API_KEY", "")
-    if not api_key:
+    key = os.environ.get("ELEVENLABS_API_KEY", "")
+    if not key:
         return False
+    voice_id = "EXAVITQu4vr4xnSDxMaL"   # Sarah — warm, clear
     try:
         r = requests.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
-            headers={"xi-api-key": api_key, "Content-Type": "application/json",
+            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+            headers={"xi-api-key": key, "Content-Type": "application/json",
                      "Accept": "audio/mpeg"},
-            json={
-                "text": text,
-                "model_id": "eleven_turbo_v2_5",
-                "voice_settings": {"stability": 0.50, "similarity_boost": 0.75, "style": 0.10},
-            },
+            json={"text": text, "model_id": "eleven_turbo_v2_5",
+                  "voice_settings": {"stability": 0.52, "similarity_boost": 0.78,
+                                     "style": 0.12, "use_speaker_boost": True}},
             timeout=60,
         )
         r.raise_for_status()
-        with open(path, "wb") as f:
-            f.write(r.content)
-        print("  ElevenLabs voiceover generated.")
+        Path(path).write_bytes(r.content)
+        print("  ElevenLabs voice ✓")
         return True
     except Exception as e:
-        print(f"  ElevenLabs error: {e} — falling back to edge-tts")
+        print(f"  ElevenLabs failed ({e}) — trying edge-tts")
         return False
 
 
 async def _tts_edge(text: str, path: str):
-    comm = _edge_tts.Communicate(text, voice="en-IN-NeerjaNeural", rate="+5%")
-    await comm.save(path)
+    try:
+        import edge_tts
+        comm = edge_tts.Communicate(text, voice="en-IN-NeerjaNeural", rate="+5%")
+        await comm.save(path)
+        print("  edge-tts voice ✓")
+    except Exception as e:
+        raise RuntimeError(f"edge-tts failed: {e}")
 
 
 def _tts(text: str, path: str):
@@ -397,206 +116,338 @@ def _tts(text: str, path: str):
         asyncio.run(_tts_edge(text, path))
 
 
-def _generate_ambient(seed: int, output_path: str, duration: float = 120.0) -> bool:
-    preset = _AMBIENT_PRESETS[seed % len(_AMBIENT_PRESETS)]
-    bass, mid, high, bpm = preset
+def _ambient(seed: int, path: str, duration: float) -> bool:
+    presets = [
+        (110.0, 146.8, 220.0, 55), (130.8, 174.6, 261.6, 60),
+        (98.0,  130.8, 196.0, 58), (146.8, 220.0, 293.7, 62),
+    ]
+    bass, mid, high, bpm = presets[seed % len(presets)]
     pulse = bpm / 60.0
     expr = (
-        f"0.15*sin({bass}*2*PI*t)*sin({pulse}*2*PI*t+0.1)+"
-        f"0.11*sin({mid}*2*PI*t)*sin({pulse*1.3}*2*PI*t+0.4)+"
-        f"0.07*sin({high}*2*PI*t)*sin({pulse*0.7}*2*PI*t+0.8)"
+        f"0.12*sin({bass}*2*PI*t)*sin({pulse}*2*PI*t+0.1)+"
+        f"0.09*sin({mid}*2*PI*t)*sin({pulse*1.3}*2*PI*t+0.4)+"
+        f"0.06*sin({high}*2*PI*t)*sin({pulse*0.7}*2*PI*t+0.8)"
     )
-    cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
-        "-f", "lavfi", "-i", f"aevalsrc={expr}:s=44100",
-        "-t", str(duration), "-c:a", "aac", "-b:a", "128k", output_path,
-    ]
-    try:
-        return subprocess.run(cmd, capture_output=True).returncode == 0
-    except Exception:
-        return False
+    cmd = ["ffmpeg", "-y", "-loglevel", "error",
+           "-f", "lavfi", "-i", f"aevalsrc={expr}:s=44100",
+           "-t", str(duration), "-c:a", "aac", "-b:a", "128k", path]
+    return subprocess.run(cmd, capture_output=True).returncode == 0
 
 
-def _mix_audio(voice: str, music: str, output: str) -> bool:
-    cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
-        "-i", voice, "-i", music,
-        "-filter_complex",
-        "[1:a]volume=0.07,aloop=loop=-1:size=2e+09[m];[0:a][m]amix=inputs=2:duration=first[out]",
-        "-map", "[out]", "-c:a", "aac", "-b:a", "192k", output,
-    ]
-    try:
-        return subprocess.run(cmd, capture_output=True).returncode == 0
-    except Exception:
-        return False
+def _mix(voice: str, music: str, out: str) -> bool:
+    cmd = ["ffmpeg", "-y", "-loglevel", "error",
+           "-i", voice, "-i", music,
+           "-filter_complex",
+           "[1:a]volume=0.06,aloop=loop=-1:size=2e+09[m];[0:a][m]amix=inputs=2:duration=first[out]",
+           "-map", "[out]", "-c:a", "aac", "-b:a", "192k", out]
+    return subprocess.run(cmd, capture_output=True).returncode == 0
 
 
-def _build_reel_script(content: dict) -> str:
-    post_type = content.get("post_type", "client")
-    subdomain = content.get("subdomain", "")
-    headline  = content.get("image_headline", "")
-    excerpt   = content.get("excerpt", "")
+# ── Script generator — Claude writes kinetic-text-optimised phrases ─────────
 
-    if post_type in ("client", "morning"):
-        return (
-            f"{headline}. "
-            f"{excerpt} "
-            f"Mahayukti is India's vetted professional advisory network. "
-            f"When you have a complex problem in {subdomain} — or any domain — "
-            f"Mahayukti connects you to the exact verified specialist for that need. "
-            f"Not a generalist. The one expert in India who has handled this before. "
-            f"Here is how it works. "
-            f"One — describe your problem at mahayukti dot com. "
-            f"Two — Mahayukti matches you to the right specialist. "
-            f"Three — work directly with that expert, with full accountability. "
-            f"Stop settling for the wrong advice. "
-            f"Visit mahayukti dot com and describe your problem today."
-        )
-    else:
-        return (
-            f"{headline}. "
-            f"{excerpt} "
-            f"Mahayukti is India's vetted professional advisory network — "
-            f"and we are building it with the best professionals in the country. "
-            f"If you are a senior expert in {subdomain}, "
-            f"Mahayukti connects you directly to clients who need exactly your expertise. "
-            f"Here is how joining works. "
-            f"One — apply at mahayukti dot com with your credentials. "
-            f"Two — get vetted by the Mahayukti team. "
-            f"Three — receive introductions to clients who need you, and earn from your expertise. "
-            f"Your knowledge has value beyond your current role. "
-            f"Apply to join at mahayukti dot com today."
-        )
+def _build_phrases(content: dict) -> list[dict]:
+    """
+    Ask Claude to write 6-8 short phrases for a kinetic text reel.
+    Returns list of {text, size, color} dicts.
+    """
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not key:
+        return _fallback_phrases(content)
 
-
-def generate_reel(content: dict, post_id: str, gh_token: str) -> tuple:
-    """Returns (local_reel_path, public_url)."""
-    domain    = content.get("domain", "")
     post_type = content.get("post_type", "morning")
     headline  = content.get("image_headline", "")
     excerpt   = content.get("excerpt", "")
-    subtext   = content.get("image_subtext", "")
+    subdomain = content.get("subdomain", "")
+    domain    = content.get("domain", "")
 
-    tmp        = tempfile.mkdtemp()
-    voice_raw  = os.path.join(tmp, "voice_raw.mp3")
-    music_path = os.path.join(tmp, "music.aac")
-    audio_path = os.path.join(tmp, "audio.mp3")
-    reel_path  = f"/tmp/reel-{post_id}.mp4"
+    if post_type in ("client", "morning"):
+        audience_brief = (
+            f"Audience: professionals and individuals in India who need expert guidance on "
+            f"{subdomain or domain}. Goal: drive them to register at mahayukti.com "
+            f"as a client/member. Show the pain point, then show the solution."
+        )
+        cta = "Register at mahayukti.com"
+    else:
+        audience_brief = (
+            f"Audience: senior Indian professionals and SME experts in {subdomain or domain}. "
+            f"Goal: drive them to apply at mahayukti.com as an advisor/expert member. "
+            f"Show the value of monetising their expertise."
+        )
+        cta = "Apply at mahayukti.com"
+
+    prompt = f"""You write punchy kinetic-text scripts for Instagram Reels.
+Style: BBC-inspired — bold, confident, human, non-corporate. NOT AI-sounding.
+Each phrase appears one at a time on a black screen in large white text.
+
+Context:
+{audience_brief}
+Headline: {headline}
+Brief: {excerpt}
+
+Write EXACTLY 7 phrases (NO more, NO less). Rules:
+- Phrase 1: 3-5 word HOOK. Shocking or relatable. No explanation yet.
+- Phrase 2-3: The problem or insight. 5-10 words each. Real and specific.
+- Phrase 4-5: The solution / what Mahayukti does. Confident, not salesy.
+- Phrase 6: Social proof or credibility (e.g. "Vetted. Verified. Accountable.")
+- Phrase 7: CTA — exactly this: "{cta}"
+
+Each phrase: plain text, no emojis, no hashtags, no punctuation except full stops.
+Return JSON: {{"phrases": ["phrase1", "phrase2", ..., "phrase7"], "voice_script": "natural spoken version of all 7 phrases combined into 25-35 words for TTS"}}"""
 
     try:
-        print("\n  Fetching Pollinations background...")
-        bg = _fetch_bg(domain, post_id)
-        if bg is None:
-            print("  Pollinations unavailable — using brand gradient fallback.")
-            bg = Image.new("RGB", (REEL_W, REEL_H), NAVY)
-            draw_bg = ImageDraw.Draw(bg)
-            for y in range(REEL_H):
-                t = y / REEL_H
-                draw_bg.line([(0, y), (REEL_W, y)], fill=(
-                    int(NAVY[0] + (DARK[0] - NAVY[0]) * t),
-                    int(NAVY[1] + (DARK[1] - NAVY[1]) * t),
-                    int(NAVY[2] + (DARK[2] - NAVY[2]) * t),
-                ))
+        r = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": key, "anthropic-version": "2023-06-01",
+                     "Content-Type": "application/json"},
+            json={"model": "claude-haiku-4-5-20251001", "max_tokens": 400,
+                  "messages": [{"role": "user", "content": prompt}]},
+            timeout=30,
+        )
+        text = r.json()["content"][0]["text"]
+        import re
+        m = re.search(r'\{.*\}', text, re.DOTALL)
+        data = json.loads(m.group())
+        phrases = data.get("phrases", [])[:7]
+        voice   = data.get("voice_script", " ".join(phrases))
+        print(f"  Script: {len(phrases)} phrases")
+        return [{"text": p, "voice": voice if i == 0 else None} for i, p in enumerate(phrases)]
+    except Exception as e:
+        print(f"  Claude script failed ({e}) — using fallback")
+        return _fallback_phrases(content)
 
-        if post_type in ("client", "morning"):
-            steps = [
-                "Describe your problem at mahayukti.com",
-                "Get matched to the exact verified specialist",
-                "Work directly — with full accountability",
-            ]
-            problem_body   = excerpt or subtext
-            solution_head  = "Mahayukti fixes this"
-            solution_body  = "India's vetted advisory network — the exact specialist for your exact need."
-        else:
-            steps = [
-                "Apply at mahayukti.com with your credentials",
-                "Get vetted by the Mahayukti team",
-                "Receive client introductions — earn from your expertise",
-            ]
-            problem_body   = excerpt or subtext
-            solution_head  = "Join Mahayukti"
-            solution_body  = "India's vetted advisory network — where top professionals get matched with clients."
 
-        frames = [
-            _make_hook_slide(headline, domain, bg),
-            _make_body_slide("The problem", problem_body, domain, bg),
-            _make_body_slide(solution_head, solution_body, domain, bg),
-            _make_steps_slide("How it works", steps, domain, bg),
-            _make_cta_slide(post_type, domain, bg),
+def _fallback_phrases(content: dict) -> list[dict]:
+    post_type = content.get("post_type", "morning")
+    headline  = content.get("image_headline", "Your problem deserves the right expert")
+    excerpt   = content.get("excerpt", "India's advisory ecosystem is broken")
+    if post_type in ("client", "morning"):
+        phrases = [
+            headline[:50],
+            excerpt[:60],
+            "Most consultants give generic advice.",
+            "You need the exact specialist who has done this before.",
+            "Mahayukti matches you to that person.",
+            "Vetted. Verified. Accountable.",
+            "Register at mahayukti.com",
         ]
+    else:
+        phrases = [
+            "Your expertise is worth more than your salary.",
+            excerpt[:60],
+            "Most professionals never monetise their real knowledge.",
+            "Mahayukti connects you to clients who need exactly you.",
+            "India's vetted advisory network. Built for specialists.",
+            "Vetted. Verified. Earning.",
+            "Apply at mahayukti.com",
+        ]
+    voice = " ".join(p for p in phrases[:6]) + " Visit mahayukti dot com."
+    return [{"text": p, "voice": voice if i == 0 else None} for i, p in enumerate(phrases)]
 
-        print("  Generating voiceover...")
-        script = _build_reel_script(content)
-        _tts(script, voice_raw)
 
-        print("  Synthesising background music...")
-        seed = _seed(post_id)
-        try:
-            ffprobe = subprocess.run(
-                ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", voice_raw],
-                capture_output=True, text=True,
-            )
-            import json as _json
-            voice_dur = float(_json.loads(ffprobe.stdout)["format"]["duration"]) + 5.0
-        except Exception:
-            voice_dur = 120.0
+# ── Frame renderer ──────────────────────────────────────────────────────────
 
-        if _generate_ambient(seed, music_path, duration=voice_dur):
-            if _mix_audio(voice_raw, music_path, audio_path):
-                print("  Music mixed in.")
+def _render_frame(phrases_shown: list[str], active_idx: int,
+                  alpha_frac: float) -> np.ndarray:
+    """
+    Render one video frame.
+    phrases_shown: all phrases up to and including current one
+    active_idx: index of the currently animating phrase
+    alpha_frac: 0.0→1.0 fade progress of the active phrase
+    """
+    img = Image.new("RGB", (W, H), BG)
+    draw = ImageDraw.Draw(img)
+
+    # Saffron top bar (4px, barely there)
+    draw.rectangle([(0, 0), (W, 4)], fill=SAFFRON)
+
+    # Handle — bottom right, always visible
+    h_font = _font(28, bold=False)
+    draw.text((W - 280, H - 55), "@wearemahayukti", fill=HANDLE_COLOR, font=h_font)
+
+    if not phrases_shown:
+        return np.array(img)
+
+    total = len(phrases_shown)
+    is_cta = (active_idx == total - 1)
+
+    # Layout: distribute phrases in the content zone (60px top → H-80px bottom)
+    zone_top    = 80
+    zone_bottom = H - 80
+    zone_h      = zone_bottom - zone_top
+
+    # Font sizes — first phrase is BIG hook, last is CTA (saffron), rest medium
+    def get_font(idx, n_phrases):
+        if idx == 0:
+            return _font(110, bold=True)     # hook: massive
+        if idx == n_phrases - 1:
+            return _font(80, bold=True)      # CTA
+        return _font(72, bold=True)          # body
+
+    # Measure all shown phrases to compute total height
+    max_w = W - 100   # 50px padding each side
+    line_gap = 16     # between lines within a phrase
+    phrase_gap = 48   # between phrases
+
+    rendered = []   # list of (lines, font, color, is_active)
+    for i, ph in enumerate(phrases_shown):
+        fn   = get_font(i, total)
+        col  = SAFFRON if i == total - 1 else WHITE
+        dim  = SAFFRON if i == total - 1 else DIM
+        is_a = (i == active_idx)
+        lines = _wrap(ph, fn, max_w, draw)
+        rendered.append((lines, fn, col if is_a else dim, is_a))
+
+    # Compute total block height
+    total_h = 0
+    for lines, fn, col, is_a in rendered:
+        bbox_h = fn.size + 8  # approx line height
+        total_h += bbox_h * len(lines) + line_gap * (len(lines) - 1)
+        total_h += phrase_gap
+    total_h = max(total_h - phrase_gap, 1)
+
+    # Vertically center the block
+    start_y = zone_top + (zone_h - total_h) // 2
+    y = max(start_y, zone_top)
+
+    for phrase_i, (lines, fn, col, is_a) in enumerate(rendered):
+        line_h = fn.size + 8
+        for ln in lines:
+            bbox = draw.textbbox((0, 0), ln, font=fn)
+            tw   = bbox[2] - bbox[0]
+            x    = (W - tw) // 2
+
+            if is_a and alpha_frac < 1.0:
+                # Fade: blend between BG and target color
+                r = int(BG[0] + (col[0] - BG[0]) * alpha_frac)
+                g = int(BG[1] + (col[1] - BG[1]) * alpha_frac)
+                b = int(BG[2] + (col[2] - BG[2]) * alpha_frac)
+                draw.text((x, y), ln, font=fn, fill=(r, g, b))
             else:
-                import shutil as _sh
-                _sh.copy2(voice_raw, audio_path)
-        else:
-            import shutil as _sh
-            _sh.copy2(voice_raw, audio_path)
+                draw.text((x, y), ln, font=fn, fill=col)
+            y += line_h + line_gap
+        y += phrase_gap
 
-        print("  Composing reel...")
-        audio = AudioFileClip(audio_path)
-        duration  = audio.duration
-        per_slide = max(duration / 5, 5.0)
+    return np.array(img)
 
-        try:
-            clips = [ImageClip(f).with_duration(per_slide) for f in frames]
-        except AttributeError:
-            clips = [ImageClip(f).set_duration(per_slide) for f in frames]
 
-        final = concatenate_videoclips(clips, method="compose")
-        try:
-            final = final.with_audio(audio.with_duration(per_slide * 5))
-        except AttributeError:
-            final = final.set_audio(audio.set_duration(per_slide * 5))
+# ── Video writer using ffmpeg raw pipe ──────────────────────────────────────
 
-        final.write_videofile(reel_path, fps=25, codec="libx264", audio_codec="aac",
-                              preset="ultrafast", logger=None)
-        print(f"  Reel composed: {reel_path}")
+def _write_video(frames_iter, n_frames: int, fps: int, audio_path: str, out_path: str):
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-f", "rawvideo", "-vcodec", "rawvideo",
+        "-s", f"{W}x{H}", "-pix_fmt", "rgb24",
+        "-r", str(fps), "-i", "pipe:0",
+        "-i", audio_path,
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+        "-c:a", "aac", "-b:a", "192k",
+        "-shortest", out_path,
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    for frame in frames_iter:
+        proc.stdin.write(frame.tobytes())
+    proc.stdin.close()
+    proc.wait()
 
-        print("  Uploading reel to repo...")
-        reel_url = _upload_reel(reel_path, post_id, gh_token)
-        return reel_path, reel_url
 
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+def _gen_frames(phrases: list[str], total_duration: float, fps: int):
+    """
+    Yield numpy frames. Each phrase gets equal time. It fades in, then holds.
+    """
+    n = len(phrases)
+    if n == 0:
+        return
 
+    secs_per_phrase = total_duration / n
+    hold_frames = int(secs_per_phrase * fps)
+
+    shown = []
+    for i, phrase in enumerate(phrases):
+        shown = phrases[:i + 1]
+        for f in range(hold_frames):
+            if f < FADE_FRAMES:
+                alpha = f / FADE_FRAMES
+            else:
+                alpha = 1.0
+            frame = _render_frame(shown, i, alpha)
+            yield frame
+
+
+# ── Upload helper ───────────────────────────────────────────────────────────
 
 def _upload_reel(reel_path: str, post_id: str, gh_token: str) -> str:
-    repo     = "vedantrungta1209/mahayukti-website"
-    filename = f"reel-{post_id}.mp4"
-    api_url  = f"https://api.github.com/repos/{repo}/contents/images/{filename}"
-    headers  = {"Authorization": f"token {gh_token}", "Accept": "application/vnd.github.v3+json"}
+    import base64
+    repo    = "vedantrungta1209/mahayukti-website"
+    fname   = f"reel-{post_id}.mp4"
+    api_url = f"https://api.github.com/repos/{repo}/contents/images/{fname}"
+    headers = {"Authorization": f"token {gh_token}",
+               "Accept": "application/vnd.github.v3+json"}
 
-    with open(reel_path, "rb") as f:
-        encoded = base64.b64encode(f.read()).decode()
+    encoded = base64.b64encode(Path(reel_path).read_bytes()).decode()
+    check   = requests.get(api_url, headers=headers)
+    sha     = check.json().get("sha") if check.status_code == 200 else None
 
-    check = requests.get(api_url, headers=headers)
-    sha   = check.json().get("sha") if check.status_code == 200 else None
-
-    payload = {"message": f"Reel: {filename}", "content": encoded, "branch": "main"}
+    payload = {"message": f"reel: {fname}", "content": encoded, "branch": "main"}
     if sha:
         payload["sha"] = sha
 
-    r = requests.put(api_url, headers=headers, json=payload)
+    r = requests.put(api_url, headers=headers, json=payload, timeout=120)
     r.raise_for_status()
-    url = f"https://mahayukti.com/images/{filename}"
-    print(f"  Reel uploaded: {url}")
-    return url
+    return f"https://mahayukti.com/images/{fname}"
+
+
+# ── Public API (same signature as old generator) ───────────────────────────
+
+def generate_reel(content: dict, post_id: str, gh_token: str) -> tuple:
+    """Returns (local_reel_path, public_url)."""
+    tmp      = tempfile.mkdtemp()
+    voice_p  = os.path.join(tmp, "voice.mp3")
+    music_p  = os.path.join(tmp, "music.aac")
+    audio_p  = os.path.join(tmp, "audio.mp3")
+    reel_p   = f"/tmp/reel-{post_id}.mp4"
+
+    try:
+        print("\n🎬 Generating kinetic text reel...")
+
+        # 1. Build phrase list via Claude
+        phrase_data = _build_phrases(content)
+        phrases     = [p["text"] for p in phrase_data]
+        voice_text  = next((p["voice"] for p in phrase_data if p.get("voice")), " ".join(phrases))
+
+        # 2. Generate voice
+        print("  Generating voice...")
+        _tts(voice_text, voice_p)
+        duration = _audio_dur(voice_p) + 1.5   # small tail
+
+        # 3. Background music
+        print("  Generating ambient music...")
+        import hashlib
+        seed = int(hashlib.md5(post_id.encode()).hexdigest()[:8], 16) % 1000
+        if _ambient(seed, music_p, duration):
+            if not _mix(voice_p, music_p, audio_p):
+                shutil.copy2(voice_p, audio_p)
+        else:
+            shutil.copy2(voice_p, audio_p)
+
+        # 4. Render frames and write video
+        print("  Rendering kinetic text frames...")
+        total_frames = int(duration * FPS)
+        _write_video(
+            _gen_frames(phrases, duration, FPS),
+            total_frames, FPS, audio_p, reel_p,
+        )
+        print(f"  Reel: {reel_p} ({duration:.1f}s)")
+
+        # 5. Upload to GitHub CDN
+        print("  Uploading reel...")
+        reel_url = _upload_reel(reel_p, post_id, gh_token)
+        print(f"  URL: {reel_url}")
+
+        return reel_p, reel_url
+
+    except Exception as e:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise RuntimeError(f"Reel generation failed: {e}") from e
+
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
