@@ -38,11 +38,6 @@ SAFFRON  = (228, 71,  26)   # India saffron — single accent, used minimally
 WHITE    = (255, 255, 255)
 MUTED    = (160, 160, 155)  # secondary text
 OFFWHITE = (235, 232, 226)  # warm off-white for body text
-# Legacy aliases (used only where not yet replaced)
-NAVY  = CHARCOAL
-GOLD  = SAFFRON
-LIGHT = OFFWHITE
-DARK  = CHARCOAL
 
 TODAY    = datetime.date.today()
 DATE_STR = TODAY.strftime("%Y-%m-%d")
@@ -462,21 +457,6 @@ _DOMAIN_PROMPTS_IMG = {
     "Cybersecurity Experts":     "ciso security expert india dark cyber operations cinematic no text no people",
     "Medical & Healthcare Professionals": "senior doctor specialist india hospital dark cinematic no text no people",
     "Intelligence & Research Professionals": "intelligence analyst india research dark dramatic cinematic no text no people",
-}
-_DOMAIN_ACCENT_COLORS = {
-    "Legal & Judiciary":         (212, 175, 55),
-    "Finance & Banking":         (16,  185, 129),
-    "Technology":                (56,  189, 248),
-    "Cybersecurity":             (239, 68,  68),
-    "Medicine & Healthcare":     (52,  211, 153),
-    "Intelligence & Research":   (148, 163, 184),
-    "Crisis Management":         (251, 146, 60),
-    "Senior Lawyers & Advocates":         (212, 175, 55),
-    "Finance & Banking Professionals":    (16,  185, 129),
-    "Technology Leaders":                 (56,  189, 248),
-    "Cybersecurity Experts":              (239, 68,  68),
-    "Medical & Healthcare Professionals": (52,  211, 153),
-    "Intelligence & Research Professionals": (148, 163, 184),
 }
 
 

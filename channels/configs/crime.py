@@ -196,23 +196,44 @@ Return valid JSON:
   "tags": {json.dumps(tags[:8] + ["Shorts", "TrueCrimeIndia"])}
 }}"""
 
-    headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
-    r = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers=headers,
-        json={
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.9,
-            "max_tokens": 800,
-            "response_format": {"type": "json_object"},
-        },
-        timeout=60,
-    )
-    if r.ok:
-        data = json.loads(r.json()["choices"][0]["message"]["content"])
-        data["category"] = "General"
-        return data
+    # Try Groq first (fast); fall through to Anthropic
+    if groq_key:
+        headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.9,
+                "max_tokens": 800,
+                "response_format": {"type": "json_object"},
+            },
+            timeout=60,
+        )
+        if r.ok:
+            data = json.loads(r.json()["choices"][0]["message"]["content"])
+            data["category"] = "General"
+            return data
+
+    # Anthropic fallback
+    if anthropic_key:
+        r = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": anthropic_key, "anthropic-version": "2023-06-01",
+                     "Content-Type": "application/json"},
+            json={"model": "claude-haiku-4-5-20251001", "max_tokens": 800,
+                  "messages": [{"role": "user", "content": prompt}]},
+            timeout=60,
+        )
+        if r.ok:
+            import re as _re
+            text = r.json()["content"][0]["text"]
+            m = _re.search(r'\{.*\}', text, _re.DOTALL)
+            if m:
+                data = json.loads(m.group())
+                data["category"] = "General"
+                return data
 
     return {
         "topic_name": f"Trailer: {episode_title}",
