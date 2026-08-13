@@ -76,8 +76,8 @@ def run():
 
 if __name__ == "__main__":
     missing = []
-    if not os.getenv("GROQ_API_KEY"):
-        missing.append("GROQ_API_KEY")
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        missing.append("ANTHROPIC_API_KEY")
     if missing:
         print(f"ERROR: Missing env vars: {', '.join(missing)}")
         sys.exit(1)
