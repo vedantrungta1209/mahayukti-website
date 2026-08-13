@@ -131,7 +131,7 @@ def post_linkedin(text: str) -> bool:
         print("  LinkedIn: MAKE_WEBHOOK_URL not set — skipping.")
         return False
     try:
-        r = requests.post(make_url, json={"content": text[:3000]}, timeout=20)
+        r = requests.post(make_url, json={"linkedin_text": text[:3000]}, timeout=20)
         ok = r.status_code < 300
         print(f"  LinkedIn: {'✅ posted' if ok else f'⚠️ failed ({r.status_code})'}")
         return ok

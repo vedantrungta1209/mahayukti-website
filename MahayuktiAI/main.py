@@ -156,7 +156,7 @@ def run_long() -> None:
                 f"Watch on @mahayuktiAI → https://youtube.com/watch?v={yt_video_id}\n\n"
                 f"#AI #ArtificialIntelligence #IndiaAI #Productivity #AITools #Mahayukti"
             )
-            _req.post(make_url, json={"content": li_text[:3000]}, timeout=15)
+            _req.post(make_url, json={"linkedin_text": li_text[:3000]}, timeout=15)
             print("  LinkedIn teaser posted ✅")
     except Exception as e:
         print(f"  ⚠️  LinkedIn teaser failed (non-fatal): {e}")

@@ -180,7 +180,7 @@ def main():
                     f"— @wearemahayukti | Make India Greatest\n\n"
                     f"#India #MakeIndiaGreatest #Mahayukti #IndiaData #IndiaFirst"
                 )
-                r = requests.post(make_url, json={"content": li_text[:3000]}, timeout=15)
+                r = requests.post(make_url, json={"linkedin_text": li_text[:3000]}, timeout=15)
                 print(f"  LinkedIn: {'✅ posted' if r.ok else f'⚠️ failed ({r.status_code})'}")
             except Exception as e:
                 print(f"  LinkedIn: ⚠️ {e}")
