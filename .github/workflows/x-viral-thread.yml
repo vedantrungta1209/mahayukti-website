@@ -2,8 +2,8 @@ name: MahaYukti Viral Thread Engine
 
 on:
   schedule:
-    # 7:00 PM IST = 1:30 PM UTC — one thread per day at evening India peak
-    - cron: '30 13 * * *'
+    # 7:00 PM IST = 1:30 PM UTC — Mon, Wed, Fri only (was daily, cut to avoid algorithm suppression)
+    - cron: '30 13 * * 1,3,5'
   workflow_dispatch:
 
 env:

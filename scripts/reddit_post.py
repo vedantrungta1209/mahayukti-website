@@ -10,12 +10,25 @@ Strategy: Post as a knowledgeable Indian, reference Mahayukti only if directly r
 import os, json, hashlib, datetime, requests, sys, time
 from pathlib import Path
 
-ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
-REDDIT_CLIENT_ID  = os.environ["REDDIT_CLIENT_ID"]
-REDDIT_SECRET     = os.environ["REDDIT_SECRET"]
-REDDIT_USERNAME   = os.environ["REDDIT_USERNAME"]
-REDDIT_PASSWORD   = os.environ["REDDIT_PASSWORD"]
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+REDDIT_CLIENT_ID  = os.environ.get("REDDIT_CLIENT_ID", "")
+REDDIT_SECRET     = os.environ.get("REDDIT_SECRET", "")
+REDDIT_USERNAME   = os.environ.get("REDDIT_USERNAME", "")
+REDDIT_PASSWORD   = os.environ.get("REDDIT_PASSWORD", "")
 REDDIT_USER_AGENT = "MahayuktiBot/1.0 by u/MahayuktiAdvisory"
+
+_missing = [k for k, v in {
+    "REDDIT_CLIENT_ID": REDDIT_CLIENT_ID,
+    "REDDIT_SECRET": REDDIT_SECRET,
+    "REDDIT_USERNAME": REDDIT_USERNAME,
+    "REDDIT_PASSWORD": REDDIT_PASSWORD,
+}.items() if not v]
+if _missing:
+    print(f"⚠️  Reddit secrets not configured — add these GitHub Secrets to enable Reddit posting:")
+    for k in _missing:
+        print(f"   • {k}")
+    print("   Go to: Settings → Secrets and variables → Actions → New repository secret")
+    sys.exit(0)
 
 _DIR      = Path(__file__).parent
 _LOG_FILE = _DIR / "reddit_post_log.json"

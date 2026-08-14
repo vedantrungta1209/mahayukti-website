@@ -1,22 +1,23 @@
-name: MahaYukti X Engagement (Every 6 Hours)
+name: MahaYukti X Reply Growth (3× Daily)
 
 on:
   schedule:
-    - cron: '0 4 * * *'    # 9:30 AM IST
-    - cron: '0 13 * * *'   # 6:30 PM IST — 2×/day (was 4×; cut to reduce profile clutter)
+    - cron: '30 3 * * *'    # 9:00 AM IST
+    - cron: '30 9 * * *'    # 3:00 PM IST
+    - cron: '30 15 * * *'   # 9:00 PM IST
   workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
-  group: x-engage
+  group: x-reply-growth
   cancel-in-progress: true
 
 jobs:
-  engage:
+  reply:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     permissions:
       contents: write
 
@@ -32,18 +33,25 @@ jobs:
       - name: Install dependencies
         run: pip install requests anthropic requests-oauthlib
 
-      - name: Run engagement
+      - name: Run reply growth
         env:
           ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
           X_API_KEY:             ${{ secrets.X_API_KEY }}
           X_API_SECRET:          ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN:        ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
-        run: python scripts/x_engage.py
+        run: python scripts/x_reply_growth.py
 
-      - name: Commit engage log
+      - name: Commit reply log
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/x_engage_log.json 2>/dev/null || true
-          git diff --staged --quiet || (git commit -m "chore: x engage log" && git pull --rebase origin main && git push)
+          git add scripts/x_reply_growth_log.json 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "chore: reply growth log" && git pull --rebase origin main && git push)
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"Reply growth failed\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true

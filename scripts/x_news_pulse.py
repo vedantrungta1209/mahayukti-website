@@ -23,7 +23,7 @@ _HEARTBEAT     = _SCRIPTS_DIR / "x_news_pulse_heartbeat.txt"
 MAX_LOG        = 200   # keep last N posted story IDs
 MIN_SCORE    = 6     # minimum relevance score to post
 MAX_AGE_HRS  = 3     # only consider stories from last N hours
-DAILY_X_CAP  = 3     # max X posts per day from this script (runs hourly, posts selectively)
+DAILY_X_CAP  = 2     # max X posts per day from this script (runs every 2h, posts selectively)
 
 # ── News sources ───────────────────────────────────────────────────────────
 SOURCES = [

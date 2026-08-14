@@ -41,6 +41,7 @@ def get_user_id() -> str | None:
 def get_recent_tweets(user_id: str) -> list[dict]:
     auth  = _oauth()
     start = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Fetch original tweets
     r = requests.get(
         f"https://api.twitter.com/2/users/{user_id}/tweets",
         params={
@@ -54,9 +55,22 @@ def get_recent_tweets(user_id: str) -> list[dict]:
     if not r.ok:
         print(f"Tweet fetch failed: {r.status_code} {r.text[:200]}")
         return []
-    data   = r.json()
-    tweets = data.get("data", [])
-    print(f"Fetched {len(tweets)} tweets from last 7 days")
+    tweets = r.json().get("data", [])
+    print(f"Fetched {len(tweets)} original tweets from last 7 days")
+
+    # Also fetch replies separately so we can count them
+    r2 = requests.get(
+        f"https://api.twitter.com/2/users/{user_id}/tweets",
+        params={
+            "max_results":  100,
+            "start_time":   start,
+            "tweet.fields": "public_metrics,created_at,text",
+        },
+        auth=auth, timeout=30,
+    )
+    all_tweets = r2.json().get("data", []) if r2.ok else []
+    reply_count = len(all_tweets) - len(tweets)
+    print(f"  ({reply_count} replies posted this week)")
     return tweets
 
 
@@ -96,16 +110,20 @@ def generate_insight(stats: dict) -> str:
     prompt = f"""You are analysing the weekly X performance for @wearemahayukti — Mahayukti's India expert advisory account.
 
 Stats this week:
-- Tweets posted: {stats['tweet_count']}
+- Original tweets posted: {stats['tweet_count']} (replies to other accounts tracked separately in x_reply_growth_log.json)
 - Total impressions: {stats['total_impressions']:,}
-- Likes: {stats['total_likes']:,} | Retweets: {stats['total_retweets']:,} | Replies: {stats['total_replies']:,} | Bookmarks: {stats['total_bookmarks']:,}
+- Likes: {stats['total_likes']:,} | Retweets: {stats['total_retweets']:,} | Replies received: {stats['total_replies']:,} | Bookmarks: {stats['total_bookmarks']:,}
 - Engagement rate: {stats['eng_rate_pct']}%
+- Followers: {stats['followers']:,}
 - Top tweet ({stats['top_tweet_impressions']:,} impressions, {stats['top_tweet_likes']} likes): "{stats['top_tweet_text']}"
+
+Context: Account is in early growth phase. Reply strategy to high-follower India accounts was added 2026-08-14 to borrow reach.
 
 Write 3-4 bullet points of genuine insight:
 - What worked (and why it likely landed)
 - What to do more/less of next week
 - One specific content idea for next week based on what performed well
+- Is follower count improving? What's the trajectory?
 
 Be direct and specific. No filler. Sound like a smart social media analyst, not a corporate report."""
 
