@@ -100,6 +100,15 @@ def run_short(cfg) -> None:
     print("  Composing video...")
     compose_short(audio_path, script, video_path, None, cfg)
 
+    # Generate thumbnail for the short
+    short_thumb_path = f"{base}/short_thumbnail.jpg"
+    print("  Generating thumbnail...")
+    try:
+        generate_thumbnail(script, short_thumb_path, cfg)
+    except Exception as _te:
+        print(f"  Thumbnail generation failed (non-fatal): {_te}")
+        short_thumb_path = None
+
     print("  Uploading to YouTube...")
     yt_id = upload_video(
         video_path=video_path,
@@ -107,6 +116,7 @@ def run_short(cfg) -> None:
         description=script.get("description", ""),
         tags=script.get("tags", []),
         is_short=True,
+        thumbnail_path=short_thumb_path,
         cfg=cfg,
     )
 
@@ -189,12 +199,22 @@ def run_long(cfg, also_short: bool = False) -> None:
             **_el_params(cfg),
         )
         compose_short(t_audio, trailer, t_video, None, cfg)
+
+        # Generate trailer thumbnail
+        t_thumb = f"{base}/trailer_thumbnail.jpg"
+        try:
+            generate_thumbnail(trailer, t_thumb, cfg)
+        except Exception as _te:
+            print(f"  Trailer thumbnail failed (non-fatal): {_te}")
+            t_thumb = None
+
         trailer_yt_id = upload_video(
             video_path=t_video,
             title=trailer.get("title", f"Trailer: {topic['name']}"),
             description=trailer.get("description", ""),
             tags=trailer.get("tags", []),
             is_short=True,
+            thumbnail_path=t_thumb,
             cfg=cfg,
         )
         # Cross-post trailer to Instagram + Facebook (non-fatal)
@@ -208,7 +228,7 @@ def run_long(cfg, also_short: bool = False) -> None:
                 f"#TrueCrimeIndia #IndianCrime #CrimeStory #CrimeDocumentary "
                 f"#Mahayukti #IndianScam #TrueCrime"
             )
-            cross_post_short(t_video, ig_cap)
+            cross_post_short(t_video, ig_cap, thumbnail_path=t_thumb)
         except Exception as _e:
             print(f"  ⚠️  Trailer social cross-post failed (non-fatal): {_e}")
         print("  Trailer done ✓")

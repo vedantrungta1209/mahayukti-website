@@ -83,7 +83,7 @@ def upload_video(
     video_type = "Short" if is_short else "Video"
     print(f"  {video_type} uploaded: https://youtube.com/watch?v={video_id}")
 
-    if thumbnail_path and Path(thumbnail_path).exists() and not is_short:
+    if thumbnail_path and Path(thumbnail_path).exists():
         try:
             media_thumb = MediaFileUpload(thumbnail_path, mimetype="image/jpeg")
             youtube.thumbnails().set(videoId=video_id, media_body=media_thumb).execute()

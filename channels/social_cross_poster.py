@@ -16,19 +16,22 @@ _MAX_UPLOAD = 50 * 1024 * 1024   # 50 MB — GitHub Contents API practical limit
 
 
 def _upload_to_host(file_path: str) -> str | None:
-    """Upload video to GitHub repo; served publicly via mahayukti.com."""
+    """Upload file to GitHub repo; served publicly via mahayukti.com."""
     gh_token = os.environ.get("GH_TOKEN", "")
     if not gh_token:
-        print("  GH_TOKEN missing — cannot host video.")
+        print("  GH_TOKEN missing — cannot host file.")
         return None
 
     file_size = os.path.getsize(file_path)
     if file_size > _MAX_UPLOAD:
-        print(f"  Video {file_size // 1024 // 1024}MB > 50MB limit — skipping IG/FB.")
+        print(f"  File {file_size // 1024 // 1024}MB > 50MB limit — skipping.")
         return None
 
     filename = os.path.basename(file_path)
-    api_url  = f"https://api.github.com/repos/{_GH_REPO}/contents/images/shorts/{filename}"
+    # Images go to thumbs sub-folder; videos go to shorts
+    is_image = filename.lower().endswith((".jpg", ".jpeg", ".png"))
+    repo_dir = "images/shorts/thumbs" if is_image else "images/shorts"
+    api_url  = f"https://api.github.com/repos/{_GH_REPO}/contents/{repo_dir}/{filename}"
     headers  = {"Authorization": f"token {gh_token}",
                 "Accept": "application/vnd.github.v3+json"}
 
@@ -43,7 +46,7 @@ def _upload_to_host(file_path: str) -> str | None:
     try:
         r = requests.put(api_url, headers=headers, json=payload, timeout=180)
         r.raise_for_status()
-        url = f"https://mahayukti.com/images/shorts/{filename}"
+        url = f"https://mahayukti.com/{repo_dir}/{filename}"
         print(f"  Hosted (GitHub): {url}")
         return url
     except Exception as e:
@@ -51,7 +54,7 @@ def _upload_to_host(file_path: str) -> str | None:
         return None
 
 
-def post_ig_reel(video_path: str, caption: str) -> bool:
+def post_ig_reel(video_path: str, caption: str, thumbnail_path: str | None = None) -> bool:
     ig_id    = os.environ.get("IG_USER_ID", "")
     fb_token = os.environ.get("FB_PAGE_ACCESS_TOKEN", "")
     if not ig_id or not fb_token:
@@ -63,11 +66,24 @@ def post_ig_reel(video_path: str, caption: str) -> bool:
         print("  Instagram: could not host video — skipping.")
         return False
 
+    # Upload thumbnail if provided
+    thumb_url = None
+    if thumbnail_path:
+        thumb_url = _upload_to_host(thumbnail_path)
+
     # Create media container
+    params = {
+        "media_type":   "REELS",
+        "video_url":    video_url,
+        "caption":      caption[:2200],
+        "access_token": fb_token,
+    }
+    if thumb_url:
+        params["thumbnail_url"] = thumb_url
+
     r = requests.post(
         f"{_GRAPH_URL}/{ig_id}/media",
-        params={"media_type": "REELS", "video_url": video_url,
-                "caption": caption[:2200], "access_token": fb_token},
+        params=params,
         timeout=30,
     )
     if r.status_code != 200 or "id" not in r.json():
@@ -142,11 +158,12 @@ def post_linkedin(text: str) -> bool:
 
 def cross_post_short(video_path: str, ig_caption: str, li_text: str = "",
                      skip_instagram: bool = False, skip_facebook: bool = False,
-                     skip_linkedin: bool = False) -> None:
+                     skip_linkedin: bool = False,
+                     thumbnail_path: str | None = None) -> None:
     """Post a short video to IG + FB. Optionally post a LinkedIn text update."""
     print("\n📲 Cross-posting to social platforms...")
     if not skip_instagram:
-        post_ig_reel(video_path, ig_caption)
+        post_ig_reel(video_path, ig_caption, thumbnail_path=thumbnail_path)
     if not skip_facebook:
         post_fb_reel(video_path, ig_caption)
     if li_text and not skip_linkedin:

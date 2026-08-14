@@ -517,83 +517,91 @@ def _wrap_text(text: str, font, max_px: int, draw) -> list[str]:
 
 def generate_image(content, width, height, filepath):
     """
-    Editorial design — clean charcoal, saffron accent, left-aligned.
-    Typography-first. No gold bars, no navy overlay, no ALL CAPS, no pills.
+    BBC editorial design — pure charcoal, solid saffron band at bottom,
+    category tag block at top, extreme typographic scale. No AI texture.
+    One strong color element (the band), everything else is space and type.
     """
     domain_key = content.get("domain", domain)
 
-    # ── Background: clean charcoal + very faint Pollinations texture ──────
+    # ── Pure charcoal — no AI photo texture ──────────────────────────────
     img = Image.new("RGB", (width, height), CHARCOAL)
-
-    bg_photo = _fetch_pollinations_img(domain_key, POST_ID, width, height)
-    if bg_photo:
-        # Blend photo in at low opacity — texture not template
-        dark = Image.new("RGB", (width, height), CHARCOAL)
-        img = Image.blend(dark, bg_photo, alpha=0.18)
-
     draw = ImageDraw.Draw(img)
 
-    # ── Single saffron left border — the only decoration ──────────────────
-    border_w = max(6, int(width * 0.006))
-    draw.rectangle([(0, 0), (border_w, height)], fill=SAFFRON)
+    # ── Geometry ──────────────────────────────────────────────────────────
+    border_w = max(8, int(width * 0.008))          # left saffron strip
+    band_h   = int(height * 0.145)                 # solid bottom band height
+    band_y   = height - band_h
+    pad_l    = border_w + int(width * 0.055)
+    pad_r    = int(width * 0.055)
+    max_w    = width - pad_l - pad_r
 
-    # ── Font scale (proportional to image height) ─────────────────────────
-    pad_l  = border_w + int(width * 0.055)   # left margin after border
-    pad_r  = int(width * 0.06)               # right margin
-    max_w  = width - pad_l - pad_r
+    # ── Saffron left border strip (stops at band) ─────────────────────────
+    draw.rectangle([(0, 0), (border_w, band_y)], fill=SAFFRON)
 
-    f_wordmark = _load_font(int(height * 0.038), bold=True)
-    f_domain   = _load_font(int(height * 0.026), bold=False)
-    f_headline = _load_font(int(height * 0.082), bold=True)
-    f_body     = _load_font(int(height * 0.040), bold=False)
-    f_url      = _load_font(int(height * 0.030), bold=True)
+    # ── Solid saffron bottom band — the single BBC-style design block ─────
+    draw.rectangle([(0, band_y), (width, height)], fill=SAFFRON)
 
-    # ── Wordmark — top left ───────────────────────────────────────────────
+    # ── Fonts ─────────────────────────────────────────────────────────────
+    f_wordmark = _load_font(int(height * 0.040), bold=True)
+    f_tag      = _load_font(int(height * 0.026), bold=True)
+    f_headline = _load_font(int(height * 0.108), bold=True)   # hero — much bigger
+    f_body     = _load_font(int(height * 0.038), bold=False)
+    f_band     = _load_font(int(height * 0.038), bold=True)
+    f_date     = _load_font(int(height * 0.026), bold=False)
+
+    # ── Zone 1: Brand header ──────────────────────────────────────────────
     wm_y = int(height * 0.055)
     draw.text((pad_l, wm_y), "MAHAYUKTI", fill=WHITE, font=f_wordmark)
 
-    # Domain / category — top right, saffron, small
-    dom_text = domain_key.upper()
-    dom_bbox = draw.textbbox((0, 0), dom_text, font=f_domain)
-    dom_x = width - pad_r - (dom_bbox[2] - dom_bbox[0])
-    dom_y = wm_y + (draw.textbbox((0, 0), "MAHAYUKTI", font=f_wordmark)[3] - (dom_bbox[3] - dom_bbox[1])) // 2
-    draw.text((dom_x, dom_y), dom_text, fill=SAFFRON, font=f_domain)
+    # Category tag — filled rectangle on right side, not a pill
+    tag_raw  = domain_key.upper()
+    tag_bbox = draw.textbbox((0, 0), tag_raw, font=f_tag)
+    tag_tw   = tag_bbox[2] - tag_bbox[0]
+    tag_th   = tag_bbox[3] - tag_bbox[1]
+    tag_pad  = int(height * 0.012)
+    tag_x    = width - pad_r - tag_tw - tag_pad * 2
+    tag_y    = wm_y
+    draw.rectangle(
+        [(tag_x, tag_y), (tag_x + tag_tw + tag_pad * 2, tag_y + tag_th + tag_pad * 2)],
+        fill=SAFFRON,
+    )
+    draw.text((tag_x + tag_pad, tag_y + tag_pad), tag_raw, fill=WHITE, font=f_tag)
 
-    # ── Thin saffron rule under wordmark ─────────────────────────────────
-    rule_y = wm_y + int(height * 0.065)
-    draw.rectangle([(pad_l, rule_y), (pad_l + int(width * 0.07), rule_y + 2)], fill=SAFFRON)
-
-    # ── Headline — large, sentence case, left-aligned ────────────────────
-    headline = content["image_headline"]   # sentence case — NOT uppercased
+    # ── Zone 2: Headline — the typographic hero ───────────────────────────
+    headline = content["image_headline"]
     h_lines  = _wrap_text(headline, f_headline, max_w, draw)
 
-    h_line_h = int(height * 0.095)
-    h_y      = int(height * 0.24)
+    h_line_h = int(height * 0.118)
+    # Start headline high enough to leave room for subtext above the band
+    available = band_y - int(height * 0.22)   # zone height
+    n_lines   = min(len(h_lines), 3)
+    block_h   = n_lines * h_line_h
+    h_y       = int(height * 0.22) + max(0, (available - block_h - int(height * 0.16)) // 2)
 
-    for ln in h_lines[:3]:   # cap at 3 lines
+    for ln in h_lines[:3]:
         draw.text((pad_l, h_y), ln, fill=WHITE, font=f_headline)
         h_y += h_line_h
 
-    # ── Thin saffron accent after headline ───────────────────────────────
-    draw.rectangle([(pad_l, h_y + 10), (pad_l + int(width * 0.12), h_y + 13)], fill=SAFFRON)
-    h_y += int(height * 0.055)
+    # ── Zone 3: Subtext below headline ───────────────────────────────────
+    subtext  = content.get("image_subtext", "")
+    if subtext:
+        sub_y    = h_y + int(height * 0.03)
+        b_lines  = _wrap_text(subtext, f_body, max_w, draw)
+        b_line_h = int(height * 0.048)
+        for ln in b_lines[:2]:
+            if sub_y + b_line_h > band_y - int(height * 0.02):
+                break
+            draw.text((pad_l, sub_y), ln, fill=OFFWHITE, font=f_body)
+            sub_y += b_line_h
 
-    # ── Body subtext — left-aligned, muted ───────────────────────────────
-    subtext = content.get("image_subtext", "")
-    b_lines = _wrap_text(subtext, f_body, max_w, draw)
-    b_line_h = int(height * 0.052)
+    # ── Zone 4: Saffron band content — mahayukti.com + date ──────────────
+    band_center_y = band_y + (band_h - int(f_band.size)) // 2
+    draw.text((pad_l, band_center_y), "mahayukti.com", fill=WHITE, font=f_band)
 
-    for ln in b_lines[:3]:
-        draw.text((pad_l, h_y), ln, fill=OFFWHITE, font=f_body)
-        h_y += b_line_h
-
-    # ── Footer — mahayukti.com bottom-left in saffron ────────────────────
-    url_y = height - int(height * 0.075)
-    draw.text((pad_l, url_y), "mahayukti.com", fill=SAFFRON, font=f_url)
-
-    # Date — bottom right, muted
-    d_bbox = draw.textbbox((0, 0), DATE_STR, font=f_domain)
-    draw.text((width - pad_r - (d_bbox[2] - d_bbox[0]), url_y + 4), DATE_STR, fill=MUTED, font=f_domain)
+    d_bbox = draw.textbbox((0, 0), DATE_STR, font=f_date)
+    d_x    = width - pad_r - (d_bbox[2] - d_bbox[0])
+    d_y    = band_y + (band_h - (d_bbox[3] - d_bbox[1])) // 2
+    draw.text((d_x, d_y), DATE_STR, fill=(255, 255, 240), font=f_date)
 
     img.save(filepath, "JPEG", quality=95)
     print(f"✅ Image: {filepath}")
@@ -946,18 +954,21 @@ def post_to_instagram_image(content, sq_url):
     print("✅ Instagram image posted")
 
 
-def post_to_instagram_reel(content, reel_url):
+def post_to_instagram_reel(content, reel_url, thumb_url=None):
     if not FB_PAGE_ACCESS_TOKEN or not IG_USER_ID:
         print("⚠️  Instagram credentials missing — skipping reel")
         return
+    params = {
+        "media_type":   "REELS",
+        "video_url":    reel_url,
+        "caption":      content["instagram_caption"],
+        "access_token": FB_PAGE_ACCESS_TOKEN,
+    }
+    if thumb_url:
+        params["thumbnail_url"] = thumb_url
     r = requests.post(
         f"https://graph.facebook.com/v22.0/{IG_USER_ID}/media",
-        data={
-            "media_type":   "REELS",
-            "video_url":    reel_url,
-            "caption":      content["instagram_caption"],
-            "access_token": FB_PAGE_ACCESS_TOKEN,
-        },
+        data=params,
     )
     r.raise_for_status()
     cid = r.json()["id"]
@@ -966,7 +977,7 @@ def post_to_instagram_reel(content, reel_url):
     print("✅ Instagram Reel posted")
 
 
-def upload_to_youtube(content, reel_path):
+def upload_to_youtube(content, reel_path, thumb_path=None):
     if not YOUTUBE_TOKEN_JSON:
         print("⚠️  YouTube token missing — skipping")
         return
@@ -1003,7 +1014,17 @@ def upload_to_youtube(content, reel_path):
     response = None
     while response is None:
         _, response = request.next_chunk()
-    print(f"✅ YouTube uploaded: https://youtube.com/watch?v={response['id']}")
+    vid_id = response["id"]
+    print(f"✅ YouTube uploaded: https://youtube.com/watch?v={vid_id}")
+
+    # Set custom thumbnail if available
+    if thumb_path and os.path.exists(thumb_path):
+        try:
+            thumb_media = MediaFileUpload(thumb_path, mimetype="image/jpeg")
+            yt.thumbnails().set(videoId=vid_id, media_body=thumb_media).execute()
+            print(f"  Thumbnail set on YouTube ✓")
+        except Exception as e:
+            print(f"  Thumbnail set failed (non-fatal): {e}")
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -1114,20 +1135,21 @@ def main():
     update_blog(content, land_name)
 
     # Generate reel (non-fatal — text posts still go out if reel fails)
-    reel_path, reel_url = None, None
+    reel_path, reel_url, thumb_path, thumb_url = None, None, None, None
     try:
         from reel_generator import generate_reel
         print("\n🎬 Generating reel...")
-        reel_path, reel_url = generate_reel(content, POST_ID, GH_TOKEN)
+        reel_path, reel_url, thumb_path, thumb_url = generate_reel(content, POST_ID, GH_TOKEN)
         print(f"   Reel ready: {reel_url}")
+        print(f"   Thumb ready: {thumb_url}")
     except Exception as e:
         print(f"⚠️  Reel failed (continuing without it): {e}")
 
-    # Upload reel to YouTube immediately (uses local file)
+    # Upload reel to YouTube immediately (uses local file + local thumbnail)
     if reel_path and os.path.exists(reel_path):
         try:
             print("\n📺 Uploading to YouTube...")
-            upload_to_youtube(content, reel_path)
+            upload_to_youtube(content, reel_path, thumb_path)
         except Exception as e:
             print(f"⚠️  YouTube upload failed: {e}")
 
@@ -1155,7 +1177,7 @@ def main():
         ("Facebook photo",    post_to_facebook,        (content, sq_path)),   # binary upload — no CDN issues
         ("Facebook Reel",     post_to_facebook_reel,   (content, reel_url) if reel_url else None),
         ("Instagram image",   post_to_instagram_image, (content, sq_url)),
-        ("Instagram Reel",    post_to_instagram_reel,  (content, reel_url) if reel_url else None),
+        ("Instagram Reel",    post_to_instagram_reel,  (content, reel_url, thumb_url) if reel_url else None),
         ("X (Twitter)",       post_to_twitter,         (content, sq_path)),
     ]:
         if args is None:
@@ -1169,9 +1191,10 @@ def main():
         except Exception as e:
             print(f"⚠️  {name} failed: {e}")
 
-    # Clean up reel temp file
-    if reel_path and os.path.exists(reel_path):
-        os.remove(reel_path)
+    # Clean up reel temp files
+    for _p in [reel_path, thumb_path]:
+        if _p and os.path.exists(_p):
+            os.remove(_p)
 
     print(f"\n✅ Done! '{content['title']}'")
 

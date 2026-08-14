@@ -378,36 +378,136 @@ def _gen_frames(phrases: list[str], total_duration: float, fps: int):
 
 # ── Upload helper ───────────────────────────────────────────────────────────
 
-def _upload_reel(reel_path: str, post_id: str, gh_token: str) -> str:
+def _gh_upload(local_path: str, repo_path: str, commit_msg: str, gh_token: str) -> str:
     import base64
     repo    = "vedantrungta1209/mahayukti-website"
-    fname   = f"reel-{post_id}.mp4"
-    api_url = f"https://api.github.com/repos/{repo}/contents/images/{fname}"
+    api_url = f"https://api.github.com/repos/{repo}/contents/{repo_path}"
     headers = {"Authorization": f"token {gh_token}",
                "Accept": "application/vnd.github.v3+json"}
 
-    encoded = base64.b64encode(Path(reel_path).read_bytes()).decode()
-    check   = requests.get(api_url, headers=headers)
+    encoded = base64.b64encode(Path(local_path).read_bytes()).decode()
+    check   = requests.get(api_url, headers=headers, timeout=15)
     sha     = check.json().get("sha") if check.status_code == 200 else None
 
-    payload = {"message": f"reel: {fname}", "content": encoded, "branch": "main"}
+    payload = {"message": commit_msg, "content": encoded, "branch": "main"}
     if sha:
         payload["sha"] = sha
 
-    r = requests.put(api_url, headers=headers, json=payload, timeout=120)
+    r = requests.put(api_url, headers=headers, json=payload, timeout=180)
     r.raise_for_status()
-    return f"https://mahayukti.com/images/{fname}"
+    return f"https://mahayukti.com/{repo_path}"
 
 
-# ── Public API (same signature as old generator) ───────────────────────────
+def _upload_reel(reel_path: str, post_id: str, gh_token: str) -> str:
+    fname = f"reel-{post_id}.mp4"
+    return _gh_upload(reel_path, f"images/{fname}", f"reel: {fname}", gh_token)
+
+
+def _upload_thumbnail(thumb_path: str, post_id: str, gh_token: str) -> str:
+    fname = f"reel-thumb-{post_id}.jpg"
+    return _gh_upload(thumb_path, f"images/{fname}", f"reel thumb: {fname}", gh_token)
+
+
+# ── Thumbnail generator — static 1080×1920 card designed for thumbnail ───────
+
+def _generate_thumbnail_image(content: dict, phrases: list[str], out_path: str):
+    """
+    Creates a 1080×1920 static thumbnail with BBC editorial design:
+    pure charcoal, solid saffron bottom band, category tag, large hook phrase.
+    """
+    W_T, H_T = 1080, 1920
+
+    CHARCOAL_T = (12, 12, 12)
+    SAFFRON_T  = (255, 107, 53)
+    WHITE_T    = (255, 255, 255)
+    OFFWHITE_T = (235, 232, 226)
+
+    img  = Image.new("RGB", (W_T, H_T), CHARCOAL_T)
+    draw = ImageDraw.Draw(img)
+
+    border_w = 10
+    band_h   = int(H_T * 0.13)
+    band_y   = H_T - band_h
+    pad_l    = border_w + int(W_T * 0.06)
+    pad_r    = int(W_T * 0.06)
+    max_w    = W_T - pad_l - pad_r
+
+    # Left border strip
+    draw.rectangle([(0, 0), (border_w, band_y)], fill=SAFFRON_T)
+
+    # Solid bottom band
+    draw.rectangle([(0, band_y), (W_T, H_T)], fill=SAFFRON_T)
+
+    # Fonts
+    f_brand   = _font(int(H_T * 0.038), bold=True)
+    f_tag     = _font(int(H_T * 0.024), bold=True)
+    f_hook    = _font(int(H_T * 0.096), bold=True)   # the big phrase
+    f_sub     = _font(int(H_T * 0.036), bold=False)
+    f_band    = _font(int(H_T * 0.034), bold=True)
+
+    # Brand header
+    wm_y = int(H_T * 0.048)
+    draw.text((pad_l, wm_y), "MAHAYUKTI", fill=WHITE_T, font=f_brand)
+
+    # Post type tag
+    post_type = content.get("post_type", "advisory")
+    tag_text  = ("FOR CLIENTS" if post_type in ("client", "morning")
+                 else "FOR EXPERTS")
+    tag_bbox  = draw.textbbox((0, 0), tag_text, font=f_tag)
+    tag_tw    = tag_bbox[2] - tag_bbox[0]
+    tag_th    = tag_bbox[3] - tag_bbox[1]
+    tag_pad   = 14
+    draw.rectangle(
+        [(pad_l, wm_y + int(H_T * 0.065)),
+         (pad_l + tag_tw + tag_pad * 2, wm_y + int(H_T * 0.065) + tag_th + tag_pad)],
+        fill=SAFFRON_T,
+    )
+    draw.text((pad_l + tag_pad, wm_y + int(H_T * 0.065) + tag_pad // 2),
+              tag_text, fill=WHITE_T, font=f_tag)
+
+    # Hook phrase — the largest text element
+    hook = phrases[0] if phrases else content.get("image_headline", "India's best expert for you")
+    hook_lines = _wrap(hook, f_hook, max_w, draw)
+    h_line_h   = int(H_T * 0.108)
+    h_y        = int(H_T * 0.30)
+    for ln in hook_lines[:4]:
+        draw.text((pad_l, h_y), ln, fill=WHITE_T, font=f_hook)
+        h_y += h_line_h
+
+    # Supporting subtext from phrase 2
+    if len(phrases) > 1:
+        sub_y = h_y + int(H_T * 0.04)
+        sub_lines = _wrap(phrases[1], f_sub, max_w, draw)
+        for ln in sub_lines[:2]:
+            if sub_y + int(H_T * 0.045) > band_y - int(H_T * 0.02):
+                break
+            draw.text((pad_l, sub_y), ln, fill=OFFWHITE_T, font=f_sub)
+            sub_y += int(H_T * 0.045)
+
+    # Band content
+    band_mid = band_y + (band_h - int(f_band.size)) // 2
+    draw.text((pad_l, band_mid), "mahayukti.com", fill=WHITE_T, font=f_band)
+
+    # Watch icon hint on right side of band
+    watch_text = "▶ Watch"
+    w_bbox = draw.textbbox((0, 0), watch_text, font=f_band)
+    draw.text((W_T - pad_r - (w_bbox[2] - w_bbox[0]), band_mid),
+              watch_text, fill=(255, 255, 220), font=f_band)
+
+    img.save(out_path, "JPEG", quality=92)
+    print(f"  Thumbnail: {out_path}")
+
+
+# ── Public API ──────────────────────────────────────────────────────────────
 
 def generate_reel(content: dict, post_id: str, gh_token: str) -> tuple:
-    """Returns (local_reel_path, public_url)."""
+    """Returns (local_reel_path, public_reel_url, local_thumb_path, public_thumb_url)."""
     tmp      = tempfile.mkdtemp()
     voice_p  = os.path.join(tmp, "voice.mp3")
     music_p  = os.path.join(tmp, "music.aac")
     audio_p  = os.path.join(tmp, "audio.mp3")
     reel_p   = f"/tmp/reel-{post_id}.mp4"
+    thumb_p  = f"/tmp/reel-thumb-{post_id}.jpg"
 
     try:
         print("\n🎬 Generating kinetic text reel...")
@@ -420,7 +520,7 @@ def generate_reel(content: dict, post_id: str, gh_token: str) -> tuple:
         # 2. Generate voice
         print("  Generating voice...")
         _tts(voice_text, voice_p)
-        duration = _audio_dur(voice_p) + 1.5   # small tail
+        duration = _audio_dur(voice_p) + 1.5
 
         # 3. Background music
         print("  Generating ambient music...")
@@ -441,12 +541,20 @@ def generate_reel(content: dict, post_id: str, gh_token: str) -> tuple:
         )
         print(f"  Reel: {reel_p} ({duration:.1f}s)")
 
-        # 5. Upload to GitHub CDN
-        print("  Uploading reel...")
-        reel_url = _upload_reel(reel_p, post_id, gh_token)
-        print(f"  URL: {reel_url}")
+        # 5. Generate thumbnail — BBC editorial static card
+        print("  Generating thumbnail...")
+        _generate_thumbnail_image(content, phrases, thumb_p)
 
-        return reel_p, reel_url
+        # 6. Upload both to GitHub CDN
+        print("  Uploading reel...")
+        reel_url  = _upload_reel(reel_p, post_id, gh_token)
+        print(f"  Reel URL: {reel_url}")
+
+        print("  Uploading thumbnail...")
+        thumb_url = _upload_thumbnail(thumb_p, post_id, gh_token)
+        print(f"  Thumb URL: {thumb_url}")
+
+        return reel_p, reel_url, thumb_p, thumb_url
 
     except Exception as e:
         shutil.rmtree(tmp, ignore_errors=True)
