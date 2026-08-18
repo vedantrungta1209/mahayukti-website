@@ -6,6 +6,7 @@ POST 2 (6:00 PM IST): Member-facing — targets professionals for enrolment
 """
 
 import os, json, datetime, requests, sys, base64, textwrap
+import numpy as np
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
@@ -484,20 +485,125 @@ def _fetch_pollinations_img(domain_key: str, post_id: str, width: int, height: i
     return None
 
 
-def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    paths = [
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/System/Library/Fonts/Helvetica.ttc",
-    ]
-    for p in paths:
+def _ensure_fonts():
+    """Download Open Sans from Google Fonts CDN if not already cached."""
+    cache = Path("/tmp/mahayukti_fonts")
+    cache.mkdir(exist_ok=True)
+    fonts = {
+        "OpenSans-Bold.ttf": "https://github.com/googlefonts/opensans/raw/main/fonts/ttf/OpenSans-Bold.ttf",
+        "OpenSans-Regular.ttf": "https://github.com/googlefonts/opensans/raw/main/fonts/ttf/OpenSans-Regular.ttf",
+        "OpenSans-SemiBold.ttf": "https://github.com/googlefonts/opensans/raw/main/fonts/ttf/OpenSans-SemiBold.ttf",
+    }
+    for name, url in fonts.items():
+        dest = cache / name
+        if not dest.exists():
+            try:
+                r = requests.get(url, timeout=10)
+                if r.status_code == 200:
+                    dest.write_bytes(r.content)
+            except Exception:
+                pass
+    return cache
+
+_FONT_CACHE = _ensure_fonts()
+
+def _load_font(size: int, bold: bool = False, semibold: bool = False) -> ImageFont.FreeTypeFont:
+    # Noto has full Unicode (₹, ₩, etc.) — prefer it for broad glyph coverage,
+    # but Open Sans renders better at display sizes when available.
+    preferred = []
+    if bold:
+        preferred += [
+            str(_FONT_CACHE / "OpenSans-Bold.ttf"),
+            "/usr/share/fonts/truetype/open-sans/OpenSans-Bold.ttf",
+            "/usr/share/fonts/opentype/noto/NotoSans-Bold.ttf",
+            "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+        ]
+    elif semibold:
+        preferred += [
+            str(_FONT_CACHE / "OpenSans-SemiBold.ttf"),
+            str(_FONT_CACHE / "OpenSans-Bold.ttf"),
+            "/usr/share/fonts/truetype/open-sans/OpenSans-SemiBold.ttf",
+            "/usr/share/fonts/opentype/noto/NotoSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        ]
+    else:
+        preferred += [
+            str(_FONT_CACHE / "OpenSans-Regular.ttf"),
+            "/usr/share/fonts/truetype/open-sans/OpenSans-Regular.ttf",
+            "/usr/share/fonts/opentype/noto/NotoSans-Regular.ttf",
+            "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+        ]
+    for p in preferred:
         try:
-            return ImageFont.truetype(p, size)
+            font = ImageFont.truetype(p, size)
+            # Verify the font can render ₹ — if not, try next
+            try:
+                font.getbbox("₹")
+                return font
+            except Exception:
+                # Font loaded but missing ₹ glyph — keep trying for a fallback
+                # but return this font if nothing better is found
+                _fallback = font
         except Exception:
             continue
-    return ImageFont.load_default()
+    try:
+        return _fallback  # type: ignore
+    except NameError:
+        return ImageFont.load_default()
+
+
+# Domain → Unsplash seed keywords for background photo (deterministic per domain)
+_DOMAIN_PHOTO_SEEDS = {
+    "Legal & Judiciary":      "courtroom,justice,law",
+    "Finance & Banking":      "finance,cityscape,trading",
+    "Technology":             "technology,digital,code",
+    "Cybersecurity":          "cybersecurity,network,dark",
+    "Healthcare":             "healthcare,hospital,medicine",
+    "Real Estate":            "architecture,building,city",
+    "Manufacturing":          "factory,manufacturing,industry",
+    "Education":              "education,library,university",
+    "Media & Entertainment":  "media,film,studio",
+    "Defence & Aerospace":    "aerospace,aviation,military",
+    "Policy & Governance":    "parliament,government,india",
+    "Startups & VC":          "startup,innovation,meeting",
+    "HR & Talent":            "office,teamwork,corporate",
+    "geopolitics":            "india,parliament,delhi",
+    "politics":               "india,election,democracy",
+    "economy":                "market,economy,finance",
+    "crime":                  "city,night,urban",
+    "AI":                     "artificial,intelligence,future",
+}
+
+
+def _fetch_background_photo(domain_key: str, width: int, height: int) -> Image.Image | None:
+    """
+    Fetch a contextual background photo. Uses Picsum with domain-seeded ID
+    for deterministic images per domain (same domain → same photo each day).
+    Falls back to None on any error so generate_image() can use charcoal.
+    """
+    # Use domain hash as seed for consistent per-domain photos
+    seed = abs(hash(domain_key)) % 1000
+    url = f"https://picsum.photos/seed/{seed}/{width}/{height}"
+    try:
+        r = requests.get(url, timeout=8, allow_redirects=True)
+        if r.status_code == 200 and r.headers.get("content-type", "").startswith("image"):
+            from io import BytesIO
+            return Image.open(BytesIO(r.content)).convert("RGB").resize((width, height), Image.LANCZOS)
+    except Exception:
+        pass
+    return None
+
+
+def _apply_dark_overlay(img: Image.Image, opacity: float = 0.72) -> Image.Image:
+    """Blend charcoal overlay over a photo for text legibility."""
+    overlay = Image.new("RGB", img.size, CHARCOAL)
+    return Image.blend(img, overlay, opacity)
 
 
 def _wrap_text(text: str, font, max_px: int, draw) -> list[str]:
@@ -515,92 +621,122 @@ def _wrap_text(text: str, font, max_px: int, draw) -> list[str]:
     return lines
 
 
+def _gradient_overlay(img: Image.Image) -> Image.Image:
+    """
+    Apply a left-to-right gradient overlay: darkest on left (where text sits),
+    slightly lighter on right. Makes text area legible without washing out the photo.
+    """
+    import numpy as np
+    arr = np.array(img).astype(float)
+    w = img.width
+    # Alpha ramp: 0.85 opacity on left, 0.55 on right
+    ramp = np.linspace(0.85, 0.55, w)
+    charcoal = np.array(CHARCOAL, dtype=float)
+    for x in range(w):
+        arr[:, x, :] = arr[:, x, :] * (1 - ramp[x]) + charcoal * ramp[x]
+    return Image.fromarray(arr.clip(0, 255).astype("uint8"))
+
+
 def generate_image(content, width, height, filepath):
     """
-    BBC editorial design — pure charcoal, solid saffron band at bottom,
-    category tag block at top, extreme typographic scale. No AI texture.
-    One strong color element (the band), everything else is space and type.
+    BBC editorial design — photo background with dark gradient overlay,
+    Open Sans typography, saffron accent strip + bottom band.
     """
     domain_key = content.get("domain", domain)
 
-    # ── Pure charcoal — no AI photo texture ──────────────────────────────
-    img = Image.new("RGB", (width, height), CHARCOAL)
+    # ── Background: real photo + gradient overlay ─────────────────────────
+    photo = _fetch_background_photo(domain_key, width, height)
+    if photo:
+        img = _gradient_overlay(photo)
+    else:
+        img = Image.new("RGB", (width, height), CHARCOAL)
+
     draw = ImageDraw.Draw(img)
 
     # ── Geometry ──────────────────────────────────────────────────────────
-    border_w = max(8, int(width * 0.008))          # left saffron strip
-    band_h   = int(height * 0.145)                 # solid bottom band height
-    band_y   = height - band_h
-    pad_l    = border_w + int(width * 0.055)
-    pad_r    = int(width * 0.055)
-    max_w    = width - pad_l - pad_r
+    border_w  = max(6, int(width * 0.006))          # left saffron accent strip
+    band_h    = int(height * 0.155)                  # bottom brand band
+    band_y    = height - band_h
+    pad_l     = border_w + int(width * 0.055)
+    pad_r     = int(width * 0.055)
+    max_w     = width - pad_l - pad_r
 
-    # ── Saffron left border strip (stops at band) ─────────────────────────
+    # ── Saffron left border strip ─────────────────────────────────────────
     draw.rectangle([(0, 0), (border_w, band_y)], fill=SAFFRON)
 
-    # ── Solid saffron bottom band — the single BBC-style design block ─────
+    # ── Solid saffron bottom band ─────────────────────────────────────────
     draw.rectangle([(0, band_y), (width, height)], fill=SAFFRON)
 
-    # ── Fonts ─────────────────────────────────────────────────────────────
-    f_wordmark = _load_font(int(height * 0.040), bold=True)
-    f_tag      = _load_font(int(height * 0.026), bold=True)
-    f_headline = _load_font(int(height * 0.108), bold=True)   # hero — much bigger
-    f_body     = _load_font(int(height * 0.038), bold=False)
-    f_band     = _load_font(int(height * 0.038), bold=True)
-    f_date     = _load_font(int(height * 0.026), bold=False)
+    # ── Fonts — Open Sans preferred, falls back through available options ──
+    f_wordmark = _load_font(int(height * 0.042), bold=True)
+    f_tag      = _load_font(int(height * 0.024), bold=True)
+    f_headline = _load_font(int(height * 0.100), bold=True)
+    f_body     = _load_font(int(height * 0.036), semibold=True)
+    f_band     = _load_font(int(height * 0.040), bold=True)
+    f_date     = _load_font(int(height * 0.028), bold=False)
 
     # ── Zone 1: Brand header ──────────────────────────────────────────────
-    wm_y = int(height * 0.055)
+    wm_y = int(height * 0.052)
     draw.text((pad_l, wm_y), "MAHAYUKTI", fill=WHITE, font=f_wordmark)
 
-    # Category tag — filled rectangle on right side, not a pill
+    # Category label — solid saffron pill on right
     tag_raw  = domain_key.upper()
     tag_bbox = draw.textbbox((0, 0), tag_raw, font=f_tag)
     tag_tw   = tag_bbox[2] - tag_bbox[0]
     tag_th   = tag_bbox[3] - tag_bbox[1]
-    tag_pad  = int(height * 0.012)
-    tag_x    = width - pad_r - tag_tw - tag_pad * 2
-    tag_y    = wm_y
+    tag_px   = int(width * 0.022)
+    tag_py   = int(height * 0.013)
+    tag_x    = width - pad_r - tag_tw - tag_px * 2
+    tag_y    = wm_y - tag_py
     draw.rectangle(
-        [(tag_x, tag_y), (tag_x + tag_tw + tag_pad * 2, tag_y + tag_th + tag_pad * 2)],
+        [(tag_x, tag_y), (tag_x + tag_tw + tag_px * 2, tag_y + tag_th + tag_py * 2)],
         fill=SAFFRON,
     )
-    draw.text((tag_x + tag_pad, tag_y + tag_pad), tag_raw, fill=WHITE, font=f_tag)
+    draw.text((tag_x + tag_px, tag_y + tag_py), tag_raw, fill=WHITE, font=f_tag)
 
-    # ── Zone 2: Headline — the typographic hero ───────────────────────────
-    headline = content["image_headline"]
+    # ── Thin white rule below header ──────────────────────────────────────
+    rule_y = wm_y + int(height * 0.065)
+    draw.rectangle([(pad_l, rule_y), (width - pad_r, rule_y + 1)], fill=(255, 255, 255, 100))
+
+    # ── Zone 2: Headline ─────────────────────────────────────────────────
+    # Replace Unicode symbols that PIL fonts often lack glyphs for
+    def _safe(t):
+        return t.replace("₹", "Rs.").replace("€", "EUR").replace("£", "GBP").replace("$", "USD").replace("–", "-").replace("—", " - ")
+    headline = _safe(content["image_headline"])
     h_lines  = _wrap_text(headline, f_headline, max_w, draw)
+    h_line_h = int(height * 0.110)
 
-    h_line_h = int(height * 0.118)
-    # Start headline high enough to leave room for subtext above the band
-    available = band_y - int(height * 0.22)   # zone height
-    n_lines   = min(len(h_lines), 3)
-    block_h   = n_lines * h_line_h
-    h_y       = int(height * 0.22) + max(0, (available - block_h - int(height * 0.16)) // 2)
+    content_top    = rule_y + int(height * 0.045)
+    content_bottom = band_y - int(height * 0.035)
+    available      = content_bottom - content_top
+    n_lines        = min(len(h_lines), 3)
+    block_h        = n_lines * h_line_h
+    subtext        = content.get("image_subtext", "")
+    sub_block_h    = int(height * 0.055) * (2 if subtext else 0)
+    h_y = content_top + max(0, (available - block_h - sub_block_h - int(height * 0.03)) // 2)
 
     for ln in h_lines[:3]:
         draw.text((pad_l, h_y), ln, fill=WHITE, font=f_headline)
         h_y += h_line_h
 
-    # ── Zone 3: Subtext below headline ───────────────────────────────────
-    subtext  = content.get("image_subtext", "")
+    # ── Zone 3: Subtext ───────────────────────────────────────────────────
     if subtext:
-        sub_y    = h_y + int(height * 0.03)
-        b_lines  = _wrap_text(subtext, f_body, max_w, draw)
-        b_line_h = int(height * 0.048)
+        sub_y    = h_y + int(height * 0.028)
+        b_lines  = _wrap_text(_safe(subtext), f_body, max_w, draw)
+        b_line_h = int(height * 0.050)
         for ln in b_lines[:2]:
-            if sub_y + b_line_h > band_y - int(height * 0.02):
+            if sub_y + b_line_h > band_y - int(height * 0.015):
                 break
             draw.text((pad_l, sub_y), ln, fill=OFFWHITE, font=f_body)
             sub_y += b_line_h
 
-    # ── Zone 4: Saffron band content — mahayukti.com + date ──────────────
-    band_center_y = band_y + (band_h - int(f_band.size)) // 2
-    draw.text((pad_l, band_center_y), "mahayukti.com", fill=WHITE, font=f_band)
+    # ── Zone 4: Saffron band — wordmark + date ────────────────────────────
+    band_text_y = band_y + int((band_h - int(f_band.size)) * 0.42)
+    draw.text((pad_l, band_text_y), "mahayukti.com", fill=WHITE, font=f_band)
 
     d_bbox = draw.textbbox((0, 0), DATE_STR, font=f_date)
     d_x    = width - pad_r - (d_bbox[2] - d_bbox[0])
-    d_y    = band_y + (band_h - (d_bbox[3] - d_bbox[1])) // 2
+    d_y    = band_y + int((band_h - (d_bbox[3] - d_bbox[1])) * 0.5)
     draw.text((d_x, d_y), DATE_STR, fill=(255, 255, 240), font=f_date)
 
     img.save(filepath, "JPEG", quality=95)

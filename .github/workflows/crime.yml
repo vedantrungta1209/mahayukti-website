@@ -54,7 +54,7 @@ jobs:
       - name: Install dependencies
         if: steps.guard.outputs.skip != 'true'
         run: |
-          sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg fonts-liberation fonts-dejavu-core
+          sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg fonts-open-sans fonts-noto-core
           pip install -r channels/requirements.txt
 
       - name: Generate long video + trailer short
