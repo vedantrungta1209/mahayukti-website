@@ -75,7 +75,10 @@ def _call_anthropic(prompt: str, max_tokens: int = 2000) -> dict:
 
 def _call_llm(prompt: str, max_tokens: int = 2000) -> dict:
     if GROQ_API_KEY:
-        return _call_groq(prompt, max_tokens)
+        try:
+            return _call_groq(prompt, max_tokens)
+        except Exception as e:
+            print(f"  ⚠️  Groq failed ({e}) — falling back to Anthropic")
     return _call_anthropic(prompt, max_tokens)
 
 
