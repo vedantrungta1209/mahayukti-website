@@ -3,6 +3,7 @@ Script generator — viral hooks, Hinglish energy, affiliate CTAs.
 """
 import json
 import re
+import time
 import requests
 from config import GROQ_API_KEY, ANTHROPIC_API_KEY
 
@@ -49,10 +50,19 @@ def _call_groq(prompt: str, max_tokens: int = 2000) -> dict:
         "max_tokens": max_tokens,
         "response_format": {"type": "json_object"},
     }
-    r = requests.post(_GROQ_URL, headers=headers, json=payload, timeout=60)
-    r.raise_for_status()
-    raw = r.json()["choices"][0]["message"]["content"]
-    return json.loads(raw)
+    last_err = None
+    for attempt in range(3):
+        try:
+            r = requests.post(_GROQ_URL, headers=headers, json=payload, timeout=60)
+            r.raise_for_status()
+            raw = r.json()["choices"][0]["message"]["content"]
+            return json.loads(raw)
+        except Exception as e:
+            last_err = e
+            wait = 2 ** attempt
+            print(f"  ⚠️  Groq attempt {attempt+1}/3 failed ({e}) — retrying in {wait}s")
+            time.sleep(wait)
+    raise last_err
 
 
 def _call_anthropic(prompt: str, max_tokens: int = 2000) -> dict:
