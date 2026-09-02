@@ -316,6 +316,12 @@ WRITING CRAFT:
 - Each platform gets its own voice — don't resize, rewrite.
 - Make it shareable. Make it feel like something worth passing on.
 
+FACTUAL ACCURACY: If a "scroll-stopper stat" opens the LinkedIn post, it must be a real,
+well-known, widely-reported figure — never invented, and never a specific multi-year
+comparison (e.g. "up from X in [year]") unless you are fully certain both figures are
+correct and different from each other. When in doubt, use the "provocative truth" framing
+instead of a stat — an unverifiable or self-contradictory number is worse than none.
+
 Respond ONLY with a valid JSON object. No markdown. No preamble. No backticks.\
 """
 
