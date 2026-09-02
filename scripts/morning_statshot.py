@@ -96,6 +96,17 @@ STAT QUALITY RULES:
 - No vague claims: not "India is growing fast" — instead "India added 127 GW solar capacity..."
 - One stat only — depth beats breadth
 - If uncertain of exact figure, choose a domain where you're confident
+- If citing more than one year/figure for comparison (e.g. "up from X in year Y"), you MUST
+  double-check the values are actually different and the math is internally consistent
+  before responding — e.g. never write "81st, up from 81st, climbed 40 ranks" (that is a
+  contradiction: 81 to 81 is zero change, not 40). If you are not fully certain of the
+  distinct historical figure, do NOT cite a multi-year comparison — state only the current
+  figure with no "up from" framing.
+- Global rankings/indices (ease of business, innovation index, logistics index, etc.) change
+  methodology and rank frequently and are the easiest category to get wrong — for this
+  domain specifically, only cite a ranking if you are highly confident of the exact year and
+  exact rank; otherwise pick a different angle within the same domain (e.g. a specific
+  reform, investment figure, or program) instead of a numbered rank.
 
 Respond with ONLY the post text (including hashtags). Nothing else."""
 
