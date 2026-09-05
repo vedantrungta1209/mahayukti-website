@@ -26,16 +26,24 @@ _YUKTI_SEED = 55901
 _yukti_cache: dict = {}
 
 
+def _yukti_seed_for(topic: str) -> int:
+    """Derives a per-topic seed so Yukti's pose/expression varies across thumbnails
+    while staying the same recognizable person (prompt is unchanged)."""
+    if not topic:
+        return _YUKTI_SEED
+    return int(hashlib.md5(topic.encode()).hexdigest()[:8], 16) % 999999
+
+
 # ── Yukti character (finance channel only) ───────────────────────────────────
 
-def _fetch_yukti(w: int, h: int, retries: int = 3) -> "Image.Image | None":
-    key = (w, h)
+def _fetch_yukti(w: int, h: int, seed: int = _YUKTI_SEED, retries: int = 3) -> "Image.Image | None":
+    key = (w, h, seed)
     if key in _yukti_cache:
         return _yukti_cache[key]
     encoded = quote(_YUKTI_PROMPT)
     url = (
         f"{_POLLINATIONS_BASE}/{encoded}"
-        f"?width={w}&height={h}&seed={_YUKTI_SEED}&nologo=true&model=flux-realism"
+        f"?width={w}&height={h}&seed={seed}&nologo=true&model=flux-realism"
     )
     for attempt in range(retries):
         try:
@@ -52,11 +60,11 @@ def _fetch_yukti(w: int, h: int, retries: int = 3) -> "Image.Image | None":
     return None
 
 
-def _composite_yukti_bottom(img: Image.Image, fade_h: int = 280) -> Image.Image:
+def _composite_yukti_bottom(img: Image.Image, fade_h: int = 280, topic: str = "") -> Image.Image:
     """Composites Yukti into the bottom 46% of a portrait frame with a top fade."""
     w, h = img.size
     zone_h = int(h * 0.46)
-    yukti = _fetch_yukti(w, zone_h + 100)
+    yukti = _fetch_yukti(w, zone_h + 100, seed=_yukti_seed_for(topic))
     if yukti is None:
         return img
     yukti = yukti.crop((0, 100, w, zone_h + 100)).resize((w, zone_h), Image.LANCZOS).convert("RGBA")
@@ -71,12 +79,12 @@ def _composite_yukti_bottom(img: Image.Image, fade_h: int = 280) -> Image.Image:
     return base.convert("RGB")
 
 
-def _composite_yukti_right(img: Image.Image, fade_w: int = 180) -> Image.Image:
+def _composite_yukti_right(img: Image.Image, fade_w: int = 180, topic: str = "") -> Image.Image:
     """Composites Yukti into the right 46% of a landscape frame with a left fade."""
     w, h = img.size
     zone_w = int(w * 0.46)
     zone_x = w - zone_w
-    yukti = _fetch_yukti(zone_w, h)
+    yukti = _fetch_yukti(zone_w, h, seed=_yukti_seed_for(topic))
     if yukti is None:
         return img
     yukti = yukti.resize((zone_w, h), Image.LANCZOS).convert("RGBA")
@@ -252,7 +260,7 @@ def create_short_title_frame(topic_name: str, category: str, output_path: str,
 
     # Composite Yukti in bottom half before drawing UI elements
     if is_finance:
-        img = _composite_yukti_bottom(img, fade_h=300)
+        img = _composite_yukti_bottom(img, fade_h=300, topic=topic_name)
 
     draw = ImageDraw.Draw(img)
     draw.rectangle([0, 0, cfg.SHORT_WIDTH, 6], fill=primary)
@@ -519,7 +527,7 @@ def create_thumbnail(title: str, category: str, output_path: str, cfg) -> str:
 
     # Composite Yukti on right side for finance channel
     if is_finance:
-        img = _composite_yukti_right(img, fade_w=200)
+        img = _composite_yukti_right(img, fade_w=200, topic=title)
 
     # Card occupies left portion only when Yukti is present
     card_x = 60
