@@ -1,4 +1,12 @@
 {
-  "replied_ids": [],
-  "replied_handles": []
+  "replied_ids": [
+    "2096227191981781307",
+    "2095649303251607909",
+    "2095758747058790427"
+  ],
+  "replied_handles": [
+    "DrSJaishankar",
+    "isro",
+    "nasscom"
+  ]
 }
