@@ -59,9 +59,19 @@ jobs:
           git add scripts/x_news_pulse_log.json scripts/x_news_pulse_heartbeat.txt scripts/x_news_pulse_daily.json
           git diff --staged --quiet || (git commit -m "chore: news pulse run" && git pull --rebase origin main && git push)
 
-      - name: Notify on failure
+      - name: Create GitHub issue on failure
         if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
-            -H "Content-Type: application/json" \
-            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"News pulse failed\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true
+          SEARCH="x-news-pulse is failing"
+          EXISTING=$(gh issue list --repo ${{ github.repository }} --state open \
+            --search "in:title $SEARCH" --json number --jq length 2>/dev/null || echo "0")
+          if [ "$EXISTING" -eq 0 ]; then
+            gh issue create --repo ${{ github.repository }} \
+              --title "x-news-pulse is failing" \
+              --body "Workflow **${{ github.workflow }}** failed. [View run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" \
+              || echo "Issue creation failed — check manually."
+          else
+            echo "Existing open failure issue found — skipping duplicate."
+          fi

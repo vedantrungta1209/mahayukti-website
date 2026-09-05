@@ -89,13 +89,22 @@ jobs:
           git push
 
 
-      - name: Notify Jarvis on failure
+      - name: Create GitHub issue on failure
         if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          ERROR=$(tail -5 /tmp/step_error.log 2>/dev/null || echo "Step failed — check run logs")
-          curl -s -X POST https://admin.rajaansh.com/jarvis/api/gh-notify \
-            -H "Content-Type: application/json" \
-            -d "{\"token\":\"ghnotify-2026\",\"workflow\":\"${{ github.workflow }}\",\"error\":\"$(echo $GITHUB_JOB failed | head -c 300)\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" || true
+          SEARCH="mahayukti-ai-long is failing"
+          EXISTING=$(gh issue list --repo ${{ github.repository }} --state open \
+            --search "in:title $SEARCH" --json number --jq length 2>/dev/null || echo "0")
+          if [ "$EXISTING" -eq 0 ]; then
+            gh issue create --repo ${{ github.repository }} \
+              --title "mahayukti-ai-long is failing" \
+              --body "Workflow **${{ github.workflow }}** failed. [View run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" \
+              || echo "Issue creation failed — check manually."
+          else
+            echo "Existing open failure issue found — skipping duplicate."
+          fi
 
       - name: Done
         if: steps.guard.outputs.skip != 'true'

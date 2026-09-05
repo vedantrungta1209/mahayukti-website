@@ -23,13 +23,19 @@ MAX_LOG         = 1000   # keep last N replied tweet IDs
 REPLIES_PER_RUN = 3      # max replies per run (3 runs × 3 replies = 9/day)
 MAX_AGE_HOURS   = 6      # only reply to tweets newer than this
 
-# Nitter instances for RSS (used in order, first one that works wins)
+# Nitter instances for RSS (used in order, first one that works wins).
+# NOTE (2026-09-05): public Nitter instances die/get blocked frequently and without
+# warning -- this list needs periodic pruning/refreshing. If ALL instances fail for
+# EVERY account in a run, the script now exits non-zero (see main()) so the existing
+# "Notify on failure" workflow step actually fires instead of silently no-opping.
 NITTER_INSTANCES = [
     "https://nitter.poast.org",
     "https://nitter.privacyredirect.com",
     "https://nitter.net",
     "https://nitter.1d4.us",
     "https://nitter.tiekoetter.com",
+    "https://xcancel.com",
+    "https://nitter.space",
 ]
 
 # High-follower India accounts to engage with
@@ -109,6 +115,7 @@ def fetch_nitter_rss(handle: str) -> list[dict]:
             r = requests.get(rss_url, timeout=12,
                              headers={"User-Agent": "Mozilla/5.0 (Mahayukti feed reader)"})
             if not r.ok:
+                print(f"  Nitter {instance.split('//')[1]} returned HTTP {r.status_code} for @{handle}")
                 continue
 
             root = ET.fromstring(r.content)
@@ -279,17 +286,35 @@ def main():
     accounts_to_check = select_accounts(log, min(REPLIES_PER_RUN * 2, len(TARGET_ACCOUNTS)))
     print(f"  Checking {len(accounts_to_check)} accounts for fresh tweets...")
 
-    candidates = []  # (account, tweet)
+    candidates = []       # (account, tweet)
+    total_fetched = 0      # tweets actually returned by Nitter, across all accounts
+    accounts_with_data = 0
+
     for acc in accounts_to_check:
         tweets = fetch_nitter_rss(acc["handle"])
+        total_fetched += len(tweets)
+        if tweets:
+            accounts_with_data += 1
         for tweet in tweets:
             if tweet["id"] in replied_ids:
                 continue
             candidates.append((acc, tweet))
             break  # one fresh tweet per account
 
+    # If every single account came back with zero tweets, the data source itself is
+    # down (all Nitter mirrors dead/blocked) -- not just "nothing new to reply to".
+    # Fail loudly so the workflow's failure-notify step actually pings Jarvis, instead
+    # of silently reporting success while doing nothing (this happened undetected for
+    # an unknown period before 2026-09-05).
+    if accounts_with_data == 0:
+        print(f"\n❌ FATAL: 0/{len(accounts_to_check)} accounts returned any data from "
+              f"{len(NITTER_INSTANCES)} Nitter instances — the data source appears fully "
+              f"down, not just lacking fresh tweets. Refusing to silently succeed.")
+        raise SystemExit(1)
+
     if not candidates:
-        print("  No fresh tweets found to reply to — exiting")
+        print(f"  No fresh unreplied tweets found ({total_fetched} tweets fetched across "
+              f"{accounts_with_data} accounts, all already replied to or too old) — exiting")
         return
 
     print(f"  {len(candidates)} reply candidates found")
