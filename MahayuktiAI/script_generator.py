@@ -7,8 +7,12 @@ import time
 import requests
 from config import GROQ_API_KEY, ANTHROPIC_API_KEY
 
-_GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MODEL = "llama-3.3-70b-versatile"
+_GROQ_URL    = "https://api.groq.com/openai/v1/chat/completions"
+_GROQ_MODELS = [
+    "llama-3.3-70b-versatile",
+    "llama3-70b-8192",
+    "llama3-8b-8192",
+]
 
 # Hook templates that actually stop the scroll
 _HOOK_STYLES = [
@@ -43,25 +47,27 @@ _AFFILIATE_HINTS = {
 
 def _call_groq(prompt: str, max_tokens: int = 2000) -> dict:
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-    payload = {
-        "model": _GROQ_MODEL,
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.85,
-        "max_tokens": max_tokens,
-        "response_format": {"type": "json_object"},
-    }
     last_err = None
-    for attempt in range(3):
-        try:
-            r = requests.post(_GROQ_URL, headers=headers, json=payload, timeout=60)
-            r.raise_for_status()
-            raw = r.json()["choices"][0]["message"]["content"]
-            return json.loads(raw)
-        except Exception as e:
-            last_err = e
-            wait = 2 ** attempt
-            print(f"  ⚠️  Groq attempt {attempt+1}/3 failed ({e}) — retrying in {wait}s")
-            time.sleep(wait)
+    for model in _GROQ_MODELS:
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.85,
+            "max_tokens": max_tokens,
+            "response_format": {"type": "json_object"},
+        }
+        for attempt in range(2):
+            try:
+                r = requests.post(_GROQ_URL, headers=headers, json=payload, timeout=60)
+                r.raise_for_status()
+                raw = r.json()["choices"][0]["message"]["content"]
+                return json.loads(raw)
+            except Exception as e:
+                last_err = e
+                wait = 2 ** attempt
+                print(f"  ⚠️  Groq {model} attempt {attempt+1}/2 failed ({e}) — retrying in {wait}s")
+                time.sleep(wait)
+        print(f"  ⚠️  Groq model {model} exhausted, trying next")
     raise last_err
 
 

@@ -10,7 +10,7 @@ import requests
 
 
 _GROQ_URL      = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MODEL    = "llama-3.3-70b-versatile"
+_GROQ_MODELS   = ["llama-3.3-70b-versatile", "llama3-70b-8192", "llama3-8b-8192"]
 _CLAUDE_URL    = "https://api.anthropic.com/v1/messages"
 _CLAUDE_MODEL  = "claude-sonnet-4-6"   # world-class writing, not Haiku
 
@@ -61,23 +61,30 @@ def _call_claude(prompt: str, anthropic_key: str, max_tokens: int = 2000) -> dic
 
 
 def _call_groq(prompt: str, groq_key: str, max_tokens: int = 2000) -> dict:
-    r = requests.post(
-        _GROQ_URL,
-        headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-        json={
-            "model": _GROQ_MODEL,
-            "messages": [
-                {"role": "system", "content": _QUALITY_SYSTEM},
-                {"role": "user", "content": prompt},
-            ],
-            "temperature": 0.82,
-            "max_tokens": max_tokens,
-            "response_format": {"type": "json_object"},
-        },
-        timeout=90,
-    )
-    r.raise_for_status()
-    return json.loads(r.json()["choices"][0]["message"]["content"])
+    last_err = None
+    for model in _GROQ_MODELS:
+        try:
+            r = requests.post(
+                _GROQ_URL,
+                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": _QUALITY_SYSTEM},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.82,
+                    "max_tokens": max_tokens,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=90,
+            )
+            r.raise_for_status()
+            return json.loads(r.json()["choices"][0]["message"]["content"])
+        except Exception as e:
+            last_err = e
+            print(f"  ⚠️  Groq {model} failed ({e}), trying next")
+    raise last_err
 
 
 def _llm(prompt: str, cfg, max_tokens: int = 2000) -> dict:

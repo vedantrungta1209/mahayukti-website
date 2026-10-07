@@ -9,8 +9,8 @@ import subprocess
 from pathlib import Path
 
 # ElevenLabs voice IDs — human-quality, much better than edge-tts
-SHORT_VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # Adam — energetic, clear male (great for AI tech)
-LONG_VOICE_ID  = "pNInz6obpgDQGcFmaJgB"  # Adam — same for consistency
+SHORT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel — clear professional (Adam deprecated)
+LONG_VOICE_ID  = "21m00Tcm4TlvDq8ikWAM"  # Rachel — same for consistency
 
 # edge-tts fallbacks (used only when ELEVENLABS_API_KEY is not set)
 SHORT_VOICE_EDGE = "en-IN-NeerjaNeural"
