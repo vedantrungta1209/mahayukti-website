@@ -65,7 +65,8 @@ def _render(slides: list[tuple[str, float]], audio_path: str, output_path: str,
     clips = [_ken_burns(p, d, w, h, zoom_in=(i % 2 == 0)) for i, (p, d) in enumerate(slides)]
     video = concatenate_videoclips(clips)
     if video.duration > audio.duration:
-        video = video.subclipped(0, audio.duration)
+        trim = getattr(video, "subclipped", None) or getattr(video, "subclip", None)
+        video = trim(0, audio.duration)
     final = video.with_audio(audio)
     final.write_videofile(output_path, fps=FPS, codec="libx264", audio_codec="aac",
                           preset="ultrafast", threads=4, logger=None)

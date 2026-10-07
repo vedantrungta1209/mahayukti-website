@@ -115,7 +115,9 @@ def _broll_clip(query: str, duration: float, w: int, h: int,
     if not path:
         return None
     try:
-        clip = VideoFileClip(path).subclipped(0, duration)
+        vc = VideoFileClip(path)
+        trim = getattr(vc, "subclipped", None) or getattr(vc, "subclip", None)
+        clip = trim(0, duration)
         if clip.w != w or clip.h != h:
             clip = clip.resized((w, h))
         return clip

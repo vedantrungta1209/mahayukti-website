@@ -102,7 +102,8 @@ def compose_video(
     clips = [_ken_burns(p, d, zoom_in=(i % 2 == 0)) for i, (p, d) in enumerate(slides)]
     video = concatenate_videoclips(clips)
     if video.duration > total:
-        video = video.subclipped(0, total)
+        trim = getattr(video, "subclipped", None) or getattr(video, "subclip", None)
+        video = trim(0, total)
 
     final = video.with_audio(audio)
     final.write_videofile(
