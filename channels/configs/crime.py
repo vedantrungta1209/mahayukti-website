@@ -203,7 +203,7 @@ Return valid JSON:
             "https://api.groq.com/openai/v1/chat/completions",
             headers=headers,
             json={
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.9,
                 "max_tokens": 800,
@@ -227,13 +227,32 @@ Return valid JSON:
             timeout=60,
         )
         if r.ok:
-            import re as _re
             text = r.json()["content"][0]["text"]
-            m = _re.search(r'\{.*\}', text, _re.DOTALL)
-            if m:
-                data = json.loads(m.group())
-                data["category"] = "General"
-                return data
+            start = text.find("{")
+            if start != -1:
+                depth = 0
+                in_string = False
+                escape = False
+                for i in range(start, len(text)):
+                    ch = text[i]
+                    if in_string:
+                        if escape:
+                            escape = False
+                        elif ch == "\\":
+                            escape = True
+                        elif ch == '"':
+                            in_string = False
+                        continue
+                    if ch == '"':
+                        in_string = True
+                    elif ch == "{":
+                        depth += 1
+                    elif ch == "}":
+                        depth -= 1
+                        if depth == 0:
+                            data = json.loads(text[start:i + 1])
+                            data["category"] = "General"
+                            return data
 
     return {
         "topic_name": f"Trailer: {episode_title}",

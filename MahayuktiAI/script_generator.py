@@ -2,16 +2,14 @@
 Script generator — viral hooks, Hinglish energy, affiliate CTAs.
 """
 import json
-import re
 import time
 import requests
 from config import GROQ_API_KEY, ANTHROPIC_API_KEY
 
 _GROQ_URL    = "https://api.groq.com/openai/v1/chat/completions"
 _GROQ_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama3-70b-8192",
-    "llama3-8b-8192",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
 ]
 
 # Hook templates that actually stop the scroll
@@ -85,8 +83,38 @@ def _call_anthropic(prompt: str, max_tokens: int = 2000) -> dict:
     r = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload, timeout=60)
     r.raise_for_status()
     text = r.json()["content"][0]["text"]
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    return json.loads(match.group()) if match else {}
+    return _extract_json_object(text)
+
+
+def _extract_json_object(text: str) -> dict:
+    """Find the first complete top-level {...} object by brace-counting
+    (string/escape-aware), instead of a greedy regex that over-matches
+    across multiple JSON-like fragments in the same response."""
+    start = text.find("{")
+    if start == -1:
+        return {}
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return json.loads(text[start:i + 1])
+    return {}
 
 
 def _call_llm(prompt: str, max_tokens: int = 2000) -> dict:

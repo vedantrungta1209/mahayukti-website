@@ -10,7 +10,7 @@ import requests
 
 
 _GROQ_URL      = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MODELS   = ["llama-3.3-70b-versatile", "llama3-70b-8192", "llama3-8b-8192"]
+_GROQ_MODELS   = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
 _CLAUDE_URL    = "https://api.anthropic.com/v1/messages"
 _CLAUDE_MODEL  = "claude-sonnet-4-6"   # world-class writing, not Haiku
 
@@ -23,6 +23,37 @@ Your videos have crossed 10M+ views. Your writing philosophy:
 - The hook must be so good that skipping feels like a mistake.
 - Calls to action feel earned, not forced.
 You ALWAYS return valid JSON and nothing else."""
+
+
+def _extract_json_object(text: str) -> dict:
+    """Find the first complete top-level {...} object by brace-counting
+    (string/escape-aware), instead of a greedy regex that over-matches
+    across multiple JSON-like fragments in the same response."""
+    start = text.find("{")
+    if start == -1:
+        raise ValueError("No JSON object found in response")
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return json.loads(text[start:i + 1])
+    raise ValueError("Unterminated JSON object in response")
 
 
 def _call_claude(prompt: str, anthropic_key: str, max_tokens: int = 2000) -> dict:
@@ -45,11 +76,8 @@ def _call_claude(prompt: str, anthropic_key: str, max_tokens: int = 2000) -> dic
         r.raise_for_status()
         stop_reason = r.json().get("stop_reason", "")
         text = r.json()["content"][0]["text"]
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if not m:
-            raise ValueError("No JSON object found in Claude response")
         try:
-            return json.loads(m.group())
+            return _extract_json_object(text)
         except json.JSONDecodeError:
             if attempt == 0 and stop_reason == "max_tokens":
                 # Response was truncated — retry with more tokens
