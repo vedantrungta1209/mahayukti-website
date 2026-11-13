@@ -110,7 +110,7 @@ em{font-style:italic;color:inherit;}
 .lr-sub{font-size:12px;color:var(--brass);margin-bottom:8px;}
 .lr-body{font-size:14px;font-weight:300;line-height:1.7;color:var(--cream-muted);max-width:620px;}
 .on-paper .lr-body{color:var(--ink-muted);}
-.lr-status{font-family:var(--mono);font-size:11px;letter-spacing:.3px;}
+.lr-status{font-family:var(--mono);font-size:11px;letter-spacing:.3px;margin-top:2px;}
 .status-open{color:var(--green2);}
 .status-coming{color:var(--cream-faint);}
 .on-paper .status-coming{color:rgba(28,27,25,.38);}
@@ -258,7 +258,7 @@ em{font-style:italic;color:inherit;}
 
 <!-- ═══════ NAV ═══════ -->
 <nav id="nav">
-  <div class="nav-logo" onclick="goto('home')">MahaYukti<span class="no">No. 001</span></div>
+  <div class="nav-logo" onclick="goto('home')">MahaYukti</div>
   <div class="nav-links" id="navLinks">
     <a onclick="goto('home')" data-p="home">Home</a>
     <a onclick="goto('about')" data-p="about">About</a>
@@ -525,18 +525,18 @@ em{font-style:italic;color:inherit;}
       <span class="tag">Bucket &amp; Vertical — Full List</span>
       <h2 class="h2" style="margin-bottom:12px;">Every domain has <em>a place.</em></h2>
       <p class="body-lg" style="max-width:600px;margin-bottom:40px;">Eleven buckets, covering credentialed professions, business owners, trades, and public figures. Three are open for founding-period applications — the rest are coming.</p>
-      <div class="bk-grid">
-        <div class="bk-cell"><div class="bk-name">Legal</div><div class="bk-verts">Advocates · Corporate counsel · Compliance · IP · Litigation</div><div class="bk-status status-open">Applications open</div></div>
-        <div class="bk-cell"><div class="bk-name">CA &amp; Finance</div><div class="bk-verts">Chartered accountancy · Forensic accounting · Investment banking · Wealth management</div><div class="bk-status status-open">Applications open</div></div>
-        <div class="bk-cell"><div class="bk-name">Technology &amp; Cybersecurity</div><div class="bk-verts">Software architecture · DevOps · VAPT · Cloud · Data science</div><div class="bk-status status-open">Applications open</div></div>
-        <div class="bk-cell"><div class="bk-name">Finance &amp; Capital</div><div class="bk-verts">VC · Private equity · Private lenders · Bankers · Family offices</div><div class="bk-status status-coming">Coming</div></div>
-        <div class="bk-cell"><div class="bk-name">Business &amp; Industry</div><div class="bk-verts">Manufacturing · MSME · Retail · F&amp;B · Agritech</div><div class="bk-status status-coming">Coming</div></div>
-        <div class="bk-cell"><div class="bk-name">Government &amp; Public Affairs</div><div class="bk-verts">Policy · Political advisory · Public sector · Defence</div><div class="bk-status status-coming">Coming</div></div>
-        <div class="bk-cell"><div class="bk-name">Culture &amp; Public Influence</div><div class="bk-verts">Media · Journalism · Arts · Sports · Entertainment</div><div class="bk-status status-coming">Coming</div></div>
-        <div class="bk-cell"><div class="bk-name">Trades &amp; Craft</div><div class="bk-verts">Architecture · Construction · Skilled trades · Artisans</div><div class="bk-status status-coming">Coming</div></div>
-        <div class="bk-cell"><div class="bk-name">Science &amp; Deep-Tech</div><div class="bk-verts">R&amp;D · Biotech · Pharma research · Academia</div><div class="bk-status status-coming">Coming</div></div>
-        <div class="bk-cell"><div class="bk-name">Healthcare &amp; Medicine</div><div class="bk-verts">Clinical practice · Hospital administration · Public health</div><div class="bk-status status-coming">Coming</div></div>
-        <div class="bk-cell"><div class="bk-name">Real Estate &amp; Infrastructure</div><div class="bk-verts">Development · Urban planning · Logistics · Construction finance</div><div class="bk-status status-coming">Coming</div></div>
+      <div class="ledger">
+        <div class="ledger-row"><div><div class="lr-num">01</div></div><div><div class="lr-name">Legal</div><div class="lr-sub">Advocates · Corporate counsel · Compliance · IP · Litigation</div><div class="lr-status status-open">Applications open</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">02</div></div><div><div class="lr-name">CA &amp; Finance</div><div class="lr-sub">Chartered accountancy · Forensic accounting · Investment banking · Wealth management</div><div class="lr-status status-open">Applications open</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">03</div></div><div><div class="lr-name">Technology &amp; Cybersecurity</div><div class="lr-sub">Software architecture · DevOps · VAPT · Cloud · Data science</div><div class="lr-status status-open">Applications open</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">04</div></div><div><div class="lr-name">Finance &amp; Capital</div><div class="lr-sub">VC · Private equity · Private lenders · Bankers · Family offices</div><div class="lr-status status-coming">Coming</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">05</div></div><div><div class="lr-name">Business &amp; Industry</div><div class="lr-sub">Manufacturing · MSME · Retail · F&amp;B · Agritech</div><div class="lr-status status-coming">Coming</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">06</div></div><div><div class="lr-name">Government &amp; Public Affairs</div><div class="lr-sub">Policy · Political advisory · Public sector · Defence</div><div class="lr-status status-coming">Coming</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">07</div></div><div><div class="lr-name">Culture &amp; Public Influence</div><div class="lr-sub">Media · Journalism · Arts · Sports · Entertainment</div><div class="lr-status status-coming">Coming</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">08</div></div><div><div class="lr-name">Trades &amp; Craft</div><div class="lr-sub">Architecture · Construction · Skilled trades · Artisans</div><div class="lr-status status-coming">Coming</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">09</div></div><div><div class="lr-name">Science &amp; Deep-Tech</div><div class="lr-sub">R&amp;D · Biotech · Pharma research · Academia</div><div class="lr-status status-coming">Coming</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">10</div></div><div><div class="lr-name">Healthcare &amp; Medicine</div><div class="lr-sub">Clinical practice · Hospital administration · Public health</div><div class="lr-status status-coming">Coming</div></div></div>
+        <div class="ledger-row"><div><div class="lr-num">11</div></div><div><div class="lr-name">Real Estate &amp; Infrastructure</div><div class="lr-sub">Development · Urban planning · Logistics · Construction finance</div><div class="lr-status status-coming">Coming</div></div></div>
       </div>
       <div style="margin-top:40px;">
         <a class="btn btn-seal" onclick="goto('join')">Apply for Membership</a>
