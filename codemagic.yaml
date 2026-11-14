@@ -32,8 +32,8 @@ workflows:
       - name: Build for generic iOS device (no signing -- proves it compiles, not for distribution)
         script: |
           cd ios/App
-          xcodebuild -resolvePackageDependencies -workspace App.xcworkspace -scheme App
-          xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug \
+          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+          xcodebuild -project App.xcodeproj -scheme App -configuration Debug \
             -destination 'generic/platform=iOS' \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER="" DEVELOPMENT_TEAM="" CODE_SIGN_ENTITLEMENTS="" \
