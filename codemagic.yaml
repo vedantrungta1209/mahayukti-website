@@ -34,4 +34,7 @@ workflows:
           cd ios/App
           xcodebuild -resolvePackageDependencies -workspace App.xcworkspace -scheme App
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug \
-            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" DEVELOPMENT_TEAM="" \
+            build
