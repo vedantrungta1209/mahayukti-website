@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MahaYukti Network — Registry &amp; Briefs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1C1B19;--navy2:#242220;--gold:#8A7250;--gold2:#9C8568;--seal:#9C2B1F;--seal2:#B5392B;
+  --white:#EFE8D8;--muted:rgba(239,232,216,0.60);--border:rgba(138,114,80,0.32);--border2:rgba(138,114,80,0.18);
+  --serif:'Fraunces',serif;--sans:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+html,body{background:var(--navy);color:var(--white);font-family:var(--sans);min-height:100%}
+.wrap{max-width:720px;margin:0 auto;padding:32px 20px 100px}
+h1{font-family:var(--serif);font-size:30px;font-weight:700;margin-bottom:6px}
+h2{font-family:var(--serif);font-size:20px;font-weight:600;margin:28px 0 12px}
+p.sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+.card{background:rgba(255,255,255,0.025);border:1px solid var(--border2);padding:18px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.field{margin-bottom:14px;flex:1;min-width:200px}
+.field label{display:block;font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:.3px;margin-bottom:6px;font-family:var(--mono);text-transform:uppercase}
+.field input,.field select,.field textarea{width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.1);padding:11px 13px;font-size:14px;color:var(--white);font-family:var(--sans);outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.field textarea{min-height:80px;resize:vertical}
+.type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px}
+.type-opt{border:1.5px solid var(--border2);padding:14px 10px;text-align:center;cursor:pointer;font-size:13px}
+.type-opt.sel{border-color:var(--gold);background:rgba(138,114,80,0.1)}
+.btn{display:inline-block;padding:12px 24px;border:1px solid var(--border);background:transparent;color:var(--white);font-family:var(--sans);font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--gold)}
+.btn-gold{background:var(--seal);border-color:var(--seal)}
+.btn-gold:hover{background:var(--seal2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bucket-chip{display:inline-block;border:1px solid var(--border2);padding:6px 10px;margin:3px;font-size:12px;cursor:pointer}
+.bucket-chip.sel{border-color:var(--gold);background:rgba(138,114,80,0.12)}
+.pill{display:inline-block;font-size:10px;font-family:var(--mono);padding:2px 8px;border:1px solid var(--border);color:var(--gold);text-transform:uppercase}
+.muted{color:var(--muted);font-size:13px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy2);border:1px solid var(--border);padding:10px 20px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.error{border-color:var(--seal);color:#ffb3a8}
+nav.top{display:flex;gap:16px;margin-bottom:24px;font-size:13px}
+nav.top a{color:var(--muted);cursor:pointer;text-decoration:none}
+nav.top a.active{color:var(--gold)}
+.hidden{display:none !important}
+.candidate-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border2);padding:10px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{border-bottom:1px solid var(--border2);padding:8px;text-align:left}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MahaYukti Network</h1>
+  <p class="sub">Registry signup for all account types, and the brief &rarr; match &rarr; introduction flow. <span class="pill">Phase 1</span></p>
+
+  <nav class="top">
+    <a onclick="showView('signup')" id="nav-signup" class="active">Register</a>
+    <a onclick="showView('login')" id="nav-login">Log in</a>
+    <a onclick="showView('dashboard')" id="nav-dashboard">My account</a>
+    <a onclick="showView('admin')" id="nav-admin" class="hidden">Admin</a>
+    <a onclick="signOut()" id="nav-signout" class="hidden" style="margin-left:auto">Sign out</a>
+  </nav>
+
+  <!-- SIGNUP -->
+  <div id="view-signup">
+    <h2>Create an account</h2>
+    <div class="type-grid" id="type-grid"></div>
+    <div id="signup-fields"></div>
+    <div class="field"><label>Email</label><input id="su-email" type="email"></div>
+    <div class="field"><label>Password (min 8 characters)</label><input id="su-password" type="password"></div>
+    <button class="btn btn-gold" id="su-submit" onclick="submitSignup()">Create account</button>
+    <p id="signup-result" class="muted" style="margin-top:14px"></p>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="view-login" class="hidden">
+    <h2>Log in</h2>
+    <div class="field"><label>Email</label><input id="li-email" type="email"></div>
+    <div class="field"><label>Password</label><input id="li-password" type="password"></div>
+    <button class="btn btn-gold" onclick="doLogin()">Log in</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="view-dashboard" class="hidden">
+    <h2>My account</h2>
+    <div id="dash-status" class="card"></div>
+
+    <div id="dash-briefs" class="hidden">
+      <h2>Create a brief</h2>
+      <div class="card">
+        <div class="field"><label>Brief type</label>
+          <select id="brief-type">
+            <option value="strategy_team">Strategy Team</option>
+            <option value="service_request">Service Request</option>
+            <option value="business_sale_interest">Business-for-sale interest</option>
+            <option value="vc_interest">VC interest</option>
+          </select>
+        </div>
+        <div class="field"><label>Description</label><textarea id="brief-desc" placeholder="What do you need, and from which buckets?"></textarea></div>
+        <div class="field"><label>Buckets (select one or more)</label><div id="brief-bucket-picker"></div></div>
+        <button class="btn btn-gold" onclick="createBrief()">Create brief &amp; run match</button>
+      </div>
+
+      <h2>My briefs</h2>
+      <div id="briefs-list"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="view-admin" class="hidden">
+    <h2>Pending accounts</h2>
+    <div id="admin-pending"></div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+const SB_URL='https://zlkowzqfowwpkvauuzzw.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpsa293enFmb3d3cGt2YXV1enp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzkxMTksImV4cCI6MjA5NDUxNTExOX0.wOZlyBhIwp05Wg6hrbcfw03kaMibFe9VTKSIphyRIwg';
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+
+const ACCOUNT_TYPES=[
+  {key:'individual',label:'Individual'},
+  {key:'corporate',label:'Corporate'},
+  {key:'institution',label:'Institution'},
+  {key:'ngo',label:'NGO'},
+  {key:'government',label:'Government'}
+];
+let selectedType='individual';
+let ST={session:null,account:null,isAdmin:false,buckets:[]};
+
+function $(id){return document.getElementById(id)}
+function toast(msg,type){const el=$('toast');el.textContent=msg;el.className='show'+(type?' '+type:'');clearTimeout(el._t);el._t=setTimeout(()=>el.className='',3500)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function showView(name){
+  ['signup','login','dashboard','admin'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==name));
+  ['signup','login','dashboard','admin'].forEach(v=>$('nav-'+v).classList.toggle('active',v===name));
+  if(name==='dashboard')loadDashboard();
+  if(name==='admin')loadAdminPending();
+}
+
+function renderTypeGrid(){
+  $('type-grid').innerHTML=ACCOUNT_TYPES.map(t=>`<div class="type-opt${t.key===selectedType?' sel':''}" onclick="selectType('${t.key}')">${t.label}</div>`).join('');
+}
+function selectType(k){selectedType=k;renderTypeGrid();renderSignupFields();}
+
+function renderSignupFields(){
+  const f=$('signup-fields');
+  if(selectedType==='individual'){
+    f.innerHTML=`
+      <div class="row">
+        <div class="field"><label>Full name</label><input id="f-name"></div>
+        <div class="field"><label>Headline</label><input id="f-headline" placeholder="e.g. Corporate counsel, M&A"></div>
+      </div>
+      <div class="field"><label>Bucket</label><select id="f-bucket"></select></div>
+      <div class="field"><label>Work/institution email domain (for OTP baseline — optional here)</label><input id="f-domain" placeholder="e.g. yourfirm.com"></div>`;
+    populateBucketSelect($('f-bucket'));
+  }else if(selectedType==='corporate'){
+    f.innerHTML=`
+      <div class="row">
+        <div class="field"><label>Legal name</label><input id="f-legalname"></div>
+        <div class="field"><label>CIN</label><input id="f-cin" placeholder="e.g. U72200KA2015PTC123456"></div>
+      </div>
+      <div class="field"><label>GSTIN</label><input id="f-gstin"></div>
+      <p class="muted" style="margin:-6px 0 14px">No automated free CIN/GST verification API was found this session (see report) — this goes to manual admin review, same as everyone else today.</p>`;
+  }else if(selectedType==='institution'){
+    f.innerHTML=`
+      <div class="row">
+        <div class="field"><label>Legal name</label><input id="f-legalname"></div>
+        <div class="field"><label>Institution type</label>
+          <select id="f-insttype"><option value="chamber">Chamber</option><option value="bar_council">Bar council</option><option value="university">University</option><option value="association">Association</option><option value="other">Other</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Authorized signatory name</label><input id="f-signatory"></div>
+      <div class="field"><label>Attestation reference (doc/ref number)</label><input id="f-attestation"></div>`;
+  }else if(selectedType==='ngo'){
+    f.innerHTML=`
+      <div class="field"><label>Legal name</label><input id="f-legalname"></div>
+      <div class="row">
+        <div class="field"><label>NGO Darpan ID</label><input id="f-darpan"></div>
+        <div class="field"><label>Section 80G reference</label><input id="f-80g"></div>
+      </div>`;
+  }else if(selectedType==='government'){
+    f.innerHTML=`
+      <div class="field"><label>Department name</label><input id="f-dept"></div>
+      <div class="row">
+        <div class="field"><label>Official domain (.gov.in / .nic.in)</label><input id="f-govdomain"></div>
+        <div class="field"><label>Authorized officer name</label><input id="f-officer"></div>
+      </div>`;
+  }
+}
+
+async function populateBucketSelect(sel){
+  await ensureBuckets();
+  sel.innerHTML=ST.buckets.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
+}
+async function ensureBuckets(){
+  if(ST.buckets.length)return ST.buckets;
+  const{data,error}=await sb.from('buckets').select('*').order('sort_order');
+  if(error){toast('Could not load buckets: '+error.message,'error');return[];}
+  ST.buckets=data||[];
+  return ST.buckets;
+}
+
+async function submitSignup(){
+  const email=$('su-email').value.trim().toLowerCase();
+  const password=$('su-password').value;
+  if(!email||password.length<8){toast('Enter an email and an 8+ character password','error');return;}
+  const btn=$('su-submit');btn.disabled=true;btn.textContent='Creating...';
+
+  try{
+    const{data:signData,error:signErr}=await sb.auth.signUp({email,password});
+    if(signErr)throw signErr;
+    if(signData?.user&&Array.isArray(signData.user.identities)&&signData.user.identities.length===0){
+      throw new Error('An account with this email already exists — log in instead.');
+    }
+    const authUserId=signData.user.id;
+
+    const{data:accRows,error:accErr}=await sb.from('accounts').insert({account_type:selectedType,auth_user_id:authUserId}).select().single();
+    if(accErr)throw accErr;
+    const accountId=accRows.id;
+
+    await sb.from('account_members').insert({account_id:accountId,auth_user_id:authUserId,role:'owner'});
+
+    if(selectedType==='individual'){
+      const{error}=await sb.from('individual_profiles').insert({
+        account_id:accountId,
+        name:$('f-name').value.trim(),
+        headline:$('f-headline').value.trim()||null,
+        bucket_id:$('f-bucket').value||null,
+        work_email_domain:$('f-domain').value.trim()||null
+      });
+      if(error)throw error;
+    }else if(selectedType==='corporate'){
+      const{error}=await sb.from('corporate_profiles').insert({
+        account_id:accountId,
+        legal_name:$('f-legalname').value.trim(),
+        cin:$('f-cin').value.trim()||null,
+        gstin:$('f-gstin').value.trim()||null,
+        verified_via:'manual_review'
+      });
+      if(error)throw error;
+    }else if(selectedType==='institution'){
+      const{error}=await sb.from('institution_profiles').insert({
+        account_id:accountId,
+        legal_name:$('f-legalname').value.trim(),
+        institution_type:$('f-insttype').value,
+        authorized_signatory_name:$('f-signatory').value.trim(),
+        attestation_ref:$('f-attestation').value.trim()||null
+      });
+      if(error)throw error;
+    }else if(selectedType==='ngo'){
+      const{error}=await sb.from('ngo_profiles').insert({
+        account_id:accountId,
+        legal_name:$('f-legalname').value.trim(),
+        ngo_darpan_id:$('f-darpan').value.trim()||null,
+        section_80g_ref:$('f-80g').value.trim()||null
+      });
+      if(error)throw error;
+    }else if(selectedType==='government'){
+      const{error}=await sb.from('government_profiles').insert({
+        account_id:accountId,
+        department_name:$('f-dept').value.trim(),
+        official_domain:$('f-govdomain').value.trim()||null,
+        authorized_officer_name:$('f-officer').value.trim()
+      });
+      if(error)throw error;
+    }
+
+    $('signup-result').textContent='Account created — status: pending admin review. Account ID '+accountId;
+    toast('Account created — pending review','success');
+  }catch(e){
+    toast(e.message||'Signup failed','error');
+  }finally{
+    btn.disabled=false;btn.textContent='Create account';
+  }
+}
+
+async function doLogin(){
+  const email=$('li-email').value.trim().toLowerCase();
+  const password=$('li-password').value;
+  const{error}=await sb.auth.signInWithPassword({email,password});
+  if(error){toast(error.message,'error');return;}
+  toast('Logged in','success');
+  await refreshSession();
+  showView('dashboard');
+}
+
+async function signOut(){
+  await sb.auth.signOut();
+  await refreshSession();
+  showView('signup');
+}
+
+async function refreshSession(){
+  const{data:{session}}=await sb.auth.getSession();
+  ST.session=session;
+  if(session){
+    $('nav-signout').classList.remove('hidden');
+    const{data:acc}=await sb.from('accounts').select('*').eq('auth_user_id',session.user.id).maybeSingle();
+    ST.account=acc||null;
+    const{data:isAdminRow}=await sb.rpc('is_platform_admin');
+    ST.isAdmin=!!isAdminRow;
+    $('nav-admin').classList.toggle('hidden',!ST.isAdmin);
+  }else{
+    $('nav-signout').classList.add('hidden');
+    $('nav-admin').classList.add('hidden');
+    ST.account=null;ST.isAdmin=false;
+  }
+}
+
+async function loadDashboard(){
+  await refreshSession();
+  if(!ST.session){$('dash-status').innerHTML='<p class="muted">Log in to see your account.</p>';$('dash-briefs').classList.add('hidden');return;}
+  if(!ST.account){$('dash-status').innerHTML='<p class="muted">No account row found for this login.</p>';$('dash-briefs').classList.add('hidden');return;}
+  const a=ST.account;
+  $('dash-status').innerHTML=`<div><strong>${esc(a.account_type)}</strong> account &middot; status: <span class="pill">${esc(a.status)}</span></div><div class="muted" style="margin-top:6px">Account ID: ${a.id}</div>`;
+  if(a.status==='approved'){
+    $('dash-briefs').classList.remove('hidden');
+    await renderBucketPicker();
+    await loadMyBriefs();
+  }else{
+    $('dash-briefs').classList.add('hidden');
+  }
+}
+
+async function renderBucketPicker(){
+  await ensureBuckets();
+  $('brief-bucket-picker').innerHTML=ST.buckets.map(b=>`<span class="bucket-chip" data-id="${b.id}" onclick="toggleBucketChip(this)">${esc(b.name)}</span>`).join('');
+}
+function toggleBucketChip(el){el.classList.toggle('sel')}
+
+async function createBrief(){
+  const desc=$('brief-desc').value.trim();
+  const type=$('brief-type').value;
+  const bucketIds=[...document.querySelectorAll('#brief-bucket-picker .bucket-chip.sel')].map(e=>e.dataset.id);
+  if(!desc){toast('Describe what the brief needs','error');return;}
+  if(!bucketIds.length){toast('Select at least one bucket','error');return;}
+  try{
+    const{data:brief,error}=await sb.from('briefs').insert({client_account_id:ST.account.id,brief_type:type,description:desc}).select().single();
+    if(error)throw error;
+    const{error:bbErr}=await sb.from('brief_buckets').insert(bucketIds.map(id=>({brief_id:brief.id,bucket_id:id})));
+    if(bbErr)throw bbErr;
+    const{data:matches,error:matchErr}=await sb.rpc('match_brief_candidates',{p_brief_id:brief.id});
+    if(matchErr)throw matchErr;
+    toast(`Brief created — ${matches?matches.length:0} candidate(s) matched`,'success');
+    $('brief-desc').value='';
+    document.querySelectorAll('#brief-bucket-picker .bucket-chip.sel').forEach(e=>e.classList.remove('sel'));
+    await loadMyBriefs();
+  }catch(e){toast(e.message||'Could not create brief','error');}
+}
+
+async function loadMyBriefs(){
+  const{data:briefs,error}=await sb.from('briefs').select('*').eq('client_account_id',ST.account.id).order('created_at',{ascending:false});
+  if(error){$('briefs-list').innerHTML='<p class="muted">'+esc(error.message)+'</p>';return;}
+  if(!briefs||!briefs.length){$('briefs-list').innerHTML='<p class="muted">No briefs yet.</p>';return;}
+
+  let html='';
+  for(const b of briefs){
+    const{data:cands}=await sb.from('brief_candidates').select('*, individual_profiles(name,headline)').eq('brief_id',b.id);
+    html+=`<div class="card"><div><strong>${esc(b.brief_type)}</strong> &middot; <span class="pill">${esc(b.status)}</span></div><div class="muted" style="margin:6px 0">${esc(b.description)}</div>`;
+    if(cands&&cands.length){
+      html+='<table><tr><th>Candidate</th><th>Headline</th><th>Status</th><th></th></tr>'+cands.map(c=>{
+        const name=c.individual_profiles?c.individual_profiles.name:c.candidate_account_id;
+        const headline=c.individual_profiles?c.individual_profiles.headline||'':'';
+        return `<tr><td>${esc(name)}</td><td>${esc(headline)}</td><td>${esc(c.status)}</td><td><button class="btn" onclick="introduce('${b.id}','${c.candidate_account_id}')" ${c.status!=='suggested'?'disabled':''}>Introduce</button></td></tr>`;
+      }).join('')+'</table>';
+    }else{
+      html+='<p class="muted">No matching candidates yet (no approved individual in the selected bucket).</p>';
+    }
+    html+='</div>';
+  }
+  $('briefs-list').innerHTML=html;
+}
+
+async function introduce(briefId,candidateAccountId){
+  try{
+    const{error}=await sb.rpc('create_introduction',{p_brief_id:briefId,p_candidate_account_id:candidateAccountId});
+    if(error)throw error;
+    toast('Introduction created','success');
+    await loadMyBriefs();
+  }catch(e){toast(e.message||'Could not introduce','error');}
+}
+
+async function loadAdminPending(){
+  await refreshSession();
+  if(!ST.isAdmin){$('admin-pending').innerHTML='<p class="muted">Admin access required.</p>';return;}
+  const{data,error}=await sb.from('accounts').select('*').eq('status','pending').order('created_at',{ascending:false});
+  if(error){$('admin-pending').innerHTML='<p class="muted">'+esc(error.message)+'</p>';return;}
+  if(!data||!data.length){$('admin-pending').innerHTML='<p class="muted">No pending accounts.</p>';return;}
+  $('admin-pending').innerHTML='<table><tr><th>Type</th><th>Account ID</th><th>Created</th><th></th></tr>'+data.map(a=>`<tr><td>${esc(a.account_type)}</td><td>${a.id}</td><td>${new Date(a.created_at).toLocaleString()}</td><td><button class="btn btn-gold" onclick="approveAccount('${a.id}')">Approve</button> <button class="btn" onclick="rejectAccount('${a.id}')">Reject</button></td></tr>`).join('')+'</table>';
+}
+async function approveAccount(id){
+  const{error}=await sb.from('accounts').update({status:'approved'}).eq('id',id);
+  if(error){toast(error.message,'error');return;}
+  toast('Approved','success');loadAdminPending();
+}
+async function rejectAccount(id){
+  const{error}=await sb.from('accounts').update({status:'rejected'}).eq('id',id);
+  if(error){toast(error.message,'error');return;}
+  toast('Rejected','success');loadAdminPending();
+}
+
+(async function init(){
+  renderTypeGrid();
+  renderSignupFields();
+  await refreshSession();
+})();
+</script>
+</body>
+</html>
