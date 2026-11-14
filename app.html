@@ -268,15 +268,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="back-btn" onclick="applyBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="eyebrow">Apply for Membership</div>
     <div class="page-title" id="apply-title">Choose your track</div>
-    <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:33%"></div></div>
-    <div style="font-size:10px;color:rgba(16,30,51,0.28);font-family:var(--sans)" id="apply-step-lbl">Step 1 of 3</div>
+    <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:50%"></div></div>
+    <div style="font-size:10px;color:rgba(16,30,51,0.28);font-family:var(--sans)" id="apply-step-lbl">Step 1 of 2</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="step-content active" id="apply-s1">
-      <div class="track-card selected" id="tr-member" onclick="selTrack('member')"><div class="track-icon">○</div><div><div class="track-name">Network Member</div><div class="track-desc">Entry into MahaYukti. Directory listing, MY Help community access.</div></div></div>
-      <div class="track-card" id="tr-participant" onclick="selTrack('participant')"><div class="track-icon">◇</div><div><div class="track-name">Network Participant</div><div class="track-desc">Active service listing, domain forums, priority referrals.</div></div></div>
-    </div>
-    <div class="step-content" id="apply-s2">
       <div id="apply-li-chip" class="prefill-chip" style="display:none">◆ Name and email filled in from LinkedIn</div>
       <div class="field" id="f-fname"><label>First Name *</label><input type="text" id="a-fname" autocapitalize="words"></div>
       <div class="field" id="f-lname"><label>Last Name</label><input type="text" id="a-lname" autocapitalize="words"></div>
@@ -287,7 +283,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div class="field"><label>City *</label><input type="text" id="a-city" autocapitalize="words"></div>
       <div class="field"><label>Domain / Role *</label><input type="text" id="a-domain" placeholder="e.g. Senior Advocate — Legal, CTO — Technology" autocapitalize="words"></div>
     </div>
-    <div class="step-content" id="apply-s3">
+    <div class="step-content" id="apply-s2">
       <div class="field"><label>About you (optional)</label><textarea id="a-about" placeholder="A line or two — what you do, and what you're hoping to find here." rows="4"></textarea></div>
       <div style="background:rgba(16,30,51,0.02);border:1px solid var(--border2);border-radius:0;padding:12px;margin-bottom:16px"><p style="font-size:11px;color:rgba(16,30,51,0.35);font-family:var(--sans);line-height:1.7">By submitting, I confirm the information provided is accurate and agree to uphold MahaYukti's network standards.</p></div>
     </div>
@@ -709,7 +705,7 @@ const LI_SIGNIN_REDIRECT_URI='https://mahayukti.com/auth/linkedin-signin/callbac
 const LI_SIGNIN_SCOPE='openid profile email';
 const LI_SIGNIN_FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-signin';
 
-const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyTrack:'member',applyStep:1,realtimeSubs:[],liConnection:null};
+const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyStep:1,realtimeSubs:[],liConnection:null};
 const DG=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Strategy & Management','Engineering & Infrastructure','Public Sector & Defence','Agriculture & Food','Energy & Environment','Media, Arts & Culture','Education & Research','Other'];
 const CD=['Legal','Finance & Accounting','Technology','Medicine & Healthcare','Strategy','Engineering','Real Estate','Agriculture','Energy','Media','Education','Other'];
 
@@ -779,6 +775,14 @@ async function handleSess(s){
     if(!p||!p.length){goto('splash');return;}
     ST.profile=p[0];
     if(ST.profile.status==='pending'||ST.profile.status==='rejected'){renderPendingScreen(ST.profile.status,ST.profile.admin_notes);goto('pending');return;}
+    // Opportunistic, automatic Participant promotion check -- no admin review, see
+    // maybe_promote_to_participant() in Supabase. Silent no-op if not yet eligible.
+    if(ST.profile.role==='member'){
+      try{
+        const r=await fetch(`${SB_URL}/rest/v1/rpc/maybe_promote_to_participant`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+s.access_token,'Content-Type':'application/json'},body:'{}'});
+        if(r.ok){const updated=await r.json();if(updated&&updated.role&&updated.role!==ST.profile.role){ST.profile=updated;toast('You\'ve been promoted to Network Participant','success');}}
+      }catch(e){}
+    }
     if(ST.profile.role==='admin')loadAdminHome();else loadMemberHome();
   }catch(e){goto('splash');}
 }
@@ -1129,39 +1133,41 @@ async function saveAbout(){
 }
 
 // APPLY
+// Everyone applies as a Member -- there is no self-selectable track any more.
+// Participant is an earned promotion (see maybe_promote_to_participant in Supabase),
+// never a signup-time choice; Bucket Head/Council were never selectable here either.
 let applyStep=1;
 let applyVia='manual'; // 'manual' | 'linkedin'
-function selTrack(t){ST.applyTrack=t;$('tr-member').classList.toggle('selected',t==='member');$('tr-participant').classList.toggle('selected',t==='participant');}
 function applyBack(){if(applyStep===1)goto('apply-choice');else applyPrev();}
 
 // Entry point for "Apply manually" on the choice screen — a plain, un-prefilled run of the
-// same 3-step flow "Apply via LinkedIn" also lands on (see liApplyPrefill below).
+// same 2-step flow "Apply via LinkedIn" also lands on (see liApplyPrefill below).
 function startManualApply(){
   applyVia='manual';
   $('apply-li-chip').style.display='none';
   ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f){f.removeAttribute('data-locked');f.querySelector('input').readOnly=false;}});
-  applyStep=1;selTrack('member');updApply();
+  applyStep=1;updApply();
   goto('apply');
 }
 
 function applyNext(){
-  if(applyStep===2){
+  if(applyStep===1){
     if(!$('a-fname').value.trim()||!$('a-email').value.trim()||!$('a-phone').value.trim()||!$('a-city').value.trim()||!$('a-domain').value.trim()){toast('Please fill required fields','error');return;}
     if($('a-password').value.length<8){toast('Password must be at least 8 characters','error');return;}
     if($('a-password').value!==$('a-password2').value){toast('Passwords do not match','error');return;}
   }
-  if(applyStep===3){doApply();return;}
+  if(applyStep===2){doApply();return;}
   applyStep++;updApply();
 }
 function applyPrev(){if(applyStep>1){applyStep--;updApply();}}
 function updApply(){
-  for(let i=1;i<=3;i++)$('apply-s'+i).classList.toggle('active',i===applyStep);
-  $('apply-prog').style.width=(applyStep/3*100)+'%';
-  $('apply-step-lbl').textContent='Step '+applyStep+' of 3';
-  const ts=['Choose your track','Your details','About you'];
+  for(let i=1;i<=2;i++)$('apply-s'+i).classList.toggle('active',i===applyStep);
+  $('apply-prog').style.width=(applyStep/2*100)+'%';
+  $('apply-step-lbl').textContent='Step '+applyStep+' of 2';
+  const ts=['Your details','About you'];
   $('apply-title').textContent=ts[applyStep-1];
   $('apply-prev').style.display=applyStep>1?'':'none';
-  $('apply-next').textContent=applyStep===3?'Submit Application':'Continue →';
+  $('apply-next').textContent=applyStep===2?'Submit Application':'Continue →';
 }
 async function doApply(){
   const about=$('a-about').value.trim(); // optional — simplified per the "too exhaustive" feedback
@@ -1191,7 +1197,9 @@ async function doApply(){
 
   // 2) Create the pending profile row in the `users` table
   const username=(fname+lname).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20)+Math.floor(1000+Math.random()*9000);
-  const userRow={auth_id:signData.user.id,username,real_name:fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,domain_group:dg,about,source:applyVia==='linkedin'?'linkedin_signin':'manual',submission_id:sid,status:'pending'};
+  // role/status are forced server-side (trg_enforce_self_signup_defaults) regardless of
+  // what's sent here -- every self-signup becomes an active Member immediately.
+  const userRow={auth_id:signData.user.id,username,real_name:fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,domain_group:dg,about,source:applyVia==='linkedin'?'linkedin_signin':'manual',submission_id:sid};
   try{
     const token=signData.session?.access_token||SB_KEY;
     const ires=await fetch(`${SB_URL}/rest/v1/users`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(userRow)});
@@ -1209,14 +1217,16 @@ async function doApply(){
 
   // 3) Keep the existing Google Form POST for admin's own visibility/backup
   try{
-    await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:sid,submissionDate:new Date().toISOString(),track:ST.applyTrack==='member'?'Network Member':'Network Participant',firstName:fname,lastName:lname,fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,about,domainGroup:dg,appliedVia:applyVia,source:'MahaYukti PWA',status:'New'}))});
+    await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:sid,submissionDate:new Date().toISOString(),track:'Network Member',firstName:fname,lastName:lname,fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,about,domainGroup:dg,appliedVia:applyVia,source:'MahaYukti PWA',status:'New'}))});
   }catch(e){}
 
   btn.disabled=false;btn.textContent='Continue →';
   applyStep=1;updApply();
   $('a-password').value='';$('a-password2').value='';
-  renderPendingScreen('pending');
-  goto('pending');
+  // Member signup is auto-approved server-side (trg_enforce_self_signup_defaults) --
+  // go straight into the app instead of a pending-review screen.
+  toast('Welcome to MahaYukti','success');
+  loadMemberHome();
 }
 
 // --- Apply via LinkedIn (sign-in prefill) -----------------------------------------------
@@ -1250,7 +1260,7 @@ function checkLiSignInReturn(){
 
 function liApplyPrefill(profile){
   applyVia='linkedin';
-  applyStep=1;selTrack('member');updApply();
+  applyStep=1;updApply();
   goto('apply');
   const given=profile.given_name||((profile.name||'').split(' ')[0])||'';
   const family=profile.family_name||((profile.name||'').split(' ').slice(1).join(' '))||'';
@@ -1281,7 +1291,7 @@ async function submitConcierge(){
 // ABOUT
 function renderAbout(){
   $('about-verticals').innerHTML=[{i:'◈',n:'MY Advisory',d:'Research, intelligence, and strategic counsel across domains.'},{i:'◆',n:'MY Consultancy',d:'Expert professional services coordinated through the network.'},{i:'◇',n:'MY Concierge',d:'Bespoke facilitation for complex, sensitive, time-critical needs.'},{i:'○',n:'MY Help',d:'Community, peer connection, mentoring, and referrals.'}].map(v=>`<div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border2)"><div style="font-size:22px;color:var(--gold);width:28px;flex-shrink:0">${v.i}</div><div><div style="font-size:16px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:3px">${v.n}</div><div style="font-size:12px;color:var(--muted);line-height:1.6">${v.d}</div></div></div>`).join('');
-  $('about-layers').innerHTML=[{s:'◈',n:'Network Council',t:'Invite Only',o:false},{s:'◆',n:'Advisory & Consulting Group',t:'By Selection',o:false},{s:'◇',n:'Network Participant',t:'Apply',o:true},{s:'○',n:'Network Member',t:'Apply',o:true}].map(l=>`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border2)"><div style="font-size:16px;color:var(--gold);width:24px;flex-shrink:0">${l.s}</div><div style="flex:1;font-size:13px;color:rgba(16,30,51,0.6)">${l.n}</div><div style="border:1px solid ${l.o?'rgba(201,148,58,0.3)':'rgba(16,30,51,0.15)'};border-radius:0;padding:3px 8px;font-size:9px;font-weight:600;letter-spacing:.2px;color:${l.o?'var(--gold)':'rgba(16,30,51,0.3)'}">${l.t}</div></div>`).join('');
+  $('about-layers').innerHTML=[{s:'◈',n:'Network Council',t:'Invite Only',o:false},{s:'◆',n:'Bucket Head',t:'Earned',o:false},{s:'◇',n:'Network Participant',t:'Earned',o:false},{s:'○',n:'Network Member',t:'Apply',o:true}].map(l=>`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border2)"><div style="font-size:16px;color:var(--gold);width:24px;flex-shrink:0">${l.s}</div><div style="flex:1;font-size:13px;color:rgba(16,30,51,0.6)">${l.n}</div><div style="border:1px solid ${l.o?'rgba(201,148,58,0.3)':'rgba(16,30,51,0.15)'};border-radius:0;padding:3px 8px;font-size:9px;font-weight:600;letter-spacing:.2px;color:${l.o?'var(--gold)':'rgba(16,30,51,0.3)'}">${l.t}</div></div>`).join('');
 }
 
 // ADMIN
