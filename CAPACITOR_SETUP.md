@@ -17,8 +17,8 @@ is genuinely `https://mahayukti.com` and the registered LinkedIn redirect URIs
 | Item | Status |
 |---|---|
 | Capacitor config + both platform projects generated, `npx cap sync` runs | Done |
-| Android `assembleDebug` | **NOT verified** — build attempted in the cloud sandbox but failed resolving dependencies (Maven Central rate-limited the sandbox proxy, HTTP 429). It is an environment failure, not a code error, but it is unconfirmed. Re-run on your machine. |
-| iOS build | **NOT built** (no macOS/Xcode). Xcode project edited by hand for push (entitlements file, AppDelegate hooks, background mode) — needs to be opened and checked in Xcode. |
+| Android `assembleDebug` | **Verified** — built successfully on a real Mac (not the cloud sandbox) after installing JDK 21 (Capacitor 8's `@capacitor/android` library module hardcodes `sourceCompatibility 21`; JDK 17/earlier won't compile it). Real `app-debug.apk` produced (5.6MB) in `android/app/build/outputs/apk/debug/`. Note: `android/capacitor-cordova-android-plugins/` is gitignored by Capacitor's own convention — always run `npm install && npx cap sync` after a fresh clone before building, or Gradle fails looking for it. |
+| iOS build | **NOT built** — needs full Xcode.app (the Command Line Tools alone aren't enough), which isn't installed on this Mac. Xcode project edited by hand for push (entitlements file, AppDelegate hooks, background mode) — needs to be opened and checked in Xcode once installed. |
 | Push notifications | **Scaffolded only.** Native hooks are in; it cannot deliver anything until the credentials below exist AND the web app calls the plugin (see "Web-app work still needed"). |
 | Signing, store listings, credentials | Not done — requires your accounts |
 
@@ -40,7 +40,15 @@ npx cap sync          # after any config/plugin change
 npx cap open ios      # needs macOS + Xcode (15+; project targets iOS 15)
 npx cap open android  # Android Studio (JDK 21, SDK 36)
 ```
-CLI Android build: `cd android && ./gradlew assembleDebug` (needs `ANDROID_HOME` / `android/local.properties`, which is git-ignored).
+CLI Android build: `cd android && ./gradlew assembleDebug` (needs `ANDROID_HOME` / `android/local.properties`, which is git-ignored, and `JAVA_HOME` pointed at a JDK 21).
+
+**If you don't already have a JDK 21:** `brew install openjdk@21` tries to compile it from source on this Mac and fails, demanding full Xcode (Homebrew has no pre-built bottle for this exact setup). Skip that — download a ready-to-run one instead, no Xcode needed:
+```bash
+curl -sSL -o jdk21.tar.gz "https://api.adoptium.net/v3/binary/latest/21/ga/mac/x64/jdk/hotspot/normal/eclipse?project=jdk"
+tar -xzf jdk21.tar.gz
+export JAVA_HOME="$PWD/jdk-21*/Contents/Home"
+```
+(Installing Android Studio instead also works and bundles its own compatible JDK — either path is fine.)
 
 ## Push notifications — what you must do
 
