@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing you in with LinkedIn…</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#FFFFFF;color:#101E33;font-family:'Public Sans',Arial,sans-serif;min-height:100%;display:flex;align-items:center;justify-content:center}
+.box{text-align:center;max-width:380px;padding:32px 20px}
+.spinner{width:28px;height:28px;border:2.5px solid rgba(16,30,51,0.12);border-top-color:#C9943A;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{font-size:16px;font-weight:600;margin-bottom:8px}
+p{font-size:13px;color:rgba(16,30,51,0.6);line-height:1.5}
+a{color:#13335E}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="spinner" id="spinner"></div>
+  <h1 id="title">Bringing over your LinkedIn details…</h1>
+  <p id="msg">Please wait, this only takes a moment.</p>
+</div>
+<script>
+// This is the registered redirect URI for "Apply via LinkedIn"
+// (https://mahayukti.com/auth/linkedin-signin/callback/ — must match exactly what is set in the
+// LinkedIn Developer app's "Authorized redirect URLs" and what app.html sent as redirect_uri
+// for THIS flow — a different, separately-registered URI from the member-posting flow's
+// /auth/linkedin/callback/, so the two never collide even though they share one LinkedIn app).
+//
+// This is plain LinkedIn Sign-In (OIDC: openid + profile + email), used only to prefill an
+// applicant's name/email/headline on the apply form, BEFORE they have any Mahayukti account.
+// That means there is no Supabase session to carry — unlike the posting flow's callback, this
+// page calls the linkedin-signin Edge Function with no Authorization header at all. The
+// function holds the LinkedIn Client Secret (never shipped to the browser), exchanges the code
+// for a token, reads /v2/userinfo, and returns just the profile fields — never the token itself
+// — back to this page.
+
+const SB_URL='https://zlkowzqfowwpkvauuzzw.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpsa293enFmb3d3cGt2YXV1enp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzkxMTksImV4cCI6MjA5NDUxNTExOX0.wOZlyBhIwp05Wg6hrbcfw03kaMibFe9VTKSIphyRIwg';
+const FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-signin';
+const REDIRECT_URI='https://mahayukti.com/auth/linkedin-signin/callback/';
+const RETURN_TO='/app.html';
+
+function fail(msg){
+  document.getElementById('spinner').style.display='none';
+  document.getElementById('title').textContent='Could not bring over your LinkedIn details';
+  document.getElementById('msg').innerHTML=msg+'<br><br>You can still apply manually.<br><br><a href="'+RETURN_TO+'#apply-choice">Return to the application</a>';
+}
+
+async function run(){
+  const params=new URLSearchParams(window.location.search);
+  const code=params.get('code');
+  const state=params.get('state');
+  const error=params.get('error');
+  if(error){fail('LinkedIn said: '+(params.get('error_description')||error));return;}
+  if(!code||!state){fail('Missing authorization code from LinkedIn.');return;}
+
+  const expected=sessionStorage.getItem('li_signin_state');
+  sessionStorage.removeItem('li_signin_state');
+  if(!expected||state!==expected){fail('Security check failed (state mismatch). Please try again.');return;}
+
+  try{
+    const r=await fetch(FUNCTION_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',apikey:SB_KEY},
+      body:JSON.stringify({action:'userinfo',code,redirect_uri:REDIRECT_URI})
+    });
+    const d=await r.json();
+    if(!r.ok||!d.profile){fail((d.error||'Could not read your LinkedIn profile')+(d.detail?'<br><span style="font-size:11px;opacity:.6">'+JSON.stringify(d.detail).slice(0,200)+'</span>':''));return;}
+    // Never store a token here — only the display profile fields the apply form prefills.
+    sessionStorage.setItem('li_signin_profile',JSON.stringify(d.profile));
+    window.location.href=RETURN_TO+'?li_signin=1';
+  }catch(e){
+    fail('Network error reaching MahaYukti: '+(e.message||e));
+  }
+}
+run();
+</script>
+</body>
+</html>

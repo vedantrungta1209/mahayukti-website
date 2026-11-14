@@ -16,7 +16,7 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   /* "The Registry" tokens — matching index.html exactly */
-  --navy:#1C1B19;--navy2:#242220;--gold:#8A7250;--gold2:#9C8568;--seal:#9C2B1F;--seal2:#B5392B;
+  --navy:#1C1B19;--navy2:#242220;--gold:#C9943A;--gold2:#E0AF5C;--seal:#9C2B1F;--seal2:#B5392B;
   --white:#EFE8D8;--green:#3C6350;--red:#B5392B;
   --muted:rgba(239,232,216,0.60);--border:rgba(138,114,80,0.32);--border2:rgba(138,114,80,0.18);
   --serif:'Fraunces',serif;--sans:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
@@ -125,6 +125,14 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
 .back-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 .step-content{display:none}.step-content.active{display:block}
 .track-card{display:flex;align-items:flex-start;gap:14px;padding:14px;border:1.5px solid var(--border2);border-radius:var(--r);background:rgba(255,255,255,0.02);cursor:pointer;margin-bottom:10px;transition:border-color .2s}
+.choice-card{display:flex;align-items:flex-start;gap:16px;padding:20px;border:1.5px solid var(--border2);border-radius:var(--r);background:rgba(255,255,255,0.02);cursor:pointer;margin-bottom:14px;transition:border-color .2s}
+.choice-card:hover{border-color:var(--gold)}
+.choice-icon{width:36px;height:36px;flex-shrink:0;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:16px}
+.choice-name{font-size:17px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:4px}
+.choice-desc{font-size:12.5px;color:rgba(255,255,255,0.4);font-family:var(--sans);line-height:1.6}
+.choice-sub{font-size:11px;color:var(--gold);font-family:var(--sans);margin-top:6px}
+.prefill-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--gold);font-family:var(--sans);background:rgba(201,148,58,0.1);border:1px solid rgba(201,148,58,0.3);border-radius:var(--r);padding:4px 10px;margin-bottom:14px}
+.field[data-locked] input{color:rgba(255,255,255,0.55);background:rgba(255,255,255,0.01)}
 .track-card.selected{border-color:var(--gold);background:rgba(138,114,80,0.06)}
 .track-icon{font-size:22px;color:var(--gold);flex-shrink:0;margin-top:2px}
 .track-name{font-size:16px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:3px}
@@ -164,7 +172,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
     <div style="width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"></div>
     <div style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:300;line-height:1.8;text-align:center;max-width:300px">India's first private cross-domain professional network.</div>
     <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">
-      <button class="btn btn-gold btn-full" onclick="goto('apply')">Apply for Membership</button>
+      <button class="btn btn-gold btn-full" onclick="goto('apply-choice')">Apply for Membership</button>
       <button class="btn btn-outline btn-full" onclick="goto('login')">Member Login</button>
     </div>
     <div style="display:flex;gap:16px;align-items:center">
@@ -190,7 +198,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocapitalize="none"></div>
     <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Your password"></div>
     <button class="btn btn-gold btn-full" id="login-btn" onclick="handleLogin()">Login to MahaYukti</button>
-    <div style="text-align:center;margin-top:20px"><span class="muted-text">Not a member? </span><button onclick="goto('apply')" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer">Apply</button></div>
+    <div style="text-align:center;margin-top:20px"><span class="muted-text">Not a member? </span><button onclick="goto('apply-choice')" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer">Apply</button></div>
   </div></div>
 </div>
 
@@ -220,8 +228,35 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
     <div class="section-title">Network Structure</div>
     <div id="about-layers"></div>
     <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-gold btn-full" onclick="goto('apply')">Apply for Membership</button>
+      <button class="btn btn-gold btn-full" onclick="goto('apply-choice')">Apply for Membership</button>
       <button class="btn btn-outline btn-full" onclick="goto('concierge')">Submit a Client Brief</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- APPLY: CHOOSE MANUAL OR LINKEDIN -->
+<div class="screen" id="screen-apply-choice">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="eyebrow">Apply for Membership</div>
+    <div class="page-title">How would you like to apply?</div>
+    <div class="page-subtitle">Either way, it takes a few minutes.</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="choice-card" onclick="startManualApply()">
+      <div class="choice-icon">✎</div>
+      <div>
+        <div class="choice-name">Apply manually</div>
+        <div class="choice-desc">Fill in your own details — name, contact, and the vertical you work in.</div>
+      </div>
+    </div>
+    <div class="choice-card" onclick="liSignInStart()">
+      <div class="choice-icon">in</div>
+      <div>
+        <div class="choice-name">Apply via LinkedIn</div>
+        <div class="choice-desc">We'll bring over your name, email, and headline from LinkedIn, so you only add your vertical and a line about yourself.</div>
+        <div class="choice-sub" id="li-signin-status"></div>
+      </div>
     </div>
   </div></div>
 </div>
@@ -232,8 +267,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
     <button class="back-btn" onclick="applyBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="eyebrow">Apply for Membership</div>
     <div class="page-title" id="apply-title">Choose your track</div>
-    <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:25%"></div></div>
-    <div style="font-size:10px;color:rgba(255,255,255,0.28);font-family:var(--sans)" id="apply-step-lbl">Step 1 of 4</div>
+    <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:33%"></div></div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.28);font-family:var(--sans)" id="apply-step-lbl">Step 1 of 3</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="step-content active" id="apply-s1">
@@ -241,29 +276,18 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
       <div class="track-card" id="tr-participant" onclick="selTrack('participant')"><div class="track-icon">◇</div><div><div class="track-name">Network Participant</div><div class="track-desc">Active service listing, domain forums, priority referrals.</div></div></div>
     </div>
     <div class="step-content" id="apply-s2">
-      <div class="field"><label>First Name *</label><input type="text" id="a-fname" autocapitalize="words"></div>
-      <div class="field"><label>Last Name *</label><input type="text" id="a-lname" autocapitalize="words"></div>
-      <div class="field"><label>Email Address *</label><input type="email" id="a-email" autocapitalize="none"></div>
+      <div id="apply-li-chip" class="prefill-chip" style="display:none">◆ Name and email filled in from LinkedIn</div>
+      <div class="field" id="f-fname"><label>First Name *</label><input type="text" id="a-fname" autocapitalize="words"></div>
+      <div class="field" id="f-lname"><label>Last Name</label><input type="text" id="a-lname" autocapitalize="words"></div>
+      <div class="field" id="f-email"><label>Email Address *</label><input type="email" id="a-email" autocapitalize="none"></div>
       <div class="field"><label>Mobile Number *</label><input type="tel" id="a-phone" placeholder="+91 XXXXX XXXXX"></div>
       <div class="field"><label>Password *</label><input type="password" id="a-password" placeholder="At least 8 characters"></div>
       <div class="field"><label>Confirm Password *</label><input type="password" id="a-password2" placeholder="Re-enter your password"></div>
-      <div class="field">
-        <label>Preferred Contact Method</label>
-        <div class="contact-toggle" id="a-contact-toggle">
-          <div class="contact-opt sel" id="cm-email" onclick="selContact('email')">Email</div>
-          <div class="contact-opt" id="cm-whatsapp" onclick="selContact('whatsapp')">WhatsApp</div>
-        </div>
-      </div>
       <div class="field"><label>City *</label><input type="text" id="a-city" autocapitalize="words"></div>
+      <div class="field"><label>Domain / Role *</label><input type="text" id="a-domain" placeholder="e.g. Senior Advocate — Legal, CTO — Technology" autocapitalize="words"></div>
     </div>
     <div class="step-content" id="apply-s3">
-      <div class="field"><label>Domain *</label><input type="text" id="a-domain" placeholder="e.g. Chartered Accountancy, Legal, Technology" autocapitalize="words"></div>
-      <div class="field"><label>Current Role *</label><input type="text" id="a-role" placeholder="e.g. Senior Advocate, CTO, CA" autocapitalize="words"></div>
-      <div class="field"><label>Years of Experience</label><input type="text" id="a-exp" placeholder="e.g. 3–5 years"></div>
-      <div class="field"><label>LinkedIn Profile</label><input type="url" id="a-linkedin" placeholder="https://linkedin.com/in/..." autocapitalize="none"></div>
-    </div>
-    <div class="step-content" id="apply-s4">
-      <div class="field"><label>About You *</label><textarea id="a-about" placeholder="In 3–5 sentences — who are you professionally and what do you bring to a cross-domain network?" rows="6"></textarea></div>
+      <div class="field"><label>About you (optional)</label><textarea id="a-about" placeholder="A line or two — what you do, and what you're hoping to find here." rows="4"></textarea></div>
       <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border2);border-radius:0;padding:12px;margin-bottom:16px"><p style="font-size:11px;color:rgba(255,255,255,0.35);font-family:var(--sans);line-height:1.7">By submitting, I confirm the information provided is accurate and agree to uphold MahaYukti's network standards.</p></div>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px">
@@ -328,7 +352,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
       <div style="margin:32px 20px;background:rgba(138,114,80,0.06);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
         <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:8px">Join MahaYukti</div>
         <div class="muted-text" style="margin-bottom:16px">The network is open. Membership is earned.</div>
-        <button class="btn btn-gold" onclick="goto('apply')">Apply Now</button>
+        <button class="btn btn-gold" onclick="goto('apply-choice')">Apply Now</button>
       </div>
     </div>
   </div>
@@ -672,6 +696,18 @@ const LI_REDIRECT_URI='https://mahayukti.com/auth/linkedin/callback/';
 const LI_SCOPE='openid profile email w_member_social';
 const LI_FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-oauth';
 
+// "Apply via LinkedIn" — a SEPARATE, unrelated use of the same LinkedIn app/Client ID above.
+// This is plain LinkedIn Sign-In (OIDC: openid + profile + email) used only to prefill the
+// applicant's name/email/headline on the apply form — it has nothing to do with posting and
+// never touches w_member_social or the linkedin_connections table. Applicants here have no
+// Mahayukti account yet, so this flow runs with NO Supabase session: the redirect URI, scope,
+// and Edge Function are all different from the member-posting feature above, so the two never
+// collide. See supabase/functions/linkedin-signin/index.ts and
+// auth/linkedin-signin/callback/index.html.
+const LI_SIGNIN_REDIRECT_URI='https://mahayukti.com/auth/linkedin-signin/callback/';
+const LI_SIGNIN_SCOPE='openid profile email';
+const LI_SIGNIN_FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-signin';
+
 const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyTrack:'member',applyStep:1,realtimeSubs:[],liConnection:null};
 const DG=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Strategy & Management','Engineering & Infrastructure','Public Sector & Defence','Agriculture & Food','Energy & Environment','Media, Arts & Culture','Education & Research','Other'];
 const CD=['Legal','Finance & Accounting','Technology','Medicine & Healthcare','Strategy','Engineering','Real Estate','Agriculture','Energy','Media','Education','Other'];
@@ -688,6 +724,16 @@ function gotoTab(n){
   goto(n);
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   const el=$('nt-'+n);if(el)el.classList.add('active');
+}
+// Lets index.html deep-link straight into a screen, e.g. app.html#apply-choice or
+// app.html#login, so the homepage's "Apply for Membership" / "Login" buttons land in the
+// right place instead of the splash screen. Only honoured for a logged-out visitor — once
+// handleSess() has placed a signed-in member on 'home'/'pending', a stale hash is ignored.
+function routeInitialHash(){
+  const n=(window.location.hash||'').replace('#','');
+  if(!n||!$('screen-'+n))return;
+  if(ST.user)return;
+  goto(n);
 }
 function dname(u){return(u?.show_real_name&&u?.real_name_approved&&u?.real_name)?u.real_name:u?.username||'?'}
 function subId(){return'MY-'+new Date().getFullYear()+String(new Date().getMonth()+1).padStart(2,'0')+String(new Date().getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substr(2,6).toUpperCase()}
@@ -709,6 +755,8 @@ async function init(){
   if(session)await handleSess(session);else goto('splash');
   sb.auth.onAuthStateChange(async(_,s)=>{if(s)await handleSess(s);else{ST.user=null;ST.profile=null;goto('splash');}});
   checkLinkedInReturn();
+  checkLiSignInReturn();
+  routeInitialHash();
 }
 
 function renderPendingScreen(status,note){
@@ -1081,32 +1129,41 @@ async function saveAbout(){
 
 // APPLY
 let applyStep=1;
-let applyContact='email';
+let applyVia='manual'; // 'manual' | 'linkedin'
 function selTrack(t){ST.applyTrack=t;$('tr-member').classList.toggle('selected',t==='member');$('tr-participant').classList.toggle('selected',t==='participant');}
-function selContact(m){applyContact=m;$('cm-email').classList.toggle('sel',m==='email');$('cm-whatsapp').classList.toggle('sel',m==='whatsapp');}
-function applyBack(){if(applyStep===1)goto('splash');else applyPrev();}
+function applyBack(){if(applyStep===1)goto('apply-choice');else applyPrev();}
+
+// Entry point for "Apply manually" on the choice screen — a plain, un-prefilled run of the
+// same 3-step flow "Apply via LinkedIn" also lands on (see liApplyPrefill below).
+function startManualApply(){
+  applyVia='manual';
+  $('apply-li-chip').style.display='none';
+  ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f){f.removeAttribute('data-locked');f.querySelector('input').readOnly=false;}});
+  applyStep=1;selTrack('member');updApply();
+  goto('apply');
+}
+
 function applyNext(){
   if(applyStep===2){
-    if(!$('a-fname').value.trim()||!$('a-email').value.trim()||!$('a-phone').value.trim()||!$('a-city').value.trim()){toast('Please fill required fields','error');return;}
+    if(!$('a-fname').value.trim()||!$('a-email').value.trim()||!$('a-phone').value.trim()||!$('a-city').value.trim()||!$('a-domain').value.trim()){toast('Please fill required fields','error');return;}
     if($('a-password').value.length<8){toast('Password must be at least 8 characters','error');return;}
     if($('a-password').value!==$('a-password2').value){toast('Passwords do not match','error');return;}
   }
-  if(applyStep===3&&(!$('a-domain').value.trim()||!$('a-role').value.trim())){toast('Please fill domain and role','error');return;}
-  if(applyStep===4){doApply();return;}
+  if(applyStep===3){doApply();return;}
   applyStep++;updApply();
 }
 function applyPrev(){if(applyStep>1){applyStep--;updApply();}}
 function updApply(){
-  for(let i=1;i<=4;i++)$('apply-s'+i).classList.toggle('active',i===applyStep);
-  $('apply-prog').style.width=(applyStep/4*100)+'%';
-  $('apply-step-lbl').textContent='Step '+applyStep+' of 4';
-  const ts=['Choose your track','Personal details','Professional details','About you'];
+  for(let i=1;i<=3;i++)$('apply-s'+i).classList.toggle('active',i===applyStep);
+  $('apply-prog').style.width=(applyStep/3*100)+'%';
+  $('apply-step-lbl').textContent='Step '+applyStep+' of 3';
+  const ts=['Choose your track','Your details','About you'];
   $('apply-title').textContent=ts[applyStep-1];
   $('apply-prev').style.display=applyStep>1?'':'none';
-  $('apply-next').textContent=applyStep===4?'Submit Application':'Continue →';
+  $('apply-next').textContent=applyStep===3?'Submit Application':'Continue →';
 }
 async function doApply(){
-  const about=$('a-about').value.trim();if(!about){toast('Please tell us about yourself','error');return;}
+  const about=$('a-about').value.trim(); // optional — simplified per the "too exhaustive" feedback
   const pw=$('a-password').value;
   if(pw.length<8){toast('Password must be at least 8 characters','error');return;}
   if(pw!==$('a-password2').value){toast('Passwords do not match','error');return;}
@@ -1133,7 +1190,7 @@ async function doApply(){
 
   // 2) Create the pending profile row in the `users` table
   const username=(fname+lname).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20)+Math.floor(1000+Math.random()*9000);
-  const userRow={auth_id:signData.user.id,username,real_name:fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,domain_group:dg,experience:$('a-exp').value.trim(),linkedin:$('a-linkedin').value.trim(),about,submission_id:sid,status:'pending'};
+  const userRow={auth_id:signData.user.id,username,real_name:fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,domain_group:dg,about,source:applyVia==='linkedin'?'linkedin_signin':'manual',submission_id:sid,status:'pending'};
   try{
     const token=signData.session?.access_token||SB_KEY;
     const ires=await fetch(`${SB_URL}/rest/v1/users`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(userRow)});
@@ -1151,14 +1208,59 @@ async function doApply(){
 
   // 3) Keep the existing Google Form POST for admin's own visibility/backup
   try{
-    await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:sid,submissionDate:new Date().toISOString(),track:ST.applyTrack==='member'?'Network Member':'Network Participant',firstName:fname,lastName:lname,fullName,email,phone:$('a-phone').value.trim(),preferredContact:applyContact,city:$('a-city').value.trim(),domain,role:$('a-role').value.trim(),experience:$('a-exp').value.trim(),linkedin:$('a-linkedin').value.trim(),about,domainGroup:dg,source:'MahaYukti PWA',status:'New'}))});
+    await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:sid,submissionDate:new Date().toISOString(),track:ST.applyTrack==='member'?'Network Member':'Network Participant',firstName:fname,lastName:lname,fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,about,domainGroup:dg,appliedVia:applyVia,source:'MahaYukti PWA',status:'New'}))});
   }catch(e){}
 
   btn.disabled=false;btn.textContent='Continue →';
-  applyStep=1;updApply();selContact('email');
+  applyStep=1;updApply();
   $('a-password').value='';$('a-password2').value='';
   renderPendingScreen('pending');
   goto('pending');
+}
+
+// --- Apply via LinkedIn (sign-in prefill) -----------------------------------------------
+// Separate, unauthenticated OIDC flow — NOT the member-posting "Connect LinkedIn" feature
+// further down this file. Used only before an applicant has any Mahayukti account, to prefill
+// name/email/headline on the apply form. See the LI_SIGNIN_* constants above this block and
+// supabase/functions/linkedin-signin/index.ts.
+function liSignInStart(){
+  const state=liRandomState();
+  sessionStorage.setItem('li_signin_state',state);
+  sessionStorage.setItem('li_signin_return','apply-choice');
+  const u='https://www.linkedin.com/oauth/v2/authorization?'+new URLSearchParams({
+    response_type:'code',client_id:LI_CLIENT_ID,redirect_uri:LI_SIGNIN_REDIRECT_URI,scope:LI_SIGNIN_SCOPE,state
+  }).toString();
+  window.location.href=u;
+}
+
+// Called on every app.html load. If the LinkedIn sign-in callback page just ran, it will have
+// stashed the fetched profile (name/email/headline/picture — never a token) in sessionStorage
+// under 'li_signin_profile' and redirected back here with ?li_signin=1.
+function checkLiSignInReturn(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('li_signin')!=='1')return;
+  history.replaceState(null,'',window.location.pathname+window.location.hash);
+  let profile=null;
+  try{profile=JSON.parse(sessionStorage.getItem('li_signin_profile')||'null');}catch(e){}
+  sessionStorage.removeItem('li_signin_profile');
+  if(!profile){toast('Could not read your LinkedIn profile. Please try again or apply manually.','error');goto('apply-choice');return;}
+  liApplyPrefill(profile);
+}
+
+function liApplyPrefill(profile){
+  applyVia='linkedin';
+  applyStep=1;selTrack('member');updApply();
+  goto('apply');
+  const given=profile.given_name||((profile.name||'').split(' ')[0])||'';
+  const family=profile.family_name||((profile.name||'').split(' ').slice(1).join(' '))||'';
+  $('a-fname').value=given;$('a-lname').value=family;$('a-email').value=profile.email||'';
+  if(given)$('f-fname').setAttribute('data-locked','');
+  if(family)$('f-lname').setAttribute('data-locked','');
+  if(profile.email)$('f-email').setAttribute('data-locked','');
+  ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f&&f.hasAttribute('data-locked'))f.querySelector('input').readOnly=true;});
+  $('apply-li-chip').style.display='';
+  if(profile.headline)$('a-domain').placeholder='From LinkedIn: '+profile.headline;
+  toast('Welcome, '+(given||'there')+' — just a couple more fields','success');
 }
 
 // CONCIERGE
