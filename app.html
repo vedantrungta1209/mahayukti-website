@@ -1285,7 +1285,6 @@ function renderAbout(){
 
 // ADMIN
 async function loadAdminHome(){
-  goto('admin-home');
   try{
     const[apps,briefs]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100')]);
     const pc=(apps||[]).length,bc=(briefs||[]).length;
