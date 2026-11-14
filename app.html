@@ -256,7 +256,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div class="field"><label>Password *</label><input type="password" id="a-password" placeholder="At least 8 characters"></div>
       <div class="field"><label>Confirm Password *</label><input type="password" id="a-password2" placeholder="Re-enter your password"></div>
       <div class="field"><label>City *</label><input type="text" id="a-city" autocapitalize="words"></div>
-      <div class="field"><label>Domain / Role *</label><input type="text" id="a-domain" placeholder="e.g. Senior Advocate — Legal, CTO — Technology" autocapitalize="words"></div>
+      <div class="field"><label>Domain / Role *</label><input type="text" id="a-domain" placeholder="e.g. Senior Advocate, CTO, Chartered Accountant" autocapitalize="words" oninput="updBucketSuggestion()"></div>
+      <div class="field" id="f-bucket" style="display:none">
+        <label>Your vertical</label>
+        <select id="a-bucket"></select>
+        <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-top:4px;font-family:var(--sans)" id="bucket-suggest-note"></div>
+      </div>
     </div>
     <div class="step-content" id="apply-s2">
       <div class="field"><label>About you (optional)</label><textarea id="a-about" placeholder="A line or two — what you do, and what you're hoping to find here." rows="4"></textarea></div>
@@ -682,8 +687,39 @@ const LI_SIGNIN_SCOPE='openid profile email';
 const LI_SIGNIN_FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-signin';
 
 const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyStep:1,realtimeSubs:[],liConnection:null};
-const DG=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Strategy & Management','Engineering & Infrastructure','Public Sector & Defence','Agriculture & Food','Energy & Environment','Media, Arts & Culture','Education & Research','Other'];
-const CD=['Legal','Finance & Accounting','Technology','Medicine & Healthcare','Strategy','Engineering','Real Estate','Agriculture','Energy','Media','Education','Other'];
+// The 12 real buckets (matches index.html's homepage list and the strategic plan --
+// previously this file had its own, different 4-category list used nowhere near the
+// actual bucket taxonomy; replaced so classification, the directory filter, and the
+// concierge chips all agree on the same names).
+const BUCKETS=['Legal','Accounting & Audit','Technology & Cybersecurity','Capital & Funding','Business & Industry','Government & Public Affairs','Defence & Security','Culture & Public Influence','Trades & Craft','Science & Deep-Tech','Healthcare & Medicine','Real Estate & Infrastructure'];
+const DG=['All',...BUCKETS];
+const CD=BUCKETS;
+
+// Keyword -> bucket classification, run live as someone types their role/domain into the
+// apply form (see classifyBucket below). Not silent: the suggestion is shown and the
+// applicant can override it with any of the 12 buckets before submitting.
+const BUCKET_KEYWORDS={
+  'Legal':['advocate','lawyer','legal','law','counsel','litigation','attorney','solicitor','judge','barrister'],
+  'Accounting & Audit':['ca ','chartered accountant','accounting','accountant','audit','auditor','tax','cfo','finance manager','bookkeep'],
+  'Technology & Cybersecurity':['cto','software','engineer','developer','tech','it ','cyber','devops','cloud','data scien','programmer','architect (software)'],
+  'Capital & Funding':['vc','venture cap','private equity','investment bank','angel invest','fund manager','portfolio manager','investor'],
+  'Business & Industry':['manufactur','industrial','operations','trade body','business owner','entrepreneur','ceo','coo','founder'],
+  'Government & Public Affairs':['civil servant','ias','ips','policy','regulatory','public admin','government','bureaucrat','secretary (govt)'],
+  'Defence & Security':['army','navy','air force','defence','military','colonel','general','brigadier','intelligence','security consult'],
+  'Culture & Public Influence':['journalist','media','publish','editor','columnist','author','writer','influencer'],
+  'Trades & Craft':['architect','craftsman','artisan','carpentry','skilled trade','electrician','plumber'],
+  'Science & Deep-Tech':['research','scientist','r&d','deep tech','phd','professor','biotech','physicist','chemist'],
+  'Healthcare & Medicine':['doctor','medical','physician','surgeon','hospital','nurse','clinician','healthcare'],
+  'Real Estate & Infrastructure':['real estate','construction','infrastructure','urban plan','developer (real estate)','civil engineer'],
+};
+function classifyBucket(text){
+  const t=(text||'').toLowerCase();
+  if(!t.trim())return null;
+  for(const b of BUCKETS){
+    if((BUCKET_KEYWORDS[b]||[]).some(k=>t.includes(k)))return b;
+  }
+  return null;
+}
 
 function $(i){return document.getElementById(i)}
 function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+(t?' '+t:'');clearTimeout(el._t);el._t=setTimeout(()=>el.className='',3000)}
@@ -1144,6 +1180,7 @@ async function saveAbout(){
 // never a signup-time choice; Bucket Head/Council were never selectable here either.
 let applyStep=1;
 let applyVia='manual'; // 'manual' | 'linkedin'
+let bucketManuallySet=false; // true once the applicant has touched the vertical dropdown themselves
 function applyBack(){if(applyStep===1)goto('splash');else applyPrev();}
 
 // Entry point for "Apply manually" on the choice screen — a plain, un-prefilled run of the
@@ -1152,13 +1189,41 @@ function startManualApply(){
   applyVia='manual';
   $('apply-li-chip').style.display='none';
   ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f){f.removeAttribute('data-locked');f.querySelector('input').readOnly=false;}});
-  applyStep=1;updApply();
+  applyStep=1;bucketManuallySet=false;initBucketSelect();updApply();
   goto('apply');
+}
+
+// Every vertical is open -- there's no closed list to apply against. As the applicant
+// types their role, classifyBucket() (keyword match, see constants above) suggests one
+// of the 12 real buckets; it's shown and editable, never silently applied. Picking a
+// different one from the dropdown yourself "locks" it so further typing won't overwrite
+// your own choice.
+function initBucketSelect(){
+  const sel=$('a-bucket');
+  if(sel&&!sel.options.length){
+    sel.innerHTML='<option value="">Select your vertical…</option>'+BUCKETS.map(b=>`<option value="${b}">${b}</option>`).join('');
+    sel.onchange=()=>{bucketManuallySet=true;$('bucket-suggest-note').textContent='';};
+  }
+}
+function updBucketSuggestion(){
+  initBucketSelect();
+  const text=$('a-domain').value;
+  const guess=classifyBucket(text);
+  const f=$('f-bucket'),sel=$('a-bucket'),note=$('bucket-suggest-note');
+  if(!text.trim()){f.style.display='none';return;}
+  f.style.display='';
+  if(guess&&!bucketManuallySet){
+    sel.value=guess;
+    note.textContent='Suggested based on what you typed — change it above if this isn\'t right.';
+  }else if(!guess&&!bucketManuallySet){
+    note.textContent='Pick the closest vertical — we couldn\'t guess one from that.';
+  }
 }
 
 function applyNext(){
   if(applyStep===1){
     if(!$('a-fname').value.trim()||!$('a-email').value.trim()||!$('a-phone').value.trim()||!$('a-city').value.trim()||!$('a-domain').value.trim()){toast('Please fill required fields','error');return;}
+    if(!$('a-bucket').value){toast('Please select your vertical','error');return;}
     if($('a-password').value.length<8){toast('Password must be at least 8 characters','error');return;}
     if($('a-password').value!==$('a-password2').value){toast('Passwords do not match','error');return;}
   }
@@ -1185,7 +1250,10 @@ async function doApply(){
   const email=$('a-email').value.trim().toLowerCase();
   const fname=$('a-fname').value.trim(),lname=$('a-lname').value.trim();
   const fullName=(fname+' '+lname).trim();
-  const dg=domain.toLowerCase().includes('ca')||domain.toLowerCase().includes('accounting')||domain.toLowerCase().includes('finance')?'Finance & Accounting':domain.toLowerCase().includes('legal')||domain.toLowerCase().includes('law')?'Law & Compliance':domain.toLowerCase().includes('tech')||domain.toLowerCase().includes('software')?'Technology':domain.toLowerCase().includes('doctor')||domain.toLowerCase().includes('medical')?'Medicine & Healthcare':'Other';
+  // Bucket is whatever's showing in the (suggested-then-editable) vertical dropdown --
+  // never silently re-guessed at submit time. applyNext()'s step-1 validation already
+  // requires this to be set before getting here.
+  const dg=$('a-bucket').value;
 
   // 1) Create the Supabase Auth account
   let signData;
@@ -1266,7 +1334,7 @@ function checkLiSignInReturn(){
 
 function liApplyPrefill(profile){
   applyVia='linkedin';
-  applyStep=1;updApply();
+  applyStep=1;bucketManuallySet=false;initBucketSelect();updApply();
   goto('apply');
   const given=profile.given_name||((profile.name||'').split(' ')[0])||'';
   const family=profile.family_name||((profile.name||'').split(' ').slice(1).join(' '))||'';
