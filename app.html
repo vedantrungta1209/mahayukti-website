@@ -691,7 +691,7 @@ const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,
 // previously this file had its own, different 4-category list used nowhere near the
 // actual bucket taxonomy; replaced so classification, the directory filter, and the
 // concierge chips all agree on the same names).
-const BUCKETS=['Legal','Accounting & Audit','Technology & Cybersecurity','Capital & Funding','Business & Industry','Government & Public Affairs','Defence & Security','Culture & Public Influence','Trades & Craft','Science & Deep-Tech','Healthcare & Medicine','Real Estate & Infrastructure'];
+const BUCKETS=['Legal','Accounting & Audit','Technology & Cybersecurity','Capital & Funding','Business & Industry','Government & Public Affairs','Defence & Security','Culture & Public Influence','Trades & Craft','Science & Deep-Tech','Healthcare & Medicine','Real Estate & Infrastructure','Other'];
 const DG=['All',...BUCKETS];
 const CD=BUCKETS;
 
@@ -1216,7 +1216,7 @@ function updBucketSuggestion(){
     sel.value=guess;
     note.textContent='Suggested based on what you typed — change it above if this isn\'t right.';
   }else if(!guess&&!bucketManuallySet){
-    note.textContent='Pick the closest vertical — we couldn\'t guess one from that.';
+    note.textContent='Pick the closest vertical — or "Other" if nothing above fits.';
   }
 }
 
