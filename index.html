@@ -3,899 +3,358 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="MahaYukti — a private, admission-gated, cross-domain professional network for India. No platform cut on what members earn together. Admission by scrutiny.">
-<title>MahaYukti — The Registry</title>
+<title>MahaYukti — A private register for India's professionals</title>
+<meta name="description" content="MahaYukti is a private, cross-domain register of verified professionals across India. Member tier is free. Applications are read individually.">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════
-   TOKENS — "The Registry"
-═══════════════════════════════════════════ */
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
 :root{
-  --ink:#1C1B19;
-  --ink2:#242220;
-  --ink3:#2B2926;
-  --paper:#EFE8D8;
-  --paper2:#E6DEC9;
-  --oxblood:#9C2B1F;
-  --oxblood2:#B5392B;
-  --green:#2F4A3C;
-  --green2:#3C6350;
-  --brass:#8A7250;
-  --brass-soft:rgba(138,114,80,.32);
-  --brass-soft2:rgba(138,114,80,.18);
-  --cream-text:#EFE8D8;
-  --cream-muted:rgba(239,232,216,.60);
-  --cream-faint:rgba(239,232,216,.34);
-  --ink-text:#1C1B19;
-  --ink-muted:rgba(28,27,25,.62);
-  --display:'Fraunces',serif;
-  --sans:'IBM Plex Sans',sans-serif;
-  --mono:'IBM Plex Mono',monospace;
+  --white:#FFFFFF;
+  --paper:#F6F5F1;          /* section-alt background — warm, not dark */
+  --ink:#101E33;             /* primary text — deep navy-black, not pure black */
+  --navy:#13335E;            /* primary blue — logo "Maha", links, outline buttons */
+  --navy-deep:#0A2140;       /* footer / CTA band background, button hover */
+  --gold:#C9943A;            /* exact accent revived from the original wordmark */
+  --gold-deep:#A97623;       /* gold hover/active */
+  --line:#E2E0D8;            /* hairlines, borders */
+  --muted:#58647A;           /* secondary text */
+  --serif:'Source Serif 4',serif;
+  --sans:'Public Sans',sans-serif;
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{font-family:var(--sans);background:var(--ink);color:var(--cream-text);overflow-x:hidden;}
-a{text-decoration:none;color:inherit;}
-img{max-width:100%;display:block;}
-button{font-family:inherit;}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--white);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--navy);outline-offset:3px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px}
 
-/* ═══════════════════════════════════════════
+/* ============================================================
    NAV
-═══════════════════════════════════════════ */
-#nav{position:fixed;top:0;left:0;right:0;z-index:900;padding:22px 56px;display:flex;align-items:center;justify-content:space-between;transition:all .3s;border-bottom:1px solid transparent;}
-#nav.stuck{padding:16px 56px;background:rgba(28,27,25,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--brass-soft);}
-.nav-logo{font-family:var(--display);font-size:22px;font-weight:600;color:var(--cream-text);cursor:pointer;letter-spacing:.2px;}
-.nav-logo .no{font-family:var(--mono);font-size:11px;color:var(--brass);margin-left:10px;font-weight:400;}
-.nav-links{display:flex;align-items:center;gap:30px;}
-.nav-links a{font-size:13px;font-weight:400;color:var(--cream-muted);transition:color .2s;cursor:pointer;position:relative;}
-.nav-links a:hover,.nav-links a.active{color:var(--cream-text);}
-.nav-links a.active::after{content:'';position:absolute;left:0;right:0;bottom:-20px;height:2px;background:var(--oxblood);}
-.nav-cta{border:1px solid var(--brass-soft)!important;padding:8px 18px;color:var(--cream-text)!important;}
-.nav-cta:hover{border-color:var(--brass)!important;}
-.ham{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
-.ham span{width:22px;height:1px;background:var(--cream-text);display:block;}
+   ============================================================ */
+#nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{
+  max-width:1120px;margin:0 auto;padding:0 32px;
+  height:76px;display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-family:var(--serif);font-size:25px;font-weight:700;color:var(--navy);letter-spacing:-.2px}
+.logo span{color:var(--gold)}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-link{font-size:14.5px;color:var(--muted);transition:color .15s}
+.nav-link:hover{color:var(--ink)}
+.nav-actions{display:flex;align-items:center;gap:12px;margin-left:28px}
 
-#mob-nav{position:fixed;top:0;right:-100%;width:270px;height:100vh;background:var(--ink2);border-left:1px solid var(--brass-soft);z-index:910;display:flex;flex-direction:column;padding:88px 32px 40px;gap:22px;transition:right .3s ease;}
-#mob-nav.open{right:0;}
-#mob-nav a{font-size:14px;color:var(--cream-muted);cursor:pointer;}
-#mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:905;display:none;}
-#mob-overlay.show{display:block;}
+@media (max-width:760px){
+  .nav-links a.nav-link{display:none}
+  .nav-inner{height:68px}
+}
 
-/* ═══════════════════════════════════════════
-   PAGE SYSTEM
-═══════════════════════════════════════════ */
-.page{display:none;min-height:100vh;}
-.page.active{display:block;}
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 22px;font-family:var(--sans);font-size:14.5px;font-weight:600;
+  border-radius:3px;border:1px solid transparent;cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s;
+  white-space:nowrap;
+}
+.btn-gold{background:var(--gold);color:#241705}
+.btn-gold:hover{background:var(--gold-deep)}
+.btn-navy{background:var(--navy);color:var(--white)}
+.btn-navy:hover{background:var(--navy-deep)}
+.btn-outline{background:transparent;color:var(--navy);border-color:var(--navy)}
+.btn-outline:hover{background:var(--navy);color:var(--white)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy)}
+.btn-lg{padding:14px 28px;font-size:15.5px}
 
-/* ═══════════════════════════════════════════
-   SHARED
-═══════════════════════════════════════════ */
-.wrap{max-width:1180px;margin:0 auto;padding:0 56px;}
-.wrap-sm{max-width:760px;margin:0 auto;padding:0 56px;}
-.section{padding:120px 0;}
-.section-sm{padding:72px 0;}
-.hairline{height:1px;background:var(--brass-soft);width:100%;}
-.tag{font-family:var(--mono);font-size:12px;color:var(--brass);letter-spacing:.3px;margin-bottom:14px;display:block;}
-.h1{font-family:var(--display);font-size:clamp(38px,5vw,64px);font-weight:600;line-height:1.08;color:var(--cream-text);}
-.h2{font-family:var(--display);font-size:clamp(28px,3.4vw,44px);font-weight:600;line-height:1.14;color:var(--cream-text);}
-.h3{font-family:var(--display);font-size:clamp(21px,2.1vw,27px);font-weight:600;color:var(--cream-text);}
-.on-paper .h1,.on-paper .h2,.on-paper .h3{color:var(--ink-text);}
-.body-lg{font-size:17px;font-weight:300;color:var(--cream-muted);line-height:1.75;}
-.body-md{font-size:15px;font-weight:300;color:var(--cream-muted);line-height:1.75;}
-.on-paper .body-lg,.on-paper .body-md{color:var(--ink-muted);}
-em{font-style:italic;color:inherit;}
+@media (max-width:480px){
+  .nav-actions .btn-outline{padding:10px 14px;font-size:13.5px}
+  .nav-actions .btn-gold{padding:10px 16px;font-size:13.5px}
+}
 
-/* buttons — flat, no rounding, no shadow */
-.btn{display:inline-block;font-size:13px;font-weight:500;padding:14px 30px;border:1px solid var(--brass-soft);cursor:pointer;transition:border-color .2s,background .2s;font-family:var(--sans);background:transparent;color:var(--cream-text);}
-.btn:hover{border-color:var(--brass);}
-.btn-seal{background:var(--oxblood);border-color:var(--oxblood);color:#fff;}
-.btn-seal:hover{background:var(--oxblood2);border-color:var(--oxblood2);}
-.btn-sm{padding:10px 22px;font-size:12px;}
-.on-paper .btn{color:var(--ink-text);border-color:rgba(28,27,25,.22);}
-.on-paper .btn:hover{border-color:var(--brass);}
-
-/* paper panel — an "open ledger page" set against the ink background */
-.panel{background:var(--paper);color:var(--ink-text);border:1px solid var(--brass-soft);padding:56px;}
-.panel-tight{padding:36px;}
-
-/* ledger rows */
-.ledger{border-top:1px solid var(--brass-soft);}
-.ledger-row{display:grid;grid-template-columns:116px 1fr;gap:32px;padding:30px 0;border-bottom:1px solid var(--brass-soft);}
-.lr-num{font-family:var(--mono);font-size:13px;color:var(--brass);}
-.lr-date{font-family:var(--mono);font-size:11px;color:var(--cream-faint);margin-top:6px;}
-.on-paper .lr-date{color:rgba(28,27,25,.42);}
-.lr-name{font-family:var(--display);font-size:19px;font-weight:600;margin-bottom:4px;}
-.lr-sub{font-size:12px;color:var(--brass);margin-bottom:8px;}
-.lr-body{font-size:14px;font-weight:300;line-height:1.7;color:var(--cream-muted);max-width:620px;}
-.on-paper .lr-body{color:var(--ink-muted);}
-.lr-status{font-family:var(--mono);font-size:11px;letter-spacing:.3px;margin-top:2px;}
-.status-open{color:var(--green2);}
-.status-coming{color:var(--cream-faint);}
-.on-paper .status-coming{color:rgba(28,27,25,.38);}
-
-/* reveal */
-.rv{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
-.rv.in{opacity:1;transform:none;}
-
-/* ═══════════════════════════════════════════
+/* ============================================================
    HERO
-═══════════════════════════════════════════ */
-#hero{min-height:92vh;display:flex;align-items:center;padding-top:90px;position:relative;}
-.hero-grid{display:grid;grid-template-columns:140px 1fr;gap:40px;max-width:1180px;margin:0 auto;padding:0 56px;align-items:start;}
-.hero-reg{font-family:var(--mono);font-size:12px;color:var(--brass);line-height:2;padding-top:12px;}
-.hero-reg div+div{margin-top:4px;}
-.hero-h1{font-family:var(--display);font-size:clamp(46px,7vw,92px);font-weight:600;line-height:1.02;color:var(--cream-text);}
-.hero-tag{font-family:var(--display);font-style:italic;font-size:19px;color:var(--brass);margin-top:18px;}
-.hero-desc{font-size:17px;font-weight:300;color:var(--cream-muted);line-height:1.8;max-width:560px;margin-top:26px;}
-.hero-btns{display:flex;gap:14px;margin-top:38px;flex-wrap:wrap;}
+   ============================================================ */
+#hero{padding:88px 0 76px}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:start}
+.hero-head{
+  font-family:var(--serif);font-weight:600;color:var(--ink);
+  font-size:clamp(34px,4.6vw,54px);line-height:1.12;letter-spacing:-.5px;
+  max-width:13.5ch;
+}
+.hero-sub{
+  margin-top:22px;font-size:17px;line-height:1.65;color:var(--muted);
+  max-width:46ch;
+}
+.hero-ctas{display:flex;align-items:center;gap:22px;margin-top:34px;flex-wrap:wrap}
 
-/* ticker */
-.ticker-wrap{overflow:hidden;border-top:1px solid var(--brass-soft);border-bottom:1px solid var(--brass-soft);padding:16px 0;}
-.ticker{display:flex;white-space:nowrap;animation:tick 70s linear infinite;width:max-content;}
-@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.tick-item{font-family:var(--mono);font-size:12px;color:var(--cream-faint);padding:0 22px;border-right:1px solid var(--brass-soft2);}
+.hero-aside{
+  border-left:1px solid var(--line);padding-left:36px;
+  display:flex;flex-direction:column;gap:26px;margin-top:6px;
+}
+.fact{display:flex;flex-direction:column;gap:3px}
+.fact-label{font-size:12.5px;color:var(--muted)}
+.fact-value{font-size:16px;font-weight:600;color:var(--ink)}
 
-/* mango / founding vision box */
-.mango-box{border-left:2px solid var(--oxblood);padding:16px 0 16px 22px;margin-top:28px;}
-.mango-label{font-family:var(--mono);font-size:11px;color:var(--brass);margin-bottom:8px;}
-.mango-text{font-size:14px;font-weight:300;line-height:1.75;color:var(--cream-muted);}
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:1fr;gap:40px}
+  .hero-aside{border-left:none;border-top:1px solid var(--line);padding-left:0;padding-top:28px;
+    flex-direction:row;flex-wrap:wrap;gap:28px 36px}
+}
 
-/* two-col */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:start;}
+/* entrance — one orchestrated moment on the hero only */
+@media (prefers-reduced-motion:no-preference){
+  .hero-head,.hero-sub,.hero-ctas{opacity:0;animation:rise .6s ease-out forwards}
+  .hero-head{animation-delay:.02s}
+  .hero-sub{animation-delay:.14s}
+  .hero-ctas{animation-delay:.24s}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+}
 
-/* verticals / service lines */
-.vl-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--brass-soft);border-left:1px solid var(--brass-soft);}
-.vl-cell{border-right:1px solid var(--brass-soft);border-bottom:1px solid var(--brass-soft);padding:30px 26px;cursor:pointer;transition:background .2s;}
-.vl-cell:hover{background:rgba(138,114,80,.06);}
-.vl-no{font-family:var(--mono);font-size:11px;color:var(--brass);margin-bottom:16px;}
-.vl-name{font-family:var(--display);font-size:19px;font-weight:600;margin-bottom:10px;}
-.vl-desc{font-size:13px;font-weight:300;color:var(--cream-muted);line-height:1.65;}
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.section{padding:72px 0}
+.section-alt{background:var(--paper)}
+.section-head{max-width:640px;margin-bottom:40px}
+.section-kicker{font-size:13px;color:var(--gold-deep);font-weight:600;margin-bottom:10px}
+.section-title{font-family:var(--serif);font-weight:600;font-size:clamp(26px,3vw,34px);color:var(--ink);line-height:1.22}
+.section-body{margin-top:14px;font-size:16px;line-height:1.7;color:var(--muted);max-width:58ch}
 
-/* bucket grid */
-.bk-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--brass-soft);border-left:1px solid var(--brass-soft);}
-.bk-cell{border-right:1px solid var(--brass-soft);border-bottom:1px solid var(--brass-soft);padding:26px 24px;}
-.bk-name{font-family:var(--display);font-size:17px;font-weight:600;margin-bottom:6px;}
-.bk-verts{font-size:12px;color:var(--cream-faint);margin-bottom:10px;line-height:1.6;}
-.bk-status{font-family:var(--mono);font-size:10.5px;letter-spacing:.3px;}
+/* buckets list */
+.bucket-list{border-top:1px solid var(--line)}
+.bucket-row{
+  display:grid;grid-template-columns:1.1fr 2fr auto;gap:28px;align-items:center;
+  padding:22px 0;border-bottom:1px solid var(--line);
+}
+.bucket-name{font-family:var(--serif);font-weight:600;font-size:19px;color:var(--ink)}
+.bucket-scope{font-size:14.5px;color:var(--muted);line-height:1.6}
+.bucket-status{font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;justify-self:end}
+.bucket-status::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:7px;vertical-align:middle}
 
-/* tier table */
-.tier-table{width:100%;border-collapse:collapse;}
-.tier-table th{text-align:left;font-family:var(--mono);font-size:11px;color:var(--brass);font-weight:400;padding:10px 14px;border-bottom:1px solid var(--brass-soft);}
-.tier-table td{padding:14px 14px;border-bottom:1px solid var(--brass-soft2);font-size:13.5px;vertical-align:top;}
-.tier-table td:first-child{font-family:var(--display);font-weight:600;font-size:15px;}
+@media (max-width:700px){
+  .bucket-row{grid-template-columns:1fr;gap:6px;padding:18px 0}
+  .bucket-status{justify-self:start}
+}
 
-/* registry entries */
-.re-row{display:grid;grid-template-columns:100px 150px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--brass-soft2);align-items:start;}
-.re-no{font-family:var(--mono);font-size:13px;color:var(--brass);}
-.re-date{font-family:var(--mono);font-size:11px;color:rgba(28,27,25,.42);}
-.re-name{font-size:14.5px;font-weight:500;margin-bottom:3px;}
-.re-tag{font-size:11.5px;color:var(--brass);margin-bottom:6px;}
-.re-line{font-size:13px;color:var(--ink-muted);line-height:1.6;}
+/* how it works — real sequence (member journey), shown as one */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.step{padding:28px 28px 30px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.step-index{font-family:var(--serif);font-size:15px;color:var(--gold-deep);margin-bottom:12px}
+.step-title{font-weight:600;font-size:16.5px;color:var(--ink);margin-bottom:8px}
+.step-body{font-size:14.5px;color:var(--muted);line-height:1.65}
+@media (max-width:760px){.steps{grid-template-columns:1fr}}
 
-/* contact */
-.contact-row{display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+/* principles — two column list, no cards/shadows */
+.prin-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px 48px}
+.prin{padding-top:18px;border-top:1px solid var(--line)}
+.prin-name{font-weight:600;font-size:15.5px;color:var(--ink);margin-bottom:6px}
+.prin-body{font-size:14.5px;color:var(--muted);line-height:1.65}
+@media (max-width:700px){.prin-grid{grid-template-columns:1fr}}
 
-/* FAQ */
-.faq-item{border-bottom:1px solid var(--brass-soft);padding:20px 0;cursor:pointer;}
-.faq-q{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:17px;font-weight:600;}
-.faq-mark{font-family:var(--mono);color:var(--brass);font-size:14px;}
-.faq-a{display:none;font-size:14px;font-weight:300;color:var(--cream-muted);line-height:1.7;max-width:640px;margin-top:14px;}
-.faq-item.open .faq-a{display:block;}
+/* CTA band */
+#cta{background:var(--navy-deep);color:var(--white);padding:76px 0;text-align:left}
+#cta .section-title{color:var(--white)}
+#cta .section-body{color:rgba(255,255,255,.68)}
+#cta .cta-row{margin-top:30px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+#cta .btn-outline{color:var(--white);border-color:rgba(255,255,255,.4)}
+#cta .btn-outline:hover{background:var(--white);color:var(--navy-deep);border-color:var(--white)}
 
 /* footer */
-#footer{border-top:1px solid var(--brass-soft);padding:70px 56px 36px;}
-.footer-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px;}
-.f-brand{font-family:var(--display);font-size:22px;font-weight:600;margin-bottom:10px;}
-.f-sub{font-family:var(--mono);font-size:11px;color:var(--brass);margin-bottom:16px;}
-.f-desc{font-size:13px;color:var(--cream-muted);line-height:1.7;max-width:320px;}
-.f-col-title{font-family:var(--mono);font-size:11px;color:var(--brass);margin-bottom:14px;}
-.f-col a{display:block;font-size:13px;color:var(--cream-muted);margin-bottom:10px;}
-.f-col a:hover{color:var(--cream-text);}
-.f-bottom{max-width:1180px;margin:56px auto 0;padding-top:24px;border-top:1px solid var(--brass-soft2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-.f-copy{font-size:12px;color:var(--cream-faint);}
-.f-legal{display:flex;gap:18px;}
-.f-legal a{font-size:12px;color:var(--cream-faint);}
+footer{padding:48px 0 36px;border-top:1px solid var(--line)}
+.foot-grid{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap}
+.foot-desc{font-size:13.5px;color:var(--muted);line-height:1.6;max-width:36ch;margin-top:10px}
+.foot-links{display:flex;gap:28px;font-size:13.5px;color:var(--muted)}
+.foot-links a:hover{color:var(--navy)}
+.foot-bottom{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+  font-size:12.5px;color:var(--muted)}
 
-/* toast */
-.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink2);border:1px solid var(--brass-soft);padding:14px 24px;font-size:13px;z-index:999;opacity:0;transition:all .3s;pointer-events:none;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* about principles */
-.pr-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--brass-soft);border-left:1px solid var(--brass-soft);}
-.pr-cell{border-right:1px solid var(--brass-soft);border-bottom:1px solid var(--brass-soft);padding:30px 26px;}
-.pr-no{font-family:var(--mono);font-size:11px;color:var(--brass);margin-bottom:14px;}
-.pr-name{font-family:var(--display);font-size:17px;font-weight:600;margin-bottom:8px;}
-.pr-body{font-size:13px;font-weight:300;color:var(--cream-muted);line-height:1.65;}
-
-/* timeline */
-.tl{border-top:1px solid var(--brass-soft);}
-.tl-row{display:grid;grid-template-columns:90px 1fr;gap:26px;padding:24px 0;border-bottom:1px solid var(--brass-soft);}
-.tl-mark{font-family:var(--mono);font-size:12px;color:var(--brass);}
-.tl-name{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:6px;}
-.tl-body{font-size:13px;font-weight:300;color:var(--cream-muted);line-height:1.65;max-width:560px;}
-
-/* blog carousel (restyled) */
-.blog-wrap{min-height:100vh;padding:150px 56px 80px;max-width:980px;margin:0 auto;}
-.blog-slide{display:none;}
-.blog-slide.act{display:block;}
-.blog-eyebrow{font-family:var(--mono);font-size:12px;color:var(--brass);margin-bottom:14px;}
-.blog-title{font-family:var(--display);font-size:clamp(26px,3.4vw,42px);font-weight:600;line-height:1.14;margin-bottom:16px;}
-.blog-meta{font-family:var(--mono);font-size:11px;color:var(--cream-faint);margin-bottom:34px;}
-.blog-excerpt{font-size:15px;font-weight:300;color:var(--cream-muted);line-height:1.8;margin-bottom:30px;}
-.blog-body{font-size:16px;font-weight:300;line-height:1.85;color:var(--cream-muted);}
-.blog-body h2{font-family:var(--display);font-size:24px;font-weight:600;color:var(--cream-text);margin:32px 0 14px;}
-.blog-body blockquote{border-left:2px solid var(--oxblood);padding:4px 0 4px 22px;margin:26px 0;font-family:var(--display);font-style:italic;font-size:19px;color:var(--cream-text);}
-.blog-body p{margin-bottom:20px;}
-.blog-nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:60px;padding-top:24px;border-top:1px solid var(--brass-soft);}
-.blog-nav-btn{font-family:var(--mono);font-size:12px;color:var(--cream-muted);cursor:pointer;background:none;border:none;}
-.blog-nav-btn:disabled{opacity:.3;cursor:default;}
-.blog-count{font-family:var(--mono);font-size:11px;color:var(--brass);}
-.blog-cta{margin-top:50px;border-top:1px solid var(--brass-soft);padding-top:40px;text-align:center;}
-
-@media(max-width:860px){
-  #nav,#nav.stuck{padding:16px 24px;}
-  .nav-links{display:none;}
-  .ham{display:flex;}
-  .wrap,.wrap-sm{padding:0 24px;}
-  .section{padding:80px 0;}
-  .hero-grid{grid-template-columns:1fr;gap:20px;padding:0 24px;}
-  .hero-reg{display:flex;gap:20px;}
-  .two-col,.contact-row{grid-template-columns:1fr;gap:40px;}
-  .vl-grid{grid-template-columns:repeat(2,1fr);}
-  .bk-grid{grid-template-columns:1fr;}
-  .pr-grid{grid-template-columns:1fr;}
-  .ledger-row{grid-template-columns:70px 1fr;gap:16px;}
-  .re-row{grid-template-columns:1fr;gap:4px;}
-  .footer-grid{grid-template-columns:1fr 1fr;}
-  .panel{padding:28px;}
-  .blog-wrap{padding:120px 24px 60px;}
+@media (max-width:600px){
+  #hero{padding:56px 0 48px}
+  .section{padding:52px 0}
+  #cta{padding:52px 0}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══════ NAV ═══════ -->
 <nav id="nav">
-  <div class="nav-logo" onclick="goto('home')">MahaYukti</div>
-  <div class="nav-links" id="navLinks">
-    <a onclick="goto('home')" data-p="home">Home</a>
-    <a onclick="goto('about')" data-p="about">About</a>
-    <a onclick="goto('network')" data-p="network">Network</a>
-    <a onclick="goto('verticals')" data-p="verticals">Verticals</a>
-    <a onclick="goto('founding')" data-p="founding">Founding</a>
-    <a onclick="goto('blog')" data-p="blog">Blog</a>
-    <a onclick="goto('join')" data-p="join">Apply</a>
-    <a onclick="goto('contact')" data-p="contact" class="nav-cta">Contact</a>
+  <div class="nav-inner">
+    <a class="logo" href="#top">Maha<span>Yukti</span></a>
+    <div style="display:flex;align-items:center">
+      <div class="nav-links">
+        <a class="nav-link" href="#about">About</a>
+        <a class="nav-link" href="#buckets">Verticals</a>
+        <a class="nav-link" href="#contact">Contact</a>
+      </div>
+      <div class="nav-actions">
+        <a class="btn btn-outline" href="app.html#login">Login</a>
+        <a class="btn btn-gold" href="app.html#apply-choice">Apply for Membership</a>
+      </div>
+    </div>
   </div>
-  <button class="ham" id="ham" onclick="toggleMob()"><span></span><span></span><span></span></button>
 </nav>
 
-<div id="mob-nav">
-  <a onclick="goto('home');toggleMob()">Home</a>
-  <a onclick="goto('about');toggleMob()">About</a>
-  <a onclick="goto('network');toggleMob()">Network</a>
-  <a onclick="goto('verticals');toggleMob()">Verticals</a>
-  <a onclick="goto('founding');toggleMob()">Founding</a>
-  <a onclick="goto('blog');toggleMob()">Blog</a>
-  <a onclick="goto('join');toggleMob()">Apply</a>
-  <a onclick="goto('contact');toggleMob()">Contact</a>
-</div>
-<div id="mob-overlay" onclick="toggleMob()"></div>
+<main>
 
-<!-- ═══════════════════════════════════════════
-     PAGE: HOME
-═══════════════════════════════════════════ -->
-<div class="page active" id="pg-home">
-
-  <section id="hero">
+  <!-- HERO -->
+  <section id="hero" class="wrap">
+    <div id="top"></div>
     <div class="hero-grid">
-      <div class="hero-reg rv">
-        <div>Register</div>
-        <div>No. 001</div>
-        <div>Est. 2026</div>
-        <div>India</div>
-      </div>
-      <div class="rv">
-        <h1 class="hero-h1">Maha<br>Yukti</h1>
-        <p class="hero-tag">Maha strategy. Every scale.</p>
-        <p class="hero-desc">A private, cross-domain professional network for India. Not a job board. Not a freelance platform. Not a consulting firm — a register of admitted members who help each other, with no platform cut on what they earn together.</p>
-        <div class="hero-btns">
-          <a class="btn btn-seal" onclick="goto('join')">Apply for Membership</a>
-          <a class="btn" onclick="goto('about')">Read the Founding Vision</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="ticker-wrap">
-    <div class="ticker" id="ticker"></div>
-  </div>
-
-  <!-- WHAT IS MAHAYUKTI -->
-  <section class="section">
-    <div class="wrap two-col rv">
       <div>
-        <span class="tag">Entry 01 — What MahaYukti Is</span>
-        <h2 class="h2">Built by someone<br>who saw it <em>work.</em></h2>
-        <p class="body-lg" style="margin-top:20px;">MahaYukti is a private professional community — where a CA in Lucknow can reach a lawyer in Kolkata, a doctor in Mumbai, and a public-affairs specialist in Delhi, inside one registry. No gatekeeping toll. No charges between members. No platform cut on what members earn together.</p>
-        <div class="mango-box">
-          <div class="mango-label">Philosophy</div>
-          <div class="mango-text">"By you. For you. Of you. A mango tree you plant today — bearing unlimited fruit in the future."</div>
+        <h1 class="hero-head">Professional India, finally networked.</h1>
+        <p class="hero-sub">MahaYukti is a private register of verified professionals across law, finance, technology, and more — built so members help each other directly, with nothing taken off what they earn together.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-gold btn-lg" href="app.html#apply-choice">Apply for Membership</a>
+          <a class="nav-link" href="#about" style="color:var(--navy);font-weight:600">See how it works →</a>
         </div>
       </div>
-      <div>
-        <div class="hairline" style="margin-bottom:28px;"></div>
-        <p class="body-md">Built by a practitioner who established similar cross-domain networks across Europe, the UK, and the USA over two decades — now bringing that same infrastructure to Indian professionals, who have long had the expertise but never the register to connect it.</p>
-        <div style="margin-top:28px;">
-          <a class="btn btn-sm" onclick="goto('about')">The Founding Vision</a>
+      <div class="hero-aside">
+        <div class="fact"><div class="fact-label">To apply</div><div class="fact-value">Free, member tier</div></div>
+        <div class="fact"><div class="fact-label">Review</div><div class="fact-value">Every application read personally</div></div>
+        <div class="fact"><div class="fact-label">Open now</div><div class="fact-value">Technology, Legal, Accounting</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT / WHAT IT IS -->
+  <section id="about" class="section section-alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-kicker">What MahaYukti is</div>
+        <h2 class="section-title">Not a job board. Not a platform. A register.</h2>
+        <p class="section-body">Members join a private, admission-gated register — not a marketplace. There's no platform cut on what members earn from each other, and every application is read by a person, not a filter.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-index">1</div>
+          <div class="step-title">Apply</div>
+          <div class="step-body">Pick your vertical and tell us who you are. Takes a few minutes, free to submit.</div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <!-- STRUCTURE: BUCKET / VERTICAL / TIER -->
-  <section class="section">
-    <div class="wrap rv">
-      <span class="tag">Entry 02 — How the Registry Is Organised</span>
-      <h2 class="h2" style="margin-bottom:40px;">Two axes. <em>One register.</em></h2>
-      <div class="two-col">
-        <div>
-          <h3 class="h3" style="margin-bottom:12px;">Bucket &amp; Vertical</h3>
-          <p class="body-md">A <strong>bucket</strong> is a macro domain community — Legal, Accounting &amp; Audit, Capital &amp; Funding, and nine others. A <strong>vertical</strong> is the specific tag within it — inside Capital &amp; Funding, that might read VC, private lender, banker, or aggregator. Every member sits in a bucket, tagged by vertical.</p>
+        <div class="step">
+          <div class="step-index">2</div>
+          <div class="step-title">Get verified</div>
+          <div class="step-body">Admin reviews every application individually and confirms your place in the register.</div>
         </div>
-        <div>
-          <h3 class="h3" style="margin-bottom:12px;">Tier</h3>
-          <p class="body-md">Tier is a separate axis entirely — it tracks standing, not profession. It runs Member → Participant → Bucket Head → Council, and is earned through contribution, never purchased. See the full tier table under <a onclick="goto('network')" style="text-decoration:underline;cursor:pointer;">Network</a>.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <!-- VERTICALS / SERVICE LINES PREVIEW -->
-  <section class="section" style="padding-bottom:0;">
-    <div class="wrap rv" style="margin-bottom:0;">
-      <span class="tag">Entry 03 — The Four Service Lines</span>
-      <h2 class="h2" style="margin-bottom:12px;">Every need. <em>Every scale.</em></h2>
-      <p class="body-lg" style="max-width:560px;margin-bottom:44px;">From structured advisory and expert consulting to discreet personal facilitation and community peer support.</p>
-    </div>
-    <div class="wrap rv" style="padding:0;">
-      <div class="vl-grid">
-        <div class="vl-cell" onclick="goto('verticals')"><div class="vl-no">01</div><div class="vl-name">MY Advisory</div><div class="vl-desc">Research, analysis, and strategic intelligence for corporates, SMEs, and institutions.</div></div>
-        <div class="vl-cell" onclick="goto('verticals')"><div class="vl-no">02</div><div class="vl-name">MY Consultancy</div><div class="vl-desc">Expert-to-client professional services across every domain — legal, financial, technical.</div></div>
-        <div class="vl-cell" onclick="goto('verticals')"><div class="vl-no">03</div><div class="vl-name">MY Concierge</div><div class="vl-desc">Bespoke, discreet facilitation for complex or time-critical circumstances.</div></div>
-        <div class="vl-cell" onclick="goto('verticals')"><div class="vl-no">04</div><div class="vl-name">MY Help</div><div class="vl-desc">The peer layer — mentoring, referrals, knowledge exchange, introductions.</div></div>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <!-- REGISTRY ENTRIES -->
-  <section class="section">
-    <div class="wrap rv">
-      <span class="tag">Entry 04 — Recent Admissions</span>
-      <h2 class="h2" style="margin-bottom:12px;">A sample of the <em>register.</em></h2>
-      <p class="body-lg" style="max-width:560px;margin-bottom:36px;">Illustrative entries, structured the way a real admission is recorded — sequence number, date, name, bucket, and what the member actually does. Founding period — applications open.</p>
-      <div class="panel panel-tight">
-        <div id="registryEntries"></div>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <!-- FOUNDING PREVIEW -->
-  <section class="section" style="background:rgba(138,114,80,.03);">
-    <div class="wrap rv">
-      <span class="tag">Entry 05 — Founding Period</span>
-      <h2 class="h2" style="margin-bottom:12px;">Three buckets. <em>Open now.</em></h2>
-      <p class="body-lg" style="max-width:580px;margin-bottom:36px;">Founding-period applications are open in three buckets. Every other bucket listed under Network is coming — if yours is not open yet, register your interest.</p>
-      <div class="bk-grid">
-        <div class="bk-cell"><div class="bk-name">Technology &amp; Cybersecurity</div><div class="bk-verts">Software architecture · DevOps · VAPT · Cloud · Data science</div><div class="bk-status status-open">Applications open</div></div>
-        <div class="bk-cell"><div class="bk-name">Legal</div><div class="bk-verts">Advocates · Corporate counsel · Compliance · IP · Litigation</div><div class="bk-status status-open">Applications open</div></div>
-        <div class="bk-cell"><div class="bk-name">Accounting &amp; Audit</div><div class="bk-verts">Chartered accountancy · Forensic accounting · Tax advisory · Internal audit</div><div class="bk-status status-open">Applications open</div></div>
-      </div>
-      <div style="margin-top:36px;">
-        <a class="btn btn-seal" onclick="goto('founding')">View Founding Details</a>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <!-- CTA -->
-  <section class="section-sm">
-    <div class="wrap-sm rv" style="text-align:center;">
-      <span class="tag" style="text-align:center;">Entry 06 — Join</span>
-      <h2 class="h2" style="margin-bottom:16px;">The register is open.<br><em>Membership is earned.</em></h2>
-      <p class="body-md" style="max-width:460px;margin:0 auto 32px;">Member tier is free, no platform cut, no fees between members — ever. Every application is reviewed individually.</p>
-      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-        <a class="btn btn-seal" onclick="goto('join')">Apply for Membership</a>
-        <a class="btn" onclick="goto('contact')">Contact Us</a>
-      </div>
-    </div>
-  </section>
-
-</div><!-- /home -->
-
-<!-- ═══════════════════════════════════════════
-     PAGE: ABOUT
-═══════════════════════════════════════════ -->
-<div class="page" id="pg-about">
-  <section class="section" style="padding-top:160px;">
-    <div class="wrap two-col rv">
-      <div>
-        <span class="tag">Register — About</span>
-        <h1 class="h1">Built by those<br>who saw it <em>work.</em></h1>
-        <p class="body-lg" style="margin-top:22px;">MahaYukti is not a startup idea. It is a model observed, built, and refined across three of the world's most sophisticated professional markets — then brought home to India.</p>
-      </div>
-      <div>
-        <div class="hairline" style="margin-bottom:28px;"></div>
-        <div class="mango-box">
-          <div class="mango-label">The Founder</div>
-          <div class="mango-text">A practitioner with two decades of experience building similar cross-domain networks across Europe, the UK, and the USA has returned to India. The network is the protagonist — the founder is its guardian, stepping in only to settle internal disputes. It is designed to run on its own, powered by its members.</div>
+        <div class="step">
+          <div class="step-index">3</div>
+          <div class="step-title">Connect directly</div>
+          <div class="step-body">Reach other members across domains for referrals and work — no platform in between.</div>
         </div>
       </div>
     </div>
   </section>
-
-  <div class="hairline"></div>
-
-  <section class="section">
-    <div class="wrap rv">
-      <span class="tag">Principles</span>
-      <h2 class="h2" style="margin-bottom:40px;">What the network is <em>built on.</em></h2>
-      <div class="pr-grid">
-        <div class="pr-cell"><div class="pr-no">01</div><div class="pr-name">Expertise first</div><div class="pr-body">Membership is earned through verified domain expertise — not job titles or years of service alone.</div></div>
-        <div class="pr-cell"><div class="pr-no">02</div><div class="pr-name">Absolute discretion</div><div class="pr-body">Client identities, member profiles, and internal operations are protected as a foundational commitment.</div></div>
-        <div class="pr-cell"><div class="pr-no">03</div><div class="pr-name">Community sustenance</div><div class="pr-body">Members keep what they earn. No platform cut between members — ever.</div></div>
-        <div class="pr-cell"><div class="pr-no">04</div><div class="pr-name">India first, global architecture</div><div class="pr-body">Rooted in India, built with the structure the founder proved abroad.</div></div>
-        <div class="pr-cell"><div class="pr-no">05</div><div class="pr-name">Scrutiny over scale</div><div class="pr-body">Every application is reviewed individually. The register's value depends on who is inside it.</div></div>
-        <div class="pr-cell"><div class="pr-no">06</div><div class="pr-name">Collective intelligence</div><div class="pr-body">A lawyer, a data scientist, a journalist, and a financier on the same mandate. That is the real asset.</div></div>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <section class="section">
-    <div class="wrap two-col rv">
-      <div>
-        <span class="tag">The Journey</span>
-        <h2 class="h2" style="font-size:clamp(26px,3vw,40px);">Two decades.<br>Three continents.<br><em>One register.</em></h2>
-        <p class="body-md" style="margin-top:18px;">The model that powers MahaYukti was not conceived in India. It was observed, built, and refined abroad — then brought home.</p>
-      </div>
-      <div>
-        <div class="tl">
-          <div class="tl-row"><div class="tl-mark">Europe</div><div><div class="tl-name">Private network architecture</div><div class="tl-body">Establishing cross-domain professional networks serving institutions and clients requiring discreet, expert-led facilitation.</div></div></div>
-          <div class="tl-row"><div class="tl-mark">UK</div><div><div class="tl-name">Advisory infrastructure</div><div class="tl-body">Building legal, financial, and intelligence advisory networks spanning multiple domains under one trusted register.</div></div></div>
-          <div class="tl-row"><div class="tl-mark">USA</div><div><div class="tl-name">Scale &amp; scope</div><div class="tl-body">Expanding the model to corporate, political, and personal facilitation — proving the architecture at scale.</div></div></div>
-          <div class="tl-row"><div class="tl-mark">India</div><div><div class="tl-name">MahaYukti · 2026</div><div class="tl-body">Returning home to build the same infrastructure for India's professionals — on Indian terms, global architecture.</div></div></div>
-        </div>
-      </div>
-    </div>
-  </section>
-</div><!-- /about -->
-
-<!-- ═══════════════════════════════════════════
-     PAGE: NETWORK
-═══════════════════════════════════════════ -->
-<div class="page" id="pg-network">
-  <section class="section" style="padding-top:160px;">
-    <div class="wrap rv">
-      <span class="tag">Register — Network Structure</span>
-      <h1 class="h1" style="max-width:680px;margin-bottom:16px;">Open to all.<br><em>Selective</em> by design.</h1>
-      <p class="body-lg" style="max-width:560px;">Every application is reviewed individually. Admission is by scrutiny — credentials, domain expertise, and professional intent are all considered.</p>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <!-- TIER TABLE -->
-  <section class="section">
-    <div class="wrap rv">
-      <span class="tag">Tier — Standing, Not Profession</span>
-      <h2 class="h2" style="margin-bottom:28px;">Member → Participant →<br><em>Bucket Head → Council.</em></h2>
-      <div class="panel">
-        <table class="tier-table">
-          <thead><tr><th>Tier</th><th>How it's reached</th><th>What it holds</th></tr></thead>
-          <tbody>
-            <tr><td>Member</td><td>Open application, verified credential</td><td>Free, forever. No platform cut. No fees between members. Directory listing, MY Help access, lead routing.</td></tr>
-            <tr><td>Participant</td><td>Active, proven contribution as a Member</td><td>Active service listing, domain forums, priority referral routing, MY Help mentoring.</td></tr>
-            <tr><td>Bucket Head</td><td>One per bucket — direct-invited industry leader, or promoted from within for real contribution</td><td>Owns vetting of new applicants in that bucket. Invite-only, annual fee.</td></tr>
-            <tr><td>Council</td><td>The sitting Bucket Heads, collectively, plus the founder</td><td>Network governance, standards, and dispute resolution. Invite-only, annual fee.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="body-md" style="margin-top:20px;max-width:640px;">Member tier is free and stays free — no registration fee, no annual fee, no charges between members, ever. The Bucket Head / Council tier is invite-only and carries an annual fee; this is the network's actual monetisation layer, separate entirely from how Members transact with each other.</p>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
 
   <!-- BUCKETS -->
-  <section class="section">
-    <div class="wrap rv">
-      <span class="tag">Bucket &amp; Vertical — Full List</span>
-      <h2 class="h2" style="margin-bottom:12px;">Every domain has <em>a place.</em></h2>
-      <p class="body-lg" style="max-width:600px;margin-bottom:40px;">Twelve buckets, covering credentialed professions, business owners, trades, and public figures. Three are open for founding-period applications — the rest are coming.</p>
-      <div class="ledger">
-        <div class="ledger-row"><div><div class="lr-num">01</div></div><div><div class="lr-name">Legal</div><div class="lr-sub">Advocates · Corporate counsel · Compliance · IP · Litigation</div><div class="lr-status status-open">Applications open</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">02</div></div><div><div class="lr-name">Accounting &amp; Audit</div><div class="lr-sub">Chartered accountancy · Forensic accounting · Tax advisory · Internal audit</div><div class="lr-status status-open">Applications open</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">03</div></div><div><div class="lr-name">Technology &amp; Cybersecurity</div><div class="lr-sub">Software architecture · DevOps · VAPT · Cloud · Data science</div><div class="lr-status status-open">Applications open</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">04</div></div><div><div class="lr-name">Capital &amp; Funding</div><div class="lr-sub">Venture capital · Private equity · Private lenders · Bankers · Family offices · Aggregators</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">05</div></div><div><div class="lr-name">Business &amp; Industry</div><div class="lr-sub">Manufacturing · MSME · Retail · F&amp;B · Agritech · Jewellery &amp; trade houses</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">06</div></div><div><div class="lr-name">Government &amp; Public Affairs</div><div class="lr-sub">Policy · Political advisory · Public sector</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">07</div></div><div><div class="lr-name">Defence &amp; Security</div><div class="lr-sub">Armed forces · Intelligence &amp; strategic affairs · Private security</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">08</div></div><div><div class="lr-name">Culture &amp; Public Influence</div><div class="lr-sub">Media · Journalism · Arts · Sports · Entertainment</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">09</div></div><div><div class="lr-name">Trades &amp; Craft</div><div class="lr-sub">Architecture · Construction · Skilled trades · Artisans</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">10</div></div><div><div class="lr-name">Science &amp; Deep-Tech</div><div class="lr-sub">R&amp;D · Biotech · Pharma research · Academia</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">11</div></div><div><div class="lr-name">Healthcare &amp; Medicine</div><div class="lr-sub">Clinical practice · Hospital administration · Public health</div><div class="lr-status status-coming">Coming</div></div></div>
-        <div class="ledger-row"><div><div class="lr-num">12</div></div><div><div class="lr-name">Real Estate &amp; Infrastructure</div><div class="lr-sub">Development · Urban planning · Logistics · Construction finance</div><div class="lr-status status-coming">Coming</div></div></div>
+  <section id="buckets" class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-kicker">Founding period</div>
+        <h2 class="section-title">Three verticals, open now</h2>
+        <p class="section-body">Every other vertical is coming. If yours isn't open yet, apply anyway — we'll place you as soon as it is.</p>
       </div>
-      <div style="margin-top:40px;">
-        <a class="btn btn-seal" onclick="goto('join')">Apply for Membership</a>
-      </div>
-    </div>
-  </section>
-</div><!-- /network -->
-
-<!-- ═══════════════════════════════════════════
-     PAGE: VERTICALS (service lines)
-═══════════════════════════════════════════ -->
-<div class="page" id="pg-verticals">
-  <section class="section" style="padding-top:160px;">
-    <div class="wrap rv">
-      <span class="tag">Register — Service Lines</span>
-      <h1 class="h1" style="max-width:640px;margin-bottom:16px;">Four service lines.<br><em>One ecosystem.</em></h1>
-      <p class="body-lg" style="max-width:520px;">Every need, every scale — from structured advisory to discreet personal facilitation.</p>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <section class="section">
-    <div class="wrap two-col rv">
-      <div>
-        <span class="tag">01 — MY Advisory</span>
-        <h2 class="h2">MY <em>Advisory</em></h2>
-        <p class="body-lg" style="margin-top:18px;">Research, analysis, strategic intelligence, and counsel — for corporates, SMEs, political clients, and institutions working through complex mandates.</p>
-      </div>
-      <div>
-        <div class="hairline" style="margin-bottom:24px;"></div>
-        <p class="body-md"><strong>Example:</strong> a corporate client planning an acquisition needs background intelligence. A legal expert, a forensic CA, a market researcher, and an OSINT specialist coordinate through MY Advisory to deliver one complete intelligence brief — not four separate invoices.</p>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <section class="section">
-    <div class="wrap two-col rv">
-      <div>
-        <span class="tag">02 — MY Consultancy</span>
-        <h2 class="h2">MY <em>Consultancy</em></h2>
-        <p class="body-lg" style="margin-top:18px;">Expert-to-client professional services across every domain — the right expert matched to the right client, from first-generation entrepreneurs to listed corporations.</p>
-      </div>
-      <div>
-        <div class="hairline" style="margin-bottom:24px;"></div>
-        <p class="body-md"><strong>Example:</strong> a first-generation entrepreneur needs a bank-loan DPR, legal structuring, and a feasibility study. MY Consultancy coordinates a CA, a lawyer, and a market researcher around one client.</p>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <section class="section">
-    <div class="wrap two-col rv">
-      <div>
-        <span class="tag">03 — MY Concierge</span>
-        <h2 class="h2">MY <em>Concierge</em></h2>
-        <p class="body-lg" style="margin-top:18px;">Bespoke facilitation for individuals and organisations navigating complex, sensitive, or time-critical circumstances — discreet, and available on short notice.</p>
-      </div>
-      <div>
-        <div class="hairline" style="margin-bottom:24px;"></div>
-        <p class="body-md">MY Concierge is not a public service. It is accessible to members and referred clients only, and the first conversation is always confidential.</p>
-        <a class="btn btn-sm" style="margin-top:16px;" href="mailto:info@mahayukti.com?subject=MY Concierge — Enquiry">Enquire Privately</a>
-      </div>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <section class="section">
-    <div class="wrap two-col rv">
-      <div>
-        <span class="tag">04 — MY Help</span>
-        <h2 class="h2">MY <em>Help</em></h2>
-        <p class="body-lg" style="margin-top:18px;">The community layer — peer connection, mentoring, referrals, knowledge exchange, and buyer–seller introductions. No transaction fees. No platform cuts.</p>
-      </div>
-      <div>
-        <div class="hairline" style="margin-bottom:24px;"></div>
-        <p class="body-md"><strong>Example:</strong> a law graduate in Patna is paired with a senior corporate advocate in Delhi — building in months what otherwise takes years.</p>
-      </div>
-    </div>
-  </section>
-</div><!-- /verticals -->
-
-<!-- ═══════════════════════════════════════════
-     PAGE: FOUNDING
-═══════════════════════════════════════════ -->
-<div class="page" id="pg-founding">
-  <section class="section" style="padding-top:160px;">
-    <div class="wrap rv">
-      <span class="tag">Register — Founding Period</span>
-      <h1 class="h1" style="max-width:680px;margin-bottom:16px;">Three buckets. <em>Open now.</em></h1>
-      <p class="body-lg" style="max-width:580px;">Founding-period applications are open across three buckets. Every applicant is reviewed individually — if you have the expertise and the intent to help build this register, this is your invitation.</p>
-    </div>
-  </section>
-
-  <div class="hairline"></div>
-
-  <section class="section">
-    <div class="wrap rv">
-      <div class="ledger">
-        <div class="ledger-row">
-          <div><div class="lr-num">Bucket</div><div class="lr-date">Open</div></div>
-          <div>
-            <div class="lr-name">Technology &amp; Cybersecurity</div>
-            <div class="lr-sub">Software architecture · DevOps · VAPT · Cloud · Data science</div>
-            <div class="lr-body">Software engineers, architects, DevOps specialists, and cybersecurity analysts build the register's own digital foundation as founding members of this bucket.</div>
-          </div>
+      <div class="bucket-list">
+        <div class="bucket-row">
+          <div class="bucket-name">Technology &amp; Cybersecurity</div>
+          <div class="bucket-scope">Software architecture, DevOps, VAPT, cloud, data science</div>
+          <div class="bucket-status">Applications open</div>
         </div>
-        <div class="ledger-row">
-          <div><div class="lr-num">Bucket</div><div class="lr-date">Open</div></div>
-          <div>
-            <div class="lr-name">Legal</div>
-            <div class="lr-sub">Advocates · Corporate counsel · Compliance · IP · Litigation</div>
-            <div class="lr-body">Advocates, corporate lawyers, and compliance specialists write the legal backbone the network runs on.</div>
-          </div>
+        <div class="bucket-row">
+          <div class="bucket-name">Legal</div>
+          <div class="bucket-scope">Advocates, corporate counsel, compliance, IP, litigation</div>
+          <div class="bucket-status">Applications open</div>
         </div>
-        <div class="ledger-row">
-          <div><div class="lr-num">Bucket</div><div class="lr-date">Open</div></div>
-          <div>
-            <div class="lr-name">Accounting &amp; Audit</div>
-            <div class="lr-sub">Chartered accountancy · Forensic accounting · Tax advisory · Internal audit</div>
-            <div class="lr-body">Chartered accountants, forensic accountants, and tax advisors build the register's financial conscience.</div>
-          </div>
+        <div class="bucket-row">
+          <div class="bucket-name">Accounting &amp; Audit</div>
+          <div class="bucket-scope">Chartered accountancy, forensic accounting, tax advisory, internal audit</div>
+          <div class="bucket-status">Applications open</div>
         </div>
       </div>
-      <div style="margin-top:40px;">
-        <a class="btn btn-seal" onclick="goto('join')">Apply for Founding Membership</a>
-      </div>
     </div>
   </section>
-</div><!-- /founding -->
 
-<!-- ═══════════════════════════════════════════
-     PAGE: JOIN / APPLY
-═══════════════════════════════════════════ -->
-<div class="page" id="pg-join">
-  <section class="section" style="padding-top:160px;">
-    <div class="wrap-sm rv" style="text-align:center;">
-      <span class="tag" style="text-align:center;">Register — Apply</span>
-      <h1 class="h1" style="margin-bottom:16px;">The register is open.<br><em>Membership is earned.</em></h1>
-      <p class="body-lg" style="max-width:520px;margin:0 auto 36px;">Member tier is free, open application, verified credential. The application itself runs in the MahaYukti application — a short, five-step form that takes about five minutes.</p>
-      <div class="panel" style="text-align:left;">
-        <div class="tag">What the form asks</div>
-        <ol style="font-size:14px;color:var(--ink-muted);line-height:2;padding-left:20px;">
-          <li>Track — Member or Participant</li>
-          <li>Personal — name, email, preferred contact method, phone, city</li>
-          <li>Professional — bucket/domain, role, experience, LinkedIn</li>
-          <li>Intent — what you're looking to give and get from the network</li>
-          <li>Review &amp; submit</li>
-        </ol>
+  <!-- PRINCIPLES -->
+  <section class="section section-alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-kicker">How the register is run</div>
+        <h2 class="section-title">A few things we don't compromise on</h2>
       </div>
-      <div style="margin-top:36px;">
-        <a class="btn btn-seal" href="app.html">Open the Application</a>
-      </div>
-      <p class="body-md" style="margin-top:20px;">Prefer email? Write to us directly — every application is reviewed individually, with complete confidentiality.</p>
-      <a class="btn btn-sm" style="margin-top:12px;" href="mailto:info@mahayukti.com?subject=Network Membership Application">Apply via Email</a>
-    </div>
-  </section>
-</div><!-- /join -->
-
-<!-- ═══════════════════════════════════════════
-     PAGE: BLOG
-═══════════════════════════════════════════ -->
-<div class="page" id="pg-blog">
-  <div class="blog-wrap" id="blogWrap">
-    <div id="blogSlides"></div>
-    <div class="blog-nav-row" id="blogNavRow" style="display:none;">
-      <button class="blog-nav-btn" id="blogPrevBtn" onclick="blogGoTo(blogCurrent-1)">← Previous</button>
-      <div class="blog-count" id="blogCount">1 / 1</div>
-      <button class="blog-nav-btn" id="blogNextBtn" onclick="blogGoTo(blogCurrent+1)">Next →</button>
-    </div>
-  </div>
-</div><!-- /blog -->
-
-<!-- ═══════════════════════════════════════════
-     PAGE: CONTACT
-═══════════════════════════════════════════ -->
-<div class="page" id="pg-contact">
-  <section class="section" style="padding-top:160px;">
-    <div class="wrap rv">
-      <span class="tag" style="text-align:center;">Register — Contact</span>
-      <h1 class="h1" style="text-align:center;max-width:620px;margin:0 auto 16px;">The first conversation<br>is always <em>confidential.</em></h1>
-      <p class="body-lg" style="text-align:center;max-width:480px;margin:0 auto 48px;">Write to us directly. Every enquiry is reviewed personally and answered within 48 hours.</p>
-      <div class="contact-row">
-        <div class="panel panel-tight">
-          <div class="tag">Email</div>
-          <h3 class="h3" style="margin-bottom:10px;">info@mahayukti.com</h3>
-          <p style="font-size:13px;color:var(--ink-muted);line-height:1.7;">All communications are treated with complete confidentiality.</p>
+      <div class="prin-grid">
+        <div class="prin">
+          <div class="prin-name">Expertise first</div>
+          <div class="prin-body">Membership is earned through verified domain expertise, not job titles alone.</div>
         </div>
-        <div class="panel panel-tight">
-          <div class="tag">Subject-line format</div>
-          <p style="font-size:13px;color:var(--ink-muted);line-height:1.9;">Network Membership · [Domain] · [City]<br>Founding Member · [Your Bucket]<br>MY Concierge · Enquiry<br>General Enquiry</p>
+        <div class="prin">
+          <div class="prin-name">Absolute discretion</div>
+          <div class="prin-body">Member profiles and client identities are protected as a founding commitment.</div>
+        </div>
+        <div class="prin">
+          <div class="prin-name">No platform cut</div>
+          <div class="prin-body">What members earn from each other stays between members — always.</div>
+        </div>
+        <div class="prin">
+          <div class="prin-name">Scrutiny over scale</div>
+          <div class="prin-body">Every application is reviewed individually. The register is only as good as who's inside it.</div>
         </div>
       </div>
-      <div style="margin-top:56px;text-align:center;">
-        <a class="btn btn-seal" onclick="goto('join')">Apply for Membership</a>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta">
+    <div class="wrap">
+      <h2 class="section-title">The register is open. Membership is earned.</h2>
+      <p class="section-body" style="margin-top:14px">Member tier is free to apply for, with no fees between members, ever. Choose how you'd like to apply — fill it in yourself, or let LinkedIn fill in the basics for you.</p>
+      <div class="cta-row">
+        <a class="btn btn-gold btn-lg" href="app.html#apply-choice">Apply for Membership</a>
+        <a class="btn btn-outline" href="mailto:info@mahayukti.com?subject=Network Membership Application">Apply by email instead</a>
       </div>
     </div>
   </section>
-</div><!-- /contact -->
 
-<!-- FOOTER -->
-<footer id="footer">
-  <div class="footer-grid">
-    <div>
-      <div class="f-brand">MahaYukti</div>
-      <div class="f-sub">Private Professional Network · Est. 2026</div>
-      <p class="f-desc">A private, admission-gated, cross-domain professional network for India. Open by application. Selective by design.</p>
+</main>
+
+<footer id="contact">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="logo">Maha<span>Yukti</span></div>
+        <p class="foot-desc">A private, cross-domain professional register for India. Open by application, selective by design.</p>
+      </div>
+      <div class="foot-links">
+        <a href="mailto:info@mahayukti.com">info@mahayukti.com</a>
+        <a href="app.html#apply-choice">Apply</a>
+        <a href="app.html#login">Login</a>
+      </div>
     </div>
-    <div class="f-col">
-      <div class="f-col-title">Service Lines</div>
-      <a onclick="goto('verticals')">MY Advisory</a>
-      <a onclick="goto('verticals')">MY Consultancy</a>
-      <a onclick="goto('verticals')">MY Concierge</a>
-      <a onclick="goto('verticals')">MY Help</a>
+    <div class="foot-bottom">
+      <div>© 2026 MahaYukti. All rights reserved.</div>
+      <div>Private professional register, est. 2026</div>
     </div>
-    <div class="f-col">
-      <div class="f-col-title">Network</div>
-      <a onclick="goto('founding')">Founding Members</a>
-      <a onclick="goto('network')">Buckets &amp; Tiers</a>
-      <a onclick="goto('join')">Apply</a>
-    </div>
-    <div class="f-col">
-      <div class="f-col-title">Contact</div>
-      <a href="mailto:info@mahayukti.com">info@mahayukti.com</a>
-      <a href="mailto:info@mahayukti.com?subject=Founding Member Application">Founding Members</a>
-      <a href="mailto:info@mahayukti.com?subject=MY Concierge — Enquiry">MY Concierge</a>
-    </div>
-  </div>
-  <div class="f-bottom">
-    <div class="f-copy">© 2026 MahaYukti. Private Professional Network. All rights reserved.</div>
-    <div class="f-legal"><a>Privacy Policy</a><a>Terms of Use</a><a>Confidentiality</a></div>
   </div>
 </footer>
 
-<div class="toast" id="toast"></div>
-
-<script>
-// NAV SCROLL
-window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('stuck',scrollY>40));
-
-// MOBILE NAV
-function toggleMob(){
-  document.getElementById('mob-nav').classList.toggle('open');
-  document.getElementById('mob-overlay').classList.toggle('show');
-}
-
-// PAGE ROUTER
-const pages={home:'pg-home',about:'pg-about',network:'pg-network',verticals:'pg-verticals',founding:'pg-founding',join:'pg-join',blog:'pg-blog',contact:'pg-contact'};
-function goto(name){
-  Object.values(pages).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
-  const t=document.getElementById(pages[name]);
-  if(t){t.classList.add('active');window.scrollTo({top:0,behavior:'instant'});}
-  document.querySelectorAll('.nav-links a[data-p]').forEach(a=>a.classList.toggle('active',a.dataset.p===name));
-  setTimeout(initReveal,60);
-  if(name==='blog'&&!blogLoaded){loadBlogPosts();}
-}
-
-// REVEAL
-function initReveal(){
-  const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');});},{threshold:0.1});
-  document.querySelectorAll('.page.active .rv').forEach(el=>{el.classList.remove('in');obs.observe(el);});
-}
-initReveal();
-
-// TOAST
-function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
-
-// TICKER — real bucket/vertical list, rendered twice for the seamless loop
-(function(){
-  const items=['Legal','Accounting & Audit','Technology & Cybersecurity','Capital & Funding','Business & Industry','Government & Public Affairs','Defence & Security','Culture & Public Influence','Trades & Craft','Science & Deep-Tech','Healthcare & Medicine','Real Estate & Infrastructure'];
-  const html=items.map(i=>`<span class="tick-item">${i}</span>`).join('');
-  document.getElementById('ticker').innerHTML=html+html;
-})();
-
-// REGISTRY ENTRIES — illustrative, structurally honest (no fake totals)
-(function(){
-  const entries=[
-    {no:'001',date:'04 Jan 2026',name:'A. Mehta',tag:'Legal — Corporate Counsel',line:'Drafts cross-border joint-venture agreements for mid-market manufacturers.'},
-    {no:'002',date:'09 Jan 2026',name:'R. Iyer',tag:'Accounting & Audit — Forensic Accounting',line:'Leads financial-fraud investigations for listed companies.'},
-    {no:'003',date:'14 Jan 2026',name:'S. Kulkarni',tag:'Technology & Cybersecurity — VAPT',line:'Runs red-team engagements for BFSI infrastructure.'},
-    {no:'004',date:'21 Jan 2026',name:'N. Bhatt',tag:'Legal — Compliance',line:'Advises first-generation founders on regulatory structuring.'},
-    {no:'005',date:'28 Jan 2026',name:'P. Ramesh',tag:'Technology & Cybersecurity — Cloud Architecture',line:'Designs infrastructure for Series A/B product teams.'},
-  ];
-  document.getElementById('registryEntries').innerHTML=entries.map(e=>`
-    <div class="re-row">
-      <div class="re-no">No. ${e.no}</div>
-      <div class="re-date">${e.date}</div>
-      <div><div class="re-name">${e.name}</div><div class="re-tag">${e.tag}</div><div class="re-line">${e.line}</div></div>
-    </div>`).join('')+`<p style="margin-top:18px;font-size:12px;color:rgba(28,27,25,.42);">Founding period — applications open. Names illustrative.</p>`;
-})();
-
-// ── BLOG ──────────────────────────────────────────────────────────────────────
-let blogPosts=[],blogLoaded=false,blogCurrent=0;
-
-async function loadBlogPosts(){
-  blogPosts=getBlogFallback();
-  renderBlog();
-  try{
-    const res=await fetch('/blog-data.json?v='+Date.now());
-    if(!res.ok)throw new Error('fetch failed');
-    const data=await res.json();
-    const posts=(data.posts||[]).map(p=>({
-      id:p.id||'',category:p.domain||'',title:p.title||'',excerpt:p.excerpt||'',date:p.date||'',
-      readTime:p.subdomain?p.subdomain+' · '+(p.audience||''):'5 min read',
-      body:(p.content||'').replace(/\n/g,'<br>')
-    })).filter(p=>p.title);
-    if(posts.length>0){blogPosts=posts;renderBlog();}
-  }catch(e){ /* fallback already showing */ }
-}
-
-function bEsc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-
-function renderBlog(){
-  const wrap=document.getElementById('blogSlides');
-  wrap.innerHTML=blogPosts.map((p,i)=>`
-    <div class="blog-slide${i===0?' act':''}" id="bslide-${i}">
-      <div class="blog-eyebrow">${bEsc(p.category)}</div>
-      <div class="blog-title">${bEsc(p.title)}</div>
-      <div class="blog-meta">Admin · MahaYukti &nbsp;·&nbsp; ${bEsc(p.date)} &nbsp;·&nbsp; ${bEsc(p.readTime)}</div>
-      ${p.excerpt?`<div class="blog-excerpt">${bEsc(p.excerpt)}</div>`:''}
-      <div class="blog-body">${p.body}</div>
-      <div class="blog-cta">
-        <div class="tag" style="text-align:center;">Join MahaYukti</div>
-        <h3 class="h3">The register is open. <em>Membership is earned.</em></h3>
-        <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn btn-seal btn-sm" onclick="goto('join')">Apply Now</button>
-          <a class="btn btn-sm" href="mailto:info@mahayukti.com">Write to Admin</a>
-        </div>
-      </div>
-    </div>`).join('');
-  blogLoaded=true;
-  document.getElementById('blogNavRow').style.display=blogPosts.length>1?'flex':'none';
-  blogGoTo(0);
-}
-
-function blogGoTo(n){
-  if(n<0||n>=blogPosts.length)return;
-  blogCurrent=n;
-  document.querySelectorAll('.blog-slide').forEach((s,i)=>s.classList.toggle('act',i===n));
-  document.getElementById('blogCount').textContent=(n+1)+' / '+blogPosts.length;
-  document.getElementById('blogPrevBtn').disabled=n===0;
-  document.getElementById('blogNextBtn').disabled=n===blogPosts.length-1;
-  window.scrollTo({top:0,behavior:'instant'});
-}
-
-function getBlogFallback(){return[
-  {id:'p1',category:'Network Philosophy',title:'Why Indian professionals are the most under-networked in the world',excerpt:'India produces more engineers, lawyers, doctors, and CAs than almost any country on earth. Yet when it comes to professional networks that actually work — we are decades behind.',date:'14 May 2026',readTime:'6 min read',body:'<p>India produces more engineers, lawyers, doctors, and chartered accountants than almost any country on earth. We graduate hundreds of thousands of professionals every year. By raw numbers, we should have the most powerful professional ecosystem in the world.</p><p>We do not. And the reason is not capability. It is infrastructure.</p><h2>The Problem Nobody Talks About</h2><p>In London, a newly qualified barrister knows that after five years of practice, they will have a network of solicitors, judges, clients, and peers that spans the city and beyond. Not because they are exceptional. Because the infrastructure exists and functions.</p><p>In Mumbai, a newly qualified advocate with equal or superior ability starts from scratch. Their network is whoever they happened to sit next to in law school, whoever they clerked under, and whoever their family already knew.</p><blockquote><p>The most powerful professional networks are the ones no single person owns — but every member builds.</p></blockquote><h2>What Changes Now</h2><p>MahaYukti is built on a simple premise: Indian professionals deserve the same private, cross-domain network infrastructure that the West has long taken for granted.</p>'},
-  {id:'p2',category:'The Network',title:'The difference between a contact and a connection',excerpt:'Most professionals have hundreds of contacts. Very few have genuine connections. The distinction determines everything about whether a network actually works for you.',date:'13 May 2026',readTime:'4 min read',body:'<p>Most professionals confuse contacts with connections. They are not the same thing.</p><h2>A Contact Is Someone You Know Of</h2><p>You met them at a conference. You connected on LinkedIn. A contact is a weak tie. Useful in aggregate. Unreliable individually.</p><h2>A Connection Is Someone Who Acts</h2><p>A connection is someone who, when you need something, picks up the phone — without being asked.</p><blockquote><p>The quality of your professional life is determined almost entirely by the quality of your connections — not the quantity of your contacts.</p></blockquote><p>MahaYukti is not built to maximise your contact list. It is built to give you genuine connections you would not otherwise have.</p>'},
-  {id:'p3',category:'MY Concierge',title:'What MY Concierge does — and who it is for',excerpt:'Some situations require more than a single professional. They require a coordinated register — discreet and available at short notice — that knows exactly who to call.',date:'12 May 2026',readTime:'5 min read',body:'<p>Most professional services operate in silos. Some situations are too complex, sensitive, or time-critical for that model to work.</p><h2>The Problem MY Concierge Solves</h2><p>A business family facing a hostile acquisition attempt needs a corporate lawyer, a CA, a strategic advisor, and a public-affairs specialist — coordinated and fast. MY Concierge exists to answer that call.</p><blockquote><p>Some situations require more than expertise. They require discretion, speed, and the right people — coordinated.</p></blockquote><p>MY Concierge is accessible to MahaYukti members and referred clients only. The first conversation is always confidential.</p>'},
-  {id:'p4',category:'Founding Members',title:'The mango tree — why founding membership is not a job offer',excerpt:'When we tell people that founding membership carries no salary — most people pause. A few lean in. Those few are the ones we are looking for.',date:'11 May 2026',readTime:'4 min read',body:'<p>Founding membership is not a job. It is an invitation to plant something — with the understanding that the person who plants the tree is not the same as the person who simply buys the fruit later.</p><blockquote><p>The person who plants the mango tree is not the same as the person who simply buys the fruit later.</p></blockquote><p>No commitment, no non-compete, no exclusivity. Founding membership is a lifetime designation — on your terms, always.</p>'},
-  {id:'p5',category:'Network Structure',title:'Bucket, vertical, tier — how MahaYukti is actually organised',excerpt:'Most networks are flat. Everyone has the same access. MahaYukti runs on two separate axes — and the distinction matters more than you might expect.',date:'10 May 2026',readTime:'5 min read',body:'<p>A bucket is a macro domain — Legal, Accounting &amp; Audit, Technology. A vertical is the specific tag inside it. Tier is a separate axis entirely, tracking standing: Member, Participant, Bucket Head, Council.</p><blockquote><p>The path upward is earned — never bought. That is what makes each tier mean something.</p></blockquote><p>Money does not determine your tier. Contribution does. That is the design.</p>'},
-  {id:'p6',category:'MY Advisory',title:'What a cross-domain mandate actually looks like',excerpt:'The most valuable professional work rarely fits into a single domain. A corporate acquisition needs a lawyer, a CA, a market researcher, and a strategist.',date:'9 May 2026',readTime:'4 min read',body:'<p>A mid-sized corporate group evaluating an acquisition needs legal due diligence, financial forensics, market intelligence, and strategic advisory — simultaneously. That is what MY Advisory is built to deliver.</p><blockquote><p>The most valuable mandates are never single-domain. They require a network, not just a professional.</p></blockquote>'},
-  {id:'p7',category:'Membership',title:'Registration is open — and here is what that means',excerpt:'MahaYukti is not asking for payment. Not asking for a long commitment. Just one question — do you belong here?',date:'15 May 2026',readTime:'3 min read',body:'<p>Member registration is open, right now, to every professional in every bucket, in every city in India — and beyond. We are not asking for your money. We are asking one question — do you belong here?</p><blockquote><p>The network is only as good as the people inside it. We are building the people before we build anything else.</p></blockquote><p>Apply at mahayukti.com, or write directly to info@mahayukti.com.</p>'}
-];}
-</script>
 </body>
 </html>
