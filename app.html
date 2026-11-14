@@ -173,7 +173,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div style="width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"></div>
     <div style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.8;text-align:center;max-width:300px">India's first private cross-domain professional network.</div>
     <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">
-      <button class="btn btn-gold btn-full" onclick="goto('apply-choice')">Apply for Membership</button>
+      <button class="btn btn-gold btn-full" onclick="startManualApply()">Apply for Membership</button>
       <button class="btn btn-outline btn-full" onclick="goto('login')">Member Login</button>
     </div>
     <div style="display:flex;gap:16px;align-items:center">
@@ -199,7 +199,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocapitalize="none"></div>
     <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Your password"></div>
     <button class="btn btn-gold btn-full" id="login-btn" onclick="handleLogin()">Login to MahaYukti</button>
-    <div style="text-align:center;margin-top:20px"><span class="muted-text">Not a member? </span><button onclick="goto('apply-choice')" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer">Apply</button></div>
+    <div style="text-align:center;margin-top:20px"><span class="muted-text">Not a member? </span><button onclick="startManualApply()" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer">Apply</button></div>
   </div></div>
 </div>
 
@@ -229,51 +229,26 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="section-title">Network Structure</div>
     <div id="about-layers"></div>
     <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-gold btn-full" onclick="goto('apply-choice')">Apply for Membership</button>
+      <button class="btn btn-gold btn-full" onclick="startManualApply()">Apply for Membership</button>
       <button class="btn btn-outline btn-full" onclick="goto('concierge')">Submit a Client Brief</button>
     </div>
   </div></div>
 </div>
 
 <!-- APPLY: CHOOSE MANUAL OR LINKEDIN -->
-<div class="screen" id="screen-apply-choice">
-  <div class="page-header gradient">
-    <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="eyebrow">Apply for Membership</div>
-    <div class="page-title">How would you like to apply?</div>
-    <div class="page-subtitle">Either way, it takes a few minutes.</div>
-  </div>
-  <div class="scroll"><div class="scroll-content-no-nav">
-    <div class="choice-card" onclick="startManualApply()">
-      <div class="choice-icon">✎</div>
-      <div>
-        <div class="choice-name">Apply manually</div>
-        <div class="choice-desc">Fill in your own details — name, contact, and the vertical you work in.</div>
-      </div>
-    </div>
-    <div class="choice-card" onclick="liSignInStart()">
-      <div class="choice-icon">in</div>
-      <div>
-        <div class="choice-name">Apply via LinkedIn</div>
-        <div class="choice-desc">We'll bring over your name, email, and headline from LinkedIn, so you only add your vertical and a line about yourself.</div>
-        <div class="choice-sub" id="li-signin-status"></div>
-      </div>
-    </div>
-  </div></div>
-</div>
-
 <!-- APPLY -->
 <div class="screen" id="screen-apply">
   <div class="page-header gradient">
     <button class="back-btn" onclick="applyBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="eyebrow">Apply for Membership</div>
-    <div class="page-title" id="apply-title">Choose your track</div>
+    <div class="page-title" id="apply-title">Your details</div>
     <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:50%"></div></div>
     <div style="font-size:10px;color:rgba(16,30,51,0.28);font-family:var(--sans)" id="apply-step-lbl">Step 1 of 2</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="step-content active" id="apply-s1">
       <div id="apply-li-chip" class="prefill-chip" style="display:none">◆ Name and email filled in from LinkedIn</div>
+      <div class="choice-card" id="li-autofill-btn" onclick="liSignInStart()" style="margin-bottom:18px"><div class="choice-icon">in</div><div><div class="choice-name">Fill this in with LinkedIn</div><div class="choice-desc">Brings over your name, email, and headline — you'll still pick your vertical and add a line about yourself.<span id="li-signin-status"></span></div></div></div>
       <div class="field" id="f-fname"><label>First Name *</label><input type="text" id="a-fname" autocapitalize="words"></div>
       <div class="field" id="f-lname"><label>Last Name</label><input type="text" id="a-lname" autocapitalize="words"></div>
       <div class="field" id="f-email"><label>Email Address *</label><input type="email" id="a-email" autocapitalize="none"></div>
@@ -349,7 +324,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div style="margin:32px 20px;background:rgba(201,148,58,0.06);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
         <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:8px">Join MahaYukti</div>
         <div class="muted-text" style="margin-bottom:16px">The network is open. Membership is earned.</div>
-        <button class="btn btn-gold" onclick="goto('apply-choice')">Apply Now</button>
+        <button class="btn btn-gold" onclick="startManualApply()">Apply Now</button>
       </div>
     </div>
   </div>
@@ -543,6 +518,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div style="font-size:13px;color:var(--muted);font-family:var(--serif);font-style:italic" id="my-rname"></div>
       <div id="my-badge"></div>
     </div>
+    <div id="my-upgrade" style="display:none"></div>
     <div class="section-title">Professional Info</div>
     <div id="my-info"></div>
     <div class="divider"></div>
@@ -722,7 +698,7 @@ function gotoTab(n){
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   const el=$('nt-'+n);if(el)el.classList.add('active');
 }
-// Lets index.html deep-link straight into a screen, e.g. app.html#apply-choice or
+// Lets index.html deep-link straight into a screen, e.g. app.html#apply or
 // app.html#login, so the homepage's "Apply for Membership" / "Login" buttons land in the
 // right place instead of the splash screen. Only honoured for a logged-out visitor — once
 // handleSess() has placed a signed-in member on 'home'/'pending', a stale hash is ignored.
@@ -775,14 +751,6 @@ async function handleSess(s){
     if(!p||!p.length){goto('splash');return;}
     ST.profile=p[0];
     if(ST.profile.status==='pending'||ST.profile.status==='rejected'){renderPendingScreen(ST.profile.status,ST.profile.admin_notes);goto('pending');return;}
-    // Opportunistic, automatic Participant promotion check -- no admin review, see
-    // maybe_promote_to_participant() in Supabase. Silent no-op if not yet eligible.
-    if(ST.profile.role==='member'){
-      try{
-        const r=await fetch(`${SB_URL}/rest/v1/rpc/maybe_promote_to_participant`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+s.access_token,'Content-Type':'application/json'},body:'{}'});
-        if(r.ok){const updated=await r.json();if(updated&&updated.role&&updated.role!==ST.profile.role){ST.profile=updated;toast('You\'ve been promoted to Network Participant','success');}}
-      }catch(e){}
-    }
     if(ST.profile.role==='admin')loadAdminHome();else loadMemberHome();
   }catch(e){goto('splash');}
 }
@@ -1042,7 +1010,45 @@ function renderProfile(){
   $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${p.domain||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${p.domain_group||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${p.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${p.experience||'—'}</div></div>`;
   $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${p.about}</p>`:'<p style="font-size:13px;color:rgba(16,30,51,0.25);font-family:var(--sans)">No about text yet.</p>';
   $('about-inp').value=p.about||'';
+  renderUpgradeCard(p);
   loadLiStatus();
+}
+
+// --- Self-initiated tier upgrade -----------------------------------------------------------
+// Member -> Participant is earned, not bought and not silently granted in the background --
+// the member has to actually come here and ask. The server (maybe_promote_to_participant,
+// Supabase) is the only source of truth on eligibility; this just shows a friendly preview
+// of the same two criteria so the button isn't a mystery before they press it.
+function renderUpgradeCard(p){
+  const box=$('my-upgrade');if(!box)return;
+  if(p.role!=='member'){box.style.display='none';return;}
+  const daysOld=Math.floor((Date.now()-new Date(p.created_at).getTime())/86400000);
+  const hasAbout=!!(p.about&&p.about.trim());
+  const eligible=daysOld>=7&&hasAbout;
+  box.style.display='';
+  box.innerHTML=`<div class="choice-card" style="margin-bottom:20px;${eligible?'':'cursor:default'}" ${eligible?'onclick="requestParticipantUpgrade()"':''}>
+    <div class="choice-icon">◇</div>
+    <div>
+      <div class="choice-name">${eligible?'Apply to become a Participant':'Upgrade to Participant'}</div>
+      <div class="choice-desc">
+        ${eligible?'You meet the criteria — tap to request it.':'Earned automatically once both are true:'}
+        <div style="margin-top:8px;font-size:12px">
+          <div style="color:${daysOld>=7?'var(--navy)':'rgba(16,30,51,0.4)'}">${daysOld>=7?'✓':'○'} Member for 7+ days (you: ${daysOld})</div>
+          <div style="color:${hasAbout?'var(--navy)':'rgba(16,30,51,0.4)'}">${hasAbout?'✓':'○'} "About you" filled in${hasAbout?'':' — add one below'}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function requestParticipantUpgrade(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/maybe_promote_to_participant`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+ST.user.access_token,'Content-Type':'application/json'},body:'{}'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const updated=await r.json();
+    if(updated&&updated.role==='participant'){ST.profile=updated;toast('You are now a Network Participant','success');renderProfile();}
+    else toast('Not eligible yet — check the criteria above','error');
+  }catch(e){toast('Could not check eligibility right now','error');}
 }
 
 // --- LinkedIn connect / share -------------------------------------------------------------
@@ -1138,7 +1144,7 @@ async function saveAbout(){
 // never a signup-time choice; Bucket Head/Council were never selectable here either.
 let applyStep=1;
 let applyVia='manual'; // 'manual' | 'linkedin'
-function applyBack(){if(applyStep===1)goto('apply-choice');else applyPrev();}
+function applyBack(){if(applyStep===1)goto('splash');else applyPrev();}
 
 // Entry point for "Apply manually" on the choice screen — a plain, un-prefilled run of the
 // same 2-step flow "Apply via LinkedIn" also lands on (see liApplyPrefill below).
@@ -1237,7 +1243,7 @@ async function doApply(){
 function liSignInStart(){
   const state=liRandomState();
   sessionStorage.setItem('li_signin_state',state);
-  sessionStorage.setItem('li_signin_return','apply-choice');
+  sessionStorage.setItem('li_signin_return','apply');
   const u='https://www.linkedin.com/oauth/v2/authorization?'+new URLSearchParams({
     response_type:'code',client_id:LI_CLIENT_ID,redirect_uri:LI_SIGNIN_REDIRECT_URI,scope:LI_SIGNIN_SCOPE,state
   }).toString();
@@ -1254,7 +1260,7 @@ function checkLiSignInReturn(){
   let profile=null;
   try{profile=JSON.parse(sessionStorage.getItem('li_signin_profile')||'null');}catch(e){}
   sessionStorage.removeItem('li_signin_profile');
-  if(!profile){toast('Could not read your LinkedIn profile. Please try again or apply manually.','error');goto('apply-choice');return;}
+  if(!profile){toast('Could not read your LinkedIn profile. Please try again or apply manually.','error');startManualApply();return;}
   liApplyPrefill(profile);
 }
 
