@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connecting LinkedIn…</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#1C1B19;color:#EFE8D8;font-family:'IBM Plex Sans',sans-serif;min-height:100%;display:flex;align-items:center;justify-content:center}
+.box{text-align:center;max-width:380px;padding:32px 20px}
+.spinner{width:28px;height:28px;border:2.5px solid rgba(239,232,216,0.15);border-top-color:#8A7250;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{font-size:16px;font-weight:600;margin-bottom:8px}
+p{font-size:13px;color:rgba(239,232,216,0.6);line-height:1.5}
+a{color:#9C8568}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="spinner" id="spinner"></div>
+  <h1 id="title">Connecting your LinkedIn account…</h1>
+  <p id="msg">Please wait, this only takes a moment.</p>
+</div>
+<script>
+// This is the registered LinkedIn OAuth redirect URI
+// (https://mahayukti.com/auth/linkedin/callback/ — must match exactly what is set in the
+// LinkedIn Developer app's "Authorized redirect URLs" and what app.html sent as redirect_uri).
+//
+// LinkedIn's authorization-code -> access-token exchange needs the app's Client Secret, which
+// must never run in browser JS. So this page does NOT talk to LinkedIn directly — it only reads
+// the ?code=&state= LinkedIn put in the URL, re-checks the CSRF `state` against what app.html
+// stashed in sessionStorage before redirecting, and hands the code to the linkedin-oauth
+// Supabase Edge Function (over HTTPS, carrying this member's own Supabase session token so the
+// function knows whose account to attach the LinkedIn connection to). The Edge Function is the
+// only place that holds the Client Secret and does the actual token exchange.
+
+const SB_URL='https://zlkowzqfowwpkvauuzzw.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpsa293enFmb3d3cGt2YXV1enp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzkxMTksImV4cCI6MjA5NDUxNTExOX0.wOZlyBhIwp05Wg6hrbcfw03kaMibFe9VTKSIphyRIwg';
+const FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-oauth';
+const REDIRECT_URI='https://mahayukti.com/auth/linkedin/callback/';
+const RETURN_TO='/app.html';
+
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+
+function fail(msg){
+  document.getElementById('spinner').style.display='none';
+  document.getElementById('title').textContent='Could not connect LinkedIn';
+  document.getElementById('msg').innerHTML=msg+'<br><br><a href="'+RETURN_TO+'">Return to MahaYukti</a>';
+}
+
+async function run(){
+  const params=new URLSearchParams(window.location.search);
+  const code=params.get('code');
+  const state=params.get('state');
+  const error=params.get('error');
+  if(error){fail('LinkedIn said: '+(params.get('error_description')||error));return;}
+  if(!code||!state){fail('Missing authorization code from LinkedIn.');return;}
+
+  const expected=sessionStorage.getItem('li_oauth_state');
+  sessionStorage.removeItem('li_oauth_state');
+  if(!expected||state!==expected){fail('Security check failed (state mismatch). Please try connecting again.');return;}
+
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){fail('Your MahaYukti session expired. Please log in and try again.');return;}
+
+  try{
+    const r=await fetch(FUNCTION_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token,apikey:SB_KEY},
+      body:JSON.stringify({action:'exchange',code,redirect_uri:REDIRECT_URI})
+    });
+    const d=await r.json();
+    if(!r.ok||!d.connected){fail((d.error||'Connection failed')+(d.detail?'<br><span style="font-size:11px;opacity:.6">'+JSON.stringify(d.detail).slice(0,200)+'</span>':''));return;}
+    window.location.href=RETURN_TO+'?linkedin=connected';
+  }catch(e){
+    fail('Network error reaching MahaYukti: '+(e.message||e));
+  }
+}
+run();
+</script>
+</body>
+</html>

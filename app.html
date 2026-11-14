@@ -535,6 +535,12 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
       <button class="btn btn-gold btn-full" onclick="saveAbout()" style="margin-top:8px">Save Changes</button>
     </div>
     <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px">
+      <div class="section-title" style="margin:0">LinkedIn</div>
+    </div>
+    <div id="li-status" style="font-size:13px;color:var(--muted);font-family:var(--sans);margin-bottom:10px">Checking connection…</div>
+    <div style="display:flex;gap:10px" id="li-actions"></div>
+    <div class="divider"></div>
     <div style="background:rgba(255,255,255,0.02);border-radius:0;padding:10px;margin-top:12px"><p style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--sans)">📵 Phone numbers are never displayed to anyone on MahaYukti.</p></div>
     <div class="divider"></div>
     <button onclick="handleSignOut()" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:rgba(255,255,255,0.35);font-size:13px;font-family:var(--sans);cursor:pointer;padding:16px 0"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
@@ -634,6 +640,19 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--white);
   </div>
 </div>
 
+<!-- MODAL: SHARE TO LINKEDIN -->
+<div class="modal-overlay" id="modal-li-share">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:16px">Share to LinkedIn</div>
+    <div class="field"><label>Update *</label><textarea id="li-share-text" placeholder="Share a short update to your own LinkedIn profile..." rows="5" maxlength="2800"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" onclick="document.getElementById('modal-li-share').classList.remove('open')" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="li-share-submit" onclick="submitLinkedInShare()" style="flex:2">Post to LinkedIn</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
 
@@ -643,7 +662,17 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const FORM='https://script.google.com/macros/s/AKfycbxBsqOS_Afx99B2qYr1DxIDTYZwapEFiBDCznSZarcm9cLSULPevCYpbYmfx84cwhY3/exec';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
 
-const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyTrack:'member',applyStep:1,realtimeSubs:[]};
+// LinkedIn "Connect LinkedIn" / "Share to LinkedIn" (individual member posting only —
+// w_member_social; NOT the org/brand-page feature, which is blocked on a separate pending
+// LinkedIn API review). Token exchange and posting happen server-side in the linkedin-oauth
+// Supabase Edge Function (supabase/functions/linkedin-oauth/index.ts) — this file only ever
+// sends the member's own Supabase session token to that function, never a LinkedIn secret.
+const LI_CLIENT_ID='86dpuqc5ufkfhp';
+const LI_REDIRECT_URI='https://mahayukti.com/auth/linkedin/callback/';
+const LI_SCOPE='openid profile email w_member_social';
+const LI_FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-oauth';
+
+const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyTrack:'member',applyStep:1,realtimeSubs:[],liConnection:null};
 const DG=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Strategy & Management','Engineering & Infrastructure','Public Sector & Defence','Agriculture & Food','Energy & Environment','Media, Arts & Culture','Education & Research','Other'];
 const CD=['Legal','Finance & Accounting','Technology','Medicine & Healthcare','Strategy','Engineering','Real Estate','Agriculture','Energy','Media','Education','Other'];
 
@@ -679,6 +708,7 @@ async function init(){
   const{data:{session}}=await sb.auth.getSession();
   if(session)await handleSess(session);else goto('splash');
   sb.auth.onAuthStateChange(async(_,s)=>{if(s)await handleSess(s);else{ST.user=null;ST.profile=null;goto('splash');}});
+  checkLinkedInReturn();
 }
 
 function renderPendingScreen(status,note){
@@ -959,6 +989,82 @@ function renderProfile(){
   $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${p.domain||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${p.domain_group||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${p.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${p.experience||'—'}</div></div>`;
   $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:300;line-height:1.75">${p.about}</p>`:'<p style="font-size:13px;color:rgba(255,255,255,0.25);font-family:var(--sans)">No about text yet.</p>';
   $('about-inp').value=p.about||'';
+  loadLiStatus();
+}
+
+// --- LinkedIn connect / share -------------------------------------------------------------
+function liRandomState(){
+  const a=new Uint8Array(16);crypto.getRandomValues(a);
+  return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function connectLinkedIn(){
+  const state=liRandomState();
+  sessionStorage.setItem('li_oauth_state',state);
+  const u='https://www.linkedin.com/oauth/v2/authorization?'+new URLSearchParams({
+    response_type:'code',client_id:LI_CLIENT_ID,redirect_uri:LI_REDIRECT_URI,scope:LI_SCOPE,state
+  }).toString();
+  window.location.href=u;
+}
+
+async function loadLiStatus(){
+  const box=$('li-status'),actions=$('li-actions');
+  if(!box||!actions||!ST.user)return;
+  try{
+    const rows=await api('linkedin_connections','?auth_user_id=eq.'+ST.user.id+'&select=connected_at,token_expires_at');
+    const conn=rows&&rows[0];
+    ST.liConnection=conn||null;
+    if(conn){
+      const expired=new Date(conn.token_expires_at).getTime()<Date.now();
+      box.textContent=expired?'Connected previously, but the connection expired.':'Connected since '+new Date(conn.connected_at).toLocaleDateString();
+      actions.innerHTML=`<button class="btn btn-outline" onclick="connectLinkedIn()" style="flex:1">${expired?'Reconnect':'Reconnect'}</button><button class="btn btn-gold" onclick="openLiShareModal()" style="flex:1" ${expired?'disabled':''}>Share to LinkedIn</button><button onclick="disconnectLinkedIn()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;margin-left:4px">Disconnect</button>`;
+    }else{
+      box.textContent='Not connected.';
+      actions.innerHTML=`<button class="btn btn-gold" onclick="connectLinkedIn()" style="flex:1">Connect LinkedIn</button>`;
+    }
+  }catch(e){
+    box.textContent='Could not check LinkedIn connection status.';
+    actions.innerHTML='';
+  }
+}
+
+async function disconnectLinkedIn(){
+  try{await api('linkedin_connections','?auth_user_id=eq.'+ST.user.id,'DELETE');toast('Disconnected from LinkedIn','success');loadLiStatus();}
+  catch(e){toast('Could not disconnect','error');}
+}
+
+function openLiShareModal(){
+  $('li-share-text').value='';
+  $('modal-li-share').classList.add('open');
+}
+
+async function submitLinkedInShare(){
+  const text=$('li-share-text').value.trim();
+  if(!text){toast('Please write something to share','error');return;}
+  const btn=$('li-share-submit');btn.disabled=true;btn.textContent='Posting...';
+  try{
+    const r=await fetch(LI_FUNCTION_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ST.user.access_token,apikey:SB_KEY},
+      body:JSON.stringify({action:'share',text})
+    });
+    const d=await r.json();
+    if(!r.ok||!d.posted)throw new Error(d.error||'Could not post to LinkedIn');
+    $('modal-li-share').classList.remove('open');
+    toast('Posted to LinkedIn','success');
+  }catch(e){
+    toast(e.message||'Could not post to LinkedIn','error');
+  }finally{
+    btn.disabled=false;btn.textContent='Post to LinkedIn';
+  }
+}
+
+function checkLinkedInReturn(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('linkedin')==='connected'){
+    toast('LinkedIn connected','success');
+    history.replaceState(null,'',window.location.pathname);
+  }
 }
 
 function toggleAboutEdit(){
