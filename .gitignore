@@ -27,3 +27,17 @@ output/
 kaggle/*/secrets.json
 .supabase-db-password.local
 .admin-temp-password.local
+node_modules/
+ios/App/Pods/
+ios/App/build/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
+*.keystore
+*.jks
+# keep native-project icons/splash (overrides *.png above)
+!android/**/*.png
+!ios/**/*.png
