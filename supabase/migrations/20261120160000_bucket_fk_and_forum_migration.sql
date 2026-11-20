@@ -39,7 +39,16 @@ where u.bucket_id is null and u.domain_group = b.name;
 -- way for any post authored with the audience selector left on its default.
 -- Nothing to backfill yet since posts is brand new in this same lineage.
 
--- ---- 2. fold forum_posts into communities/posts, if it exists -----------
+-- ---- 2. columns community-scoped posts need, regardless of whether there's
+--         anything to migrate from forum_posts ---------------------------
+
+alter table public.posts add column if not exists community_id uuid references public.communities(id);
+alter table public.posts add column if not exists title text;
+alter table public.posts add column if not exists pinned boolean not null default false;
+
+create index if not exists posts_community_idx on public.posts(community_id);
+
+-- ---- 3. fold forum_posts into communities/posts, if it exists -----------
 
 do $$
 declare
@@ -51,10 +60,6 @@ begin
     raise notice 'forum_posts does not exist in this database -- nothing to migrate.';
     return;
   end if;
-
-  alter table public.posts add column if not exists community_id uuid references public.communities(id);
-  alter table public.posts add column if not exists title text;
-  alter table public.posts add column if not exists pinned boolean not null default false;
 
   for rec in
     select distinct domain_group from public.forum_posts where domain_group is not null

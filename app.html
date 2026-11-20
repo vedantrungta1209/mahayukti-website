@@ -520,14 +520,30 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
 </div>
 
-<!-- FORUMS -->
+<!-- COMMUNITIES -->
 <div class="screen" id="screen-forums">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Forums</div>
+    <div class="page-title">Communities</div>
   </div>
-  <div style="padding:0 20px 8px;flex-shrink:0"><div class="chips" id="forum-chips"></div></div>
-  <div class="scroll"><div class="scroll-content" id="forum-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="scroll"><div class="scroll-content" id="forum-list"><div class="loader"><div class="spinner"></div></div>
+    <a href="javascript:void(0)" onclick="promptNewCommunity()" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create a community</a>
+  </div></div>
+</div>
+
+<!-- COMMUNITY DETAIL -->
+<div class="screen" id="screen-community">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('forums')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title" id="community-title">Community</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="card" style="margin-bottom:14px">
+      <textarea id="community-compose" rows="2" placeholder="Post in this community…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitCommunityPost()">Post</button></div>
+    </div>
+    <div id="community-posts"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
 </div>
 
 <!-- NOTIFICATIONS -->
@@ -881,10 +897,12 @@ function openPost(id,ctx){
   goto('blog-post');
 }
 
-async function loadSocialFeed(){
-  const el=$('social-feed');if(!el)return;
+async function loadSocialFeed(){ await renderPostList('social-feed','?community_id=is.null&order=created_at.desc&limit=30&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored'); }
+
+async function renderPostList(containerId,query){
+  const el=$(containerId);if(!el)return;
   try{
-    const posts=await api('posts','?community_id=is.null&order=created_at.desc&limit=30&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored')||[];
+    const posts=await api('posts',query)||[];
     if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
     const ids=[...new Set(posts.map(p=>p.author_id).filter(Boolean))];let am={};
     if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
@@ -918,6 +936,16 @@ async function submitPost(){
     await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.profile.bucket_id||null,audience:'sector'});
     $('feed-compose').value='';
     await loadSocialFeed();
+  }catch(e){alert('Could not post — please try again.');}
+}
+
+async function submitCommunityPost(){
+  const cid=ST.currentCommunity?.id,body=$('community-compose').value.trim();
+  if(!cid||!body||!ST.profile)return;
+  try{
+    await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.currentCommunity.bucket_id||null,audience:'everyone',community_id:cid});
+    $('community-compose').value='';
+    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned`);
   }catch(e){alert('Could not post — please try again.');}
 }
 
@@ -1176,21 +1204,48 @@ async function submitHelp(){
 }
 
 async function loadForums(){
-  const DGS=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Public Sector & Defence','Other'];
-  $('forum-chips').innerHTML=DGS.map(g=>`<div class="chip${g===ST.dirFilter?' active':''}" onclick="setForumFilter('${g}')">${g}</div>`).join('');
+  const el=$('forum-list');
   try{
-    let p=`?order=pinned.desc,created_at.desc&select=id,title,content,domain_group,pinned,reply_count,created_at,author_id&limit=50`;
-    const d=await api('forum_posts',p);const el=$('forum-list');
-    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No forum posts yet.</div></div>';return;}
-    const ids=[...new Set(d.map(p=>p.author_id))];let am={};
-    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
-    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card${p.pinned?' gold-border':''}" style="margin-bottom:10px">${p.pinned?'<div style="font-size:10px;color:var(--gold);margin-bottom:6px">📌 Pinned</div>':''}<div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${p.domain_group||''}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n}</span><span style="font-size:11px;color:var(--gold)">${p.reply_count||0} replies →</span></div></div>`;}).join('');
-  }catch(e){$('forum-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+    const communities=await api('communities','?order=created_at.asc&select=id,name,kind,bucket_id,institution_name,requires_verification')||[];
+    if(!communities.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No communities yet — start one.</div></div>';return;}
+    const counts={};
+    try{const cm=await api('community_members',`?community_id=in.(${communities.map(c=>c.id).join(',')})&status=eq.active&select=community_id`);(cm||[]).forEach(r=>counts[r.community_id]=(counts[r.community_id]||0)+1);}catch(e){}
+    ST.communities=communities;
+    el.innerHTML=communities.map(c=>`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openCommunity('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3">${c.name}</div>
+        ${c.kind==='institution'?'<div class="layer-badge" style="flex-shrink:0;margin-left:8px">Institution-verified</div>':''}
+      </div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-top:6px">${counts[c.id]||0} members</div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load communities</div></div>';}
 }
 
-function setForumFilter(g){
-  document.querySelectorAll('#forum-chips .chip').forEach(c=>c.classList.toggle('active',c.textContent===g));
-  loadForums();
+async function promptNewCommunity(){
+  const name=prompt('Name this community (e.g. "Early-Stage Capital"):');if(!name||!name.trim()||!ST.profile)return;
+  try{
+    await api('communities','','POST',{name:name.trim(),kind:'topic',bucket_id:ST.profile.bucket_id||null,created_by:ST.profile.id});
+    await loadForums();
+  }catch(e){alert('Could not create the community — please try again.');}
+}
+
+async function openCommunity(id){
+  const c=(ST.communities||[]).find(x=>x.id===id);if(!c)return;
+  ST.currentCommunity=c;
+  $('community-title').textContent=c.name;
+  goto('community');
+  await joinCommunityIfNeeded(c);
+  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned`);
+}
+
+async function joinCommunityIfNeeded(c){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('community_members',`?community_id=eq.${c.id}&user_id=eq.${ST.profile.id}&select=user_id`);
+    if(!existing||!existing.length){
+      await api('community_members','','POST',{community_id:c.id,user_id:ST.profile.id,status:c.requires_verification?'pending':'active'});
+    }
+  }catch(e){}
 }
 
 async function loadNotifs(){
