@@ -356,8 +356,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div class="quick-card" onclick="goto('forums')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg><span>Forums</span></div>
     </div>
     <div class="stats-row" id="home-stats"></div>
-    <div class="section-title">From the Blog</div>
+    <div class="section-title">Official Updates</div>
     <div id="home-blog"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="section-title" style="margin-top:20px">Your Feed</div>
+    <div class="card" style="margin-bottom:14px">
+      <textarea id="feed-compose" rows="2" placeholder="Share an update with the register…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitPost()">Post</button></div>
+    </div>
+    <div id="social-feed"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active" onclick="gotoTab('home')" id="nt-home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
@@ -755,7 +761,8 @@ async function api(t,p='',m='GET',b=null){
   const r=await fetch(`${SB_URL}/rest/v1/${t}${p}`,o);
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'API error');}
   if(m==='DELETE'||r.status===204)return null;
-  return r.json();
+  const t2=await r.text();
+  return t2?JSON.parse(t2):null;
 }
 
 async function init(){
@@ -811,6 +818,7 @@ async function loadMemberHome(){
   $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${p.domain_group||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${p.city||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${p.role.charAt(0).toUpperCase()+p.role.slice(1)}</div><div class="stat-lbl">Level</div></div>`;
   goto('home');gotoTab('home');
   loadBlogFeed('home-blog','home');
+  loadSocialFeed();
   setupRT();
 }
 
@@ -850,6 +858,59 @@ function openPost(id,ctx){
   $('bp-body').innerHTML=p.body||'';
   $('bp-back').onclick=()=>goto(ctx==='public'?'blog-public':'home');
   goto('blog-post');
+}
+
+async function loadSocialFeed(){
+  const el=$('social-feed');if(!el)return;
+  try{
+    const posts=await api('posts','?community_id=is.null&order=created_at.desc&limit=30&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored')||[];
+    if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
+    const ids=[...new Set(posts.map(p=>p.author_id).filter(Boolean))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    const myId=ST.profile?.id;
+    let likeSet=new Set();
+    try{const mine=await api('post_likes',`?user_id=eq.${myId}&select=post_id`);(mine||[]).forEach(r=>likeSet.add(r.post_id));}catch(e){}
+    let likeCounts={},commentCounts={};
+    try{const lc=await api('post_likes',`?post_id=in.(${posts.map(p=>p.id).join(',')})&select=post_id`);(lc||[]).forEach(r=>likeCounts[r.post_id]=(likeCounts[r.post_id]||0)+1);}catch(e){}
+    try{const cc=await api('post_comments',`?post_id=in.(${posts.map(p=>p.id).join(',')})&select=post_id`);(cc||[]).forEach(r=>commentCounts[r.post_id]=(commentCounts[r.post_id]||0)+1);}catch(e){}
+    el.innerHTML=posts.map(p=>{
+      const n=dname(am[p.author_id]||{});
+      const liked=likeSet.has(p.id);
+      return`<div class="card" style="margin-bottom:10px">
+        <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${p.is_sponsored?'Sponsored':n}</div>
+        <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+        ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${p.title}</div>`:''}
+        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${p.body}</div>
+        ${p.link_url?`<a href="${p.link_url}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${p.link_title||p.link_url} →</a>`:''}
+        <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
+          <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
+          <span style="color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} comments</span>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+async function submitPost(){
+  const body=$('feed-compose').value.trim();if(!body||!ST.profile)return;
+  try{
+    await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.profile.bucket_id||null,audience:'sector'});
+    $('feed-compose').value='';
+    await loadSocialFeed();
+  }catch(e){alert('Could not post — please try again.');}
+}
+
+async function toggleLike(postId){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('post_likes',`?post_id=eq.${postId}&user_id=eq.${ST.profile.id}&select=post_id`);
+    if(existing&&existing.length){
+      await api('post_likes',`?post_id=eq.${postId}&user_id=eq.${ST.profile.id}`,'DELETE');
+    }else{
+      await api('post_likes','','POST',{post_id:postId,user_id:ST.profile.id});
+    }
+    await loadSocialFeed();
+  }catch(e){}
 }
 
 async function loadDir(){
