@@ -10,9 +10,17 @@
 
 begin;
 
-insert into storage.buckets (id, name, public)
-values ('uploads', 'uploads', true)
-on conflict (id) do nothing;
+-- file_size_limit and allowed_mime_types weren't set originally, meaning
+-- the bucket accepted a file of any type or size -- the client only
+-- declares accept="image/*" on the <input>, which the browser doesn't
+-- enforce as a hard rule and a direct Storage API call ignores entirely.
+-- 8MB covers a real phone photo with room to spare without letting someone
+-- run up storage costs with arbitrarily large uploads.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('uploads', 'uploads', true, 8388608, array['image/jpeg','image/png','image/webp','image/gif'])
+on conflict (id) do update set
+  file_size_limit = 8388608,
+  allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif'];
 
 -- Path convention the app writes to: uploads/<auth_uid>/<timestamp>-<name>.
 -- Anyone can READ (the bucket is public -- images need to render for every
