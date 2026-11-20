@@ -353,7 +353,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div class="quick-card" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></div>
       <div class="quick-card" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></div>
       <div class="quick-card" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>MY Help</span></div>
-      <div class="quick-card" onclick="goto('forums')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg><span>Forums</span></div>
+      <div class="quick-card" onclick="goto('forums')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg><span>Communities</span></div>
+      <div class="quick-card" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span>Marketplace</span></div>
+      <div class="quick-card" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>The Exchange</span></div>
+      <div class="quick-card" onclick="goto('events')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Events</span></div>
     </div>
     <div class="stats-row" id="home-stats"></div>
     <div class="section-title">Official Updates</div>
@@ -544,6 +547,67 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     </div>
     <div id="community-posts"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
+</div>
+
+<!-- MARKETPLACE -->
+<div class="screen" id="screen-marketplace">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Marketplace</div>
+  </div>
+  <div class="scroll"><div class="scroll-content" id="marketplace-list"><div class="loader"><div class="spinner"></div></div>
+    <a href="javascript:void(0)" onclick="goto('new-listing')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ List something for sale</a>
+  </div></div>
+</div>
+
+<!-- NEW LISTING -->
+<div class="screen" id="screen-new-listing">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">List an item</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="field"><label>What are you selling</label><input type="text" id="nl-title"></div>
+    <div class="field"><label>Category</label><input type="text" id="nl-category" placeholder="e.g. Office equipment"></div>
+    <div class="field"><label>Price</label><input type="text" id="nl-price" placeholder="e.g. ₹1,20,000"></div>
+    <div class="field"><label>Description</label><textarea id="nl-desc" rows="3" placeholder="Condition, age, reason for selling"></textarea></div>
+    <div class="field"><label>Location</label><input type="text" id="nl-location"></div>
+    <button class="btn btn-gold btn-full" style="margin-top:4px" onclick="submitListing()">Publish listing</button>
+  </div></div>
+</div>
+
+<!-- THE EXCHANGE -->
+<div class="screen" id="screen-exchange">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">The Exchange</div>
+  </div>
+  <div class="scroll"><div class="scroll-content" id="exchange-list"><div class="loader"><div class="spinner"></div></div>
+    <a href="javascript:void(0)" onclick="goto('new-brief')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Post a brief</a>
+  </div></div>
+</div>
+
+<!-- NEW BRIEF -->
+<div class="screen" id="screen-new-brief">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Post a brief</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="chips" id="brief-type-chips"></div>
+    <div class="field" style="margin-top:14px"><label>Describe what you need</label><textarea id="nb-desc" rows="4"></textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:13px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="nb-anon">Post anonymously</label>
+    <button class="btn btn-gold btn-full" style="margin-top:16px" onclick="submitBrief()">Post brief</button>
+  </div></div>
+</div>
+
+<!-- EVENTS -->
+<div class="screen" id="screen-events">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Events</div>
+  </div>
+  <div class="scroll"><div class="scroll-content" id="events-list"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
 
 <!-- NOTIFICATIONS -->
@@ -769,7 +833,7 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{}};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips};
   if(loads[n])loads[n]();
 }
 function gotoTab(n){
@@ -1245,6 +1309,130 @@ async function joinCommunityIfNeeded(c){
     if(!existing||!existing.length){
       await api('community_members','','POST',{community_id:c.id,user_id:ST.profile.id,status:c.requires_verification?'pending':'active'});
     }
+  }catch(e){}
+}
+
+// ---- Marketplace ----
+
+async function loadMarketplace(){
+  const el=$('marketplace-list');
+  try{
+    const d=await api('marketplace_listings','?status=eq.active&order=created_at.desc&limit=50&select=id,title,category,price_text,description,location,seller_id')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No listings yet.</div></div>';return;}
+    const ids=[...new Set(d.map(x=>x.seller_id))];let am={};
+    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${x.title}</div>
+      <div style="font-size:14px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:4px">${x.price_text||''}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${dname(am[x.seller_id]||{})} · ${x.location||''}</div>
+      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${x.description}</div>`:''}
+      <button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:12px" onclick="inquireListing('${x.id}')">Message seller</button>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the marketplace</div></div>';}
+}
+
+async function submitListing(){
+  if(!ST.profile)return;
+  const title=$('nl-title').value.trim();if(!title)return;
+  try{
+    await api('marketplace_listings','','POST',{
+      seller_id:ST.profile.id,title,
+      category:$('nl-category').value.trim()||null,
+      price_text:$('nl-price').value.trim()||null,
+      description:$('nl-desc').value.trim()||null,
+      location:$('nl-location').value.trim()||null
+    });
+    ['nl-title','nl-category','nl-price','nl-desc','nl-location'].forEach(id=>$(id).value='');
+    goto('marketplace');
+  }catch(e){alert('Could not publish the listing — please try again.');}
+}
+
+async function inquireListing(listingId){
+  const msg=prompt('Message to the seller:');if(!msg||!msg.trim()||!ST.profile)return;
+  try{await api('marketplace_inquiries','','POST',{listing_id:listingId,buyer_id:ST.profile.id,message:msg.trim()});alert('Sent.');}
+  catch(e){alert('Could not send — please try again.');}
+}
+
+// ---- The Exchange ----
+
+const BRIEF_TYPES=[['service_request','Service request'],['strategy_team','Strategy team'],['business_for_sale','Business for sale'],['vc_interest','VC / funding interest']];
+
+function initBriefTypeChips(){
+  ST.briefType=ST.briefType||'service_request';
+  $('brief-type-chips').innerHTML=BRIEF_TYPES.map(([v,l])=>`<div class="chip${v===ST.briefType?' active':''}" onclick="setBriefType('${v}')">${l}</div>`).join('');
+}
+function setBriefType(v){ST.briefType=v;initBriefTypeChips();}
+
+async function loadExchange(){
+  const el=$('exchange-list');
+  try{
+    const d=await api('exchange_briefs','?status=eq.open&order=created_at.desc&limit=50&select=id,brief_type,description,anonymous,author_id')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No open briefs yet.</div></div>';return;}
+    const ids=[...new Set(d.filter(x=>!x.anonymous).map(x=>x.author_id))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    const labels=Object.fromEntries(BRIEF_TYPES);
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${labels[x.brief_type]||x.brief_type}</div>
+      <div style="font-size:14px;color:var(--white);font-family:var(--sans);line-height:1.5;margin-bottom:8px">${x.description}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">${x.anonymous?'Posted anonymously':dname(am[x.author_id]||{})}</div>
+      <button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:12px" onclick="respondToBrief('${x.id}')">Respond</button>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load The Exchange</div></div>';}
+}
+
+async function submitBrief(){
+  if(!ST.profile)return;
+  const description=$('nb-desc').value.trim();if(!description)return;
+  try{
+    await api('exchange_briefs','','POST',{
+      author_id:ST.profile.id,
+      brief_type:ST.briefType||'service_request',
+      description,
+      bucket_id:ST.profile.bucket_id||null,
+      anonymous:$('nb-anon').checked
+    });
+    $('nb-desc').value='';$('nb-anon').checked=false;
+    goto('exchange');
+  }catch(e){alert('Could not post the brief — please try again.');}
+}
+
+async function respondToBrief(briefId){
+  const msg=prompt('Your message to the author:');if(!msg||!msg.trim()||!ST.profile)return;
+  try{await api('exchange_brief_responses','','POST',{brief_id:briefId,responder_id:ST.profile.id,message:msg.trim()});alert('Sent.');}
+  catch(e){alert('Could not send — please try again.');}
+}
+
+// ---- Events ----
+
+async function loadEventsList(){
+  const el=$('events-list');
+  try{
+    const d=await api('events',`?order=starts_at.asc&starts_at=gte.${new Date().toISOString()}&select=id,title,description,starts_at,location,is_virtual,host_label`)||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No upcoming events.</div></div>';return;}
+    let myRsvps=new Set();
+    if(ST.profile){try{const r=await api('event_rsvps',`?user_id=eq.${ST.profile.id}&select=event_id`);(r||[]).forEach(x=>myRsvps.add(x.event_id));}catch(e){}}
+    let counts={};
+    try{const c=await api('event_rsvps',`?event_id=in.(${d.map(x=>x.id).join(',')})&select=event_id`);(c||[]).forEach(x=>counts[x.event_id]=(counts[x.event_id]||0)+1);}catch(e){}
+    el.innerHTML=d.map(x=>{const going=myRsvps.has(x.id);return`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--gold);font-family:var(--sans);font-weight:600;margin-bottom:4px">${new Date(x.starts_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+      <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${x.title}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${x.is_virtual?'Virtual':x.location||''}${x.host_label?' · Hosted by '+x.host_label:''}</div>
+      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${x.description}</div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:rgba(16,30,51,0.4)">${counts[x.id]||0} going</span>
+        <button class="btn ${going?'btn-outline':'btn-gold'}" style="width:auto;padding:8px 16px;font-size:12px" onclick="toggleRsvp('${x.id}')">${going?"You're going":'RSVP'}</button>
+      </div>
+    </div>`;}).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load events</div></div>';}
+}
+
+async function toggleRsvp(eventId){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('event_rsvps',`?event_id=eq.${eventId}&user_id=eq.${ST.profile.id}&select=event_id`);
+    if(existing&&existing.length){await api('event_rsvps',`?event_id=eq.${eventId}&user_id=eq.${ST.profile.id}`,'DELETE');}
+    else{await api('event_rsvps','','POST',{event_id:eventId,user_id:ST.profile.id});}
+    await loadEventsList();
   }catch(e){}
 }
 
