@@ -199,6 +199,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocapitalize="none"></div>
     <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Your password"></div>
     <button class="btn btn-gold btn-full" id="login-btn" onclick="handleLogin()">Login to MahaYukti</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:18px 0"><div style="flex:1;height:1px;background:var(--border)"></div><div style="font-size:11px;color:rgba(16,30,51,0.35);text-transform:uppercase;letter-spacing:.06em">or</div><div style="flex:1;height:1px;background:var(--border)"></div></div>
+    <button class="btn btn-outline btn-full" id="google-login-btn" onclick="handleGoogleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.85-.07-1.66-.21-2.45H12v4.63h6.46c-.28 1.5-1.13 2.78-2.4 3.63v3h3.87c2.27-2.09 3.58-5.17 3.58-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.87-3c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.94H1.3v3.1C3.27 21.3 7.3 24 12 24z"/><path fill="#FBBC05" d="M5.29 14.31A7.2 7.2 0 0 1 4.9 12c0-.8.14-1.57.39-2.31v-3.1H1.3A11.98 11.98 0 0 0 0 12c0 1.93.46 3.76 1.3 5.41l3.99-3.1z"/><path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.59 1.8l3.44-3.44C17.94 1.19 15.24 0 12 0 7.3 0 3.27 2.7 1.3 6.59l3.99 3.1C6.23 6.86 8.88 4.75 12 4.75z"/></svg>
+      Continue with Google
+    </button>
     <div style="text-align:center;margin-top:20px"><span class="muted-text">Not a member? </span><button onclick="startManualApply()" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer">Apply</button></div>
   </div></div>
 </div>
@@ -784,11 +789,22 @@ async function handleSess(s){
   ST.user=s.user;ST.user.access_token=s.access_token;
   try{
     const p=await api('users','?auth_id=eq.'+s.user.id+'&select=*');
-    if(!p||!p.length){goto('splash');return;}
+    if(!p||!p.length){
+      await sb.auth.signOut();
+      toast('No MahaYukti account found for that sign-in. Apply for membership first.','error');
+      goto('splash');
+      return;
+    }
     ST.profile=p[0];
     if(ST.profile.status==='pending'||ST.profile.status==='rejected'){renderPendingScreen(ST.profile.status,ST.profile.admin_notes);goto('pending');return;}
     if(ST.profile.role==='admin')loadAdminHome();else loadMemberHome();
   }catch(e){goto('splash');}
+}
+
+async function handleGoogleLogin(){
+  const btn=$('google-login-btn');btn.disabled=true;
+  try{const{error}=await sb.auth.signInWithOAuth({provider:'google'});if(error)throw error;}
+  catch(e){toast(e.message||'Google sign-in failed','error');btn.disabled=false;}
 }
 
 async function handleLogin(){
