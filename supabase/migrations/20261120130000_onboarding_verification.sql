@@ -1,57 +1,62 @@
--- Wires the onboarding/verification design from the 2026-11-20 prototype onto the existing
--- accounts/individual_profiles/corporate_profiles schema (20261114000000_phase1_accounts_briefs.sql),
--- rather than inventing a second, competing data model. That earlier migration was built from the
--- architecture doc but never connected to a real signup UI -- the live site still runs on the old
--- flat `public.users` table. This migration only adds columns; nothing here is destructive.
+-- Wires the onboarding/verification design from the 2026-11-20 prototype onto the LIVE
+-- `public.users` table -- the one app.html's apply/login/admin flow actually reads and writes.
+--
+-- Correction from the first version of this migration: it originally targeted
+-- accounts/individual_profiles/corporate_profiles (20261114000000_phase1_accounts_briefs.sql).
+-- That schema was built from the architecture doc for a future multi-account-type model, but was
+-- NEVER connected to any real UI, and flipping the whole live app onto it (directory, profiles,
+-- messaging, admin review all currently query `users`) is a much bigger, separate undertaking --
+-- not something to fold into this feature. This migration never reached production, so rewriting
+-- it in place is safe; no live data is affected either way.
+--
+-- `public.users` already has `username` (unique), `founding_member`, and `founding_approved`
+-- columns (20261113235900_users_bootstrap.sql) -- reused here, not duplicated.
 --
 -- Adds:
---   1. Username (individual_profiles) -- the existing schema had no handle at all.
---   2. Phone/PAN/Aadhaar verification status (individual_profiles).
---   3. Authorised representative fields + director/email-domain verification status
---      (corporate_profiles) -- the existing schema had no representative capture at all.
---   4. Founding-member invite codes (new table) -- the dignitary/PMO path from the prototype.
---   5. Updates the stale verification_rules note for 'corporate': the original note said no
---      usable CIN/GST lookup API existed; paid vendor APIs (Decentro, Meon) do exist for this,
---      just weren't in scope when that note was written.
+--   1. Phone/PAN/Aadhaar verification status on `users`.
+--   2. An `account_kind` discriminator ('individual' | 'organisation') plus organisation-specific
+--      fields (CIN, authorised representative, automated-check status) on the SAME table, rather
+--      than a second table -- consistent with how the rest of the live app already treats
+--      `organisation` as a field on one flat row, not a distinct entity.
+--   3. Founding-member invite codes (new table), referencing `public.users` instead of the
+--      unused `public.accounts`.
 --
 -- Idempotent (IF NOT EXISTS everywhere) -- safe to re-run.
 
 begin;
 
 -- =========================================================================
--- 1 & 2. individual_profiles: username + verification status
+-- 1. Individual verification status
 -- =========================================================================
 
-alter table public.individual_profiles
-  add column if not exists username text,
-  add column if not exists phone text,
+alter table public.users
   add column if not exists phone_verified boolean not null default false,
   add column if not exists pan_verified boolean not null default false,
   add column if not exists aadhaar_verified boolean not null default false, -- via DigiLocker, see report
   add column if not exists verified_at timestamptz;
 
--- Partial unique index (not a plain unique constraint) so multiple NULLs are allowed before a
--- member picks a handle, but no two real handles can collide.
-create unique index if not exists individual_profiles_username_unique_idx
-  on public.individual_profiles (username) where username is not null;
-
 -- =========================================================================
--- 3. corporate_profiles: authorised representative + automated-check status
+-- 2. Organisation accounts, on the same table
 -- =========================================================================
 
-alter table public.corporate_profiles
+alter table public.users
+  add column if not exists account_kind text not null default 'individual'
+    check (account_kind in ('individual', 'organisation')),
+  add column if not exists cin text,
+  add column if not exists cin_matched boolean not null default false,
+  add column if not exists cin_matched_company_name text,
   add column if not exists rep_name text,
   add column if not exists rep_title text,
   add column if not exists rep_email text,
   add column if not exists rep_phone text,
-  add column if not exists cin_matched boolean not null default false,
-  add column if not exists cin_matched_company_name text,
   add column if not exists director_matched boolean not null default false,
   add column if not exists rep_email_domain_verified boolean not null default false,
-  add column if not exists auto_verified_at timestamptz; -- set only when all three checks pass
+  add column if not exists auto_verified_at timestamptz; -- set only when cin+director+email all pass
+
+create index if not exists users_account_kind_idx on public.users(account_kind);
 
 -- =========================================================================
--- 4. Founding-member invites (the PMO/dignitary path)
+-- 3. Founding-member invites (the PMO/dignitary path)
 -- =========================================================================
 
 create table if not exists public.founding_invites (
@@ -62,9 +67,9 @@ create table if not exists public.founding_invites (
   domain        text,               -- their expected field/role, shown back to them on the invite screen
   ordinal       int,                 -- "Founding Member No. 014" -- assigned when the invite is created, not on accept
   used_at       timestamptz,
-  used_by_account_id uuid references public.accounts(id),
+  used_by_user_id uuid references public.users(id),
   created_at    timestamptz not null default now(),
-  created_by    uuid references public.accounts(id) -- admin who issued it
+  created_by    uuid references public.users(id) -- admin who issued it
 );
 
 create index if not exists founding_invites_code_idx on public.founding_invites(code);
@@ -96,9 +101,11 @@ $$;
 
 grant execute on function public.check_founding_invite(text) to anon, authenticated;
 
--- Marks an invite used once the invitee's account is created. Callable only with the matching
--- code (not by account id alone), so a client can't mark an arbitrary invite used.
-create or replace function public.redeem_founding_invite(p_code text, p_account_id uuid)
+-- Marks an invite used once the invitee's own `users` row is created. Callable only with the
+-- matching code (not by user id alone), so a client can't mark an arbitrary invite used. Also
+-- flips founding_member/founding_approved on that user, so the existing (already-live) columns
+-- drive the UI, nothing new to read elsewhere.
+create or replace function public.redeem_founding_invite(p_code text, p_user_id uuid)
 returns public.founding_invites
 language plpgsql
 security definer
@@ -108,7 +115,7 @@ declare
   v_row public.founding_invites;
 begin
   update public.founding_invites
-  set used_at = now(), used_by_account_id = p_account_id
+  set used_at = now(), used_by_user_id = p_user_id
   where code = p_code and used_at is null
   returning * into v_row;
 
@@ -116,21 +123,14 @@ begin
     raise exception 'invite code invalid or already used';
   end if;
 
+  update public.users
+  set founding_member = true, founding_approved = true, status = 'active'
+  where id = p_user_id;
+
   return v_row;
 end;
 $$;
 
 grant execute on function public.redeem_founding_invite(text, uuid) to authenticated;
-
--- =========================================================================
--- 5. verification_rules: correct the stale "no usable API" note for corporate
--- =========================================================================
-
-update public.verification_rules
-set
-  method = 'cin_director_email_auto',
-  requires_admin_review = false, -- only when all three auto-checks pass; see corporate_profiles.auto_verified_at
-  notes = 'Automated as of 2026-11-20: CIN matched against MCA via a paid vendor API (Decentro/Meon -- no free/instant public one exists, confirmed again this session), representative cross-checked against MCA director records (DIN), and representative work-email domain verified against the organisation''s own domain. All three passing -> instant approval, auto_verified_at set, no human review. Any one failing -> falls back to the existing manual admin queue.'
-where account_type = 'corporate';
 
 commit;
