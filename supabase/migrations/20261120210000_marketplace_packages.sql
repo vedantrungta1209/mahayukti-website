@@ -14,7 +14,7 @@ begin;
 
 create table if not exists public.marketplace_packages (
   id             uuid primary key default gen_random_uuid(),
-  name           text not null,
+  name           text not null unique,
   listing_quota  int,     -- null = unlimited
   price          numeric not null,
   duration_days  int not null,
@@ -22,11 +22,15 @@ create table if not exists public.marketplace_packages (
   active         boolean not null default true
 );
 
+-- Bare "on conflict do nothing" with no target needs an actual constraint to
+-- catch the conflict -- name wasn't unique above, so this would have
+-- inserted three duplicate rows on every re-run of this migration instead of
+-- being idempotent. Added the unique constraint and the explicit target.
 insert into public.marketplace_packages (name, listing_quota, price, duration_days, sort_order) values
   ('Starter',    3,    499,  90, 1),
   ('Pro',        15,   1999, 90, 2),
   ('Unlimited',  null, 4999, 90, 3)
-on conflict do nothing;
+on conflict (name) do nothing;
 
 create table if not exists public.seller_package_subscriptions (
   id            uuid primary key default gen_random_uuid(),

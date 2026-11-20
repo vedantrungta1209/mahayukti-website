@@ -373,6 +373,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
         <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitPost()">Post</button>
       </div>
     </div>
+    <div id="trending-hashtags" style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px"></div>
     <div id="social-feed"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
   <div class="nav-bar">
@@ -568,8 +569,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="page-title">Marketplace</div>
   </div>
-  <div class="scroll"><div class="scroll-content" id="marketplace-list"><div class="loader"><div class="spinner"></div></div>
-    <a href="javascript:void(0)" onclick="goto('new-listing')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ List something for sale</a>
+  <div class="scroll"><div class="scroll-content">
+    <div id="marketplace-cta" style="margin-bottom:10px"></div>
+    <div id="marketplace-list"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
 </div>
 
@@ -580,6 +582,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="page-title">List an item</div>
   </div>
   <div class="scroll"><div class="scroll-content">
+    <div id="nl-quota-note" style="font-size:12px;color:var(--gold);font-family:var(--sans);margin-bottom:12px"></div>
     <div class="field"><label>What are you selling</label><input type="text" id="nl-title"></div>
     <div class="field"><label>Category</label><input type="text" id="nl-category" placeholder="e.g. Office equipment"></div>
     <div class="field"><label>Price</label><input type="text" id="nl-price" placeholder="e.g. ₹1,20,000"></div>
@@ -587,6 +590,30 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="field"><label>Location</label><input type="text" id="nl-location"></div>
     <button class="btn btn-gold btn-full" style="margin-top:4px" onclick="submitListing()">Publish listing</button>
   </div></div>
+</div>
+
+<!-- MARKETPLACE PACKAGES -->
+<div class="screen" id="screen-marketplace-packages">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Seller Packages</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:16px">Listing on the Marketplace needs an active package — keeps it a real marketplace, not a free-for-all. Request one below; an admin activates it once payment is confirmed.</p>
+    <div id="packages-list"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="divider"></div>
+    <div class="section-title">Your requests</div>
+    <div id="my-package-requests"></div>
+  </div></div>
+</div>
+
+<!-- ADMIN: MARKETPLACE PACKAGE REQUESTS -->
+<div class="screen" id="screen-admin-packages">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Package Requests</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="admin-packages-list"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
 
 <!-- THE EXCHANGE -->
@@ -718,7 +745,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="card" onclick="goto('admin-moderation')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Moderation Queue</span><span id="mod-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <div class="card" onclick="goto('admin-publish-update')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Publish an Official Update</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <div class="card" onclick="goto('admin-ads')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Ad Campaigns</span><span id="ads-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-    <div class="card" onclick="goto('admin-partners')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Platform Partners</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-partners')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Platform Partners</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-packages')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Marketplace Package Requests</span><span id="pkg-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
@@ -832,6 +860,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="field"><label>Daily budget (₹)</label><input type="text" id="ad-budget" placeholder="2500"></div>
     <div class="field"><label>Duration (days)</label><input type="text" id="ad-duration" placeholder="14"></div>
     <button class="btn btn-gold btn-full" onclick="submitAdCampaign()">Submit for review</button>
+    <div class="divider"></div>
+    <div class="section-title">Your campaigns</div>
+    <div id="my-ad-campaigns"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
 </div>
 
@@ -999,7 +1030,7 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote};
   if(loads[n])loads[n]();
 }
 function gotoTab(n){
@@ -1086,6 +1117,7 @@ async function loadMemberHome(){
   goto('home');gotoTab('home');
   loadBlogFeed('home-blog','home');
   loadSocialFeed();
+  loadTrendingHashtags();
   setupRT();
 }
 
@@ -1127,32 +1159,73 @@ function openPost(id,ctx){
   goto('blog-post');
 }
 
+// Relevance ranking: all inputs are real, already-stored data -- bucket
+// match, your own explicit More/Normal/Less weight, accepted connections,
+// follows, recency, and engagement on the post itself. No fabricated score,
+// no black box -- just a weighted sum, computed over the most recent 100
+// eligible posts (same audience/mute/block filtering as before), then the
+// top 30 are shown. Sponsored posts and your own posts skip scoring and are
+// positioned exactly as the UI already promised elsewhere (sponsored cards
+// are inherently few and already labelled; your own posts you'd see anyway).
+function scorePostRelevance(p,ctx){
+  const ageHours=(Date.now()-new Date(p.created_at).getTime())/36e5;
+  const recency=Math.exp(-ageHours/48); // halves roughly every ~33h
+  let affinity=0.3; // baseline for an 'everyone' post with no bucket tie to you
+  if(p.bucket_id&&p.bucket_id===ctx.myBucketId){
+    affinity=ctx.weights[p.bucket_id]==='more'?1.5:ctx.weights[p.bucket_id]==='less'?0.4:1.0;
+  }else if(p.audience==='buckets'&&(p.audience_bucket_ids||[]).includes(ctx.myBucketId)){
+    affinity=0.8;
+  }
+  const proximity=ctx.connIds.has(p.author_id)?1.0:ctx.followIds.has(p.author_id)?0.8:0.3;
+  const engagement=Math.log2(1+(ctx.likeCounts[p.id]||0)+(ctx.commentCounts[p.id]||0))/5; // soft, log-scaled
+  return recency*0.35+affinity*0.30+proximity*0.25+Math.min(engagement,1)*0.10;
+}
+
 async function loadSocialFeed(){
-  let exclude=[],weights={},audienceClause='or=(audience.eq.everyone)';
+  let exclude=[],weights={},audienceClause='or=(audience.eq.everyone)',connIds=new Set(),followIds=new Set();
   if(ST.profile){
     try{
-      const[mu,bu1,bu2,w,myConns]=await Promise.all([
+      const[mu,bu1,bu2,w,myConns,myFollows]=await Promise.all([
         api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),
         api('blocked_users',`?blocker_id=eq.${ST.profile.id}&select=blocked_id`),
         api('blocked_users',`?blocked_id=eq.${ST.profile.id}&select=blocker_id`),
         api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&weight=neq.normal&select=bucket_id,weight`),
-        api('member_connections',`?status=eq.accepted&or=(requester_id.eq.${ST.profile.id},addressee_id.eq.${ST.profile.id})&select=requester_id,addressee_id`)
+        api('member_connections',`?status=eq.accepted&or=(requester_id.eq.${ST.profile.id},addressee_id.eq.${ST.profile.id})&select=requester_id,addressee_id`),
+        api('follows',`?follower_id=eq.${ST.profile.id}&select=followee_id`)
       ]);
       exclude=[...(mu||[]).map(x=>x.muted_id),...(bu1||[]).map(x=>x.blocked_id),...(bu2||[]).map(x=>x.blocker_id)];
       (w||[]).forEach(x=>weights[x.bucket_id]=x.weight);
-      const connIds=(myConns||[]).map(c=>c.requester_id===ST.profile.id?c.addressee_id:c.requester_id);
+      connIds=new Set((myConns||[]).map(c=>c.requester_id===ST.profile.id?c.addressee_id:c.requester_id));
+      followIds=new Set((myFollows||[]).map(f=>f.followee_id));
       const parts=['audience.eq.everyone'];
       if(ST.profile.bucket_id){
         parts.push(`and(audience.eq.sector,bucket_id.eq.${ST.profile.bucket_id})`);
         parts.push(`audience_bucket_ids.cs.{${ST.profile.bucket_id}}`);
       }
-      if(connIds.length)parts.push(`and(audience.eq.connections,author_id.in.(${connIds.join(',')}))`);
+      if(connIds.size)parts.push(`and(audience.eq.connections,author_id.in.(${[...connIds].join(',')}))`);
       parts.push(`author_id.eq.${ST.profile.id}`); // always see your own posts regardless of their audience
       audienceClause=`or=(${parts.join(',')})`;
     }catch(e){}
   }
   const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
-  await renderPostList('social-feed',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=30${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored`,weights);
+  const el=$('social-feed');if(!el)return;
+  try{
+    const candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored`)||[];
+    if(!candidates.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
+    const sponsored=candidates.filter(p=>p.is_sponsored);
+    const organic=candidates.filter(p=>!p.is_sponsored);
+    if(ST.profile&&organic.length){
+      const ids=organic.map(p=>p.id);
+      let likeCounts={},commentCounts={};
+      try{const lc=await api('post_likes',`?post_id=in.(${ids.join(',')})&select=post_id`);(lc||[]).forEach(r=>likeCounts[r.post_id]=(likeCounts[r.post_id]||0)+1);}catch(e){}
+      try{const cc=await api('post_comments',`?post_id=in.(${ids.join(',')})&select=post_id`);(cc||[]).forEach(r=>commentCounts[r.post_id]=(commentCounts[r.post_id]||0)+1);}catch(e){}
+      const ctx={myBucketId:ST.profile.bucket_id,weights,connIds,followIds,likeCounts,commentCounts};
+      organic.sort((a,b)=>scorePostRelevance(b,ctx)-scorePostRelevance(a,ctx));
+    }
+    // One sponsored card near the top, the rest ranked organically underneath.
+    const ordered=sponsored.length?[sponsored[0],...organic.slice(0,29),...sponsored.slice(1)]:organic;
+    await renderPostCards('social-feed',ordered.slice(0,30));
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
 }
 
 async function renderPostList(containerId,query,weights){
@@ -1167,6 +1240,14 @@ async function renderPostList(containerId,query,weights){
       const rank=b=>weights[b]==='more'?-1:weights[b]==='less'?1:0;
       posts=posts.map((p,i)=>({p,i})).sort((a,b)=>rank(a.p.bucket_id)-rank(b.p.bucket_id)||a.i-b.i).map(x=>x.p);
     }
+    await renderPostCards(containerId,posts);
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+async function renderPostCards(containerId,posts){
+  const el=$(containerId);if(!el)return;
+  try{
+    if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
     const ids=[...new Set(posts.map(p=>p.author_id).filter(Boolean))];let am={};
     if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     const myId=ST.profile?.id;
@@ -1253,6 +1334,23 @@ async function submitPost(){
     $('feed-compose').value='';
     await loadSocialFeed();
   }catch(e){alert('Could not post — please try again.');}
+}
+
+async function loadTrendingHashtags(){
+  const el=$('trending-hashtags');if(!el)return;
+  try{
+    const since=new Date(Date.now()-7*864e5).toISOString();
+    const recent=await api('posts',`?created_at=gte.${since}&community_id=is.null&select=id`)||[];
+    if(!recent.length){el.innerHTML='';return;}
+    const ids=recent.map(p=>p.id);
+    const links=await api('post_hashtags',`?post_id=in.(${ids.join(',')})&select=hashtag_id`)||[];
+    if(!links.length){el.innerHTML='';return;}
+    const counts={};links.forEach(l=>counts[l.hashtag_id]=(counts[l.hashtag_id]||0)+1);
+    const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x=>x[0]);
+    const tags=await api('hashtags',`?id=in.(${top.join(',')})&select=id,tag`)||[];
+    const tagMap={};tags.forEach(t=>tagMap[t.id]=t.tag);
+    el.innerHTML=top.filter(id=>tagMap[id]).map(id=>`<div class="chip" style="white-space:nowrap;cursor:pointer" onclick="openHashtag('${tagMap[id]}')">#${tagMap[id]} · ${counts[id]}</div>`).join('');
+  }catch(e){el.innerHTML='';}
 }
 
 async function openHashtag(tag){
@@ -1631,7 +1729,13 @@ async function joinCommunityIfNeeded(c){
 // ---- Marketplace ----
 
 async function loadMarketplace(){
-  const el=$('marketplace-list');
+  const el=$('marketplace-list'),cta=$('marketplace-cta');
+  try{
+    const hasPackage=await memberHasActivePackage();
+    cta.innerHTML=hasPackage
+      ?'<a href="javascript:void(0)" onclick="goto(\'new-listing\')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ List something for sale</a>'
+      :'<a href="javascript:void(0)" onclick="goto(\'marketplace-packages\')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">Get a seller package to list an item</a>';
+  }catch(e){}
   try{
     const d=await api('marketplace_listings','?status=eq.active&order=created_at.desc&limit=50&select=id,title,category,price_text,description,location,seller_id')||[];
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No listings yet.</div></div>';return;}
@@ -1647,9 +1751,32 @@ async function loadMarketplace(){
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the marketplace</div></div>';}
 }
 
+async function getActivePackageSubscription(){
+  if(!ST.profile)return null;
+  try{
+    const subs=await api('seller_package_subscriptions',`?user_id=eq.${ST.profile.id}&status=eq.active&order=activated_at.desc&select=id,listings_used,expires_at,package_id`)||[];
+    const now=Date.now();
+    const pkgs=await api('marketplace_packages','?select=id,listing_quota');
+    const pkgMap={};(pkgs||[]).forEach(p=>pkgMap[p.id]=p);
+    return subs.find(s=>{
+      if(s.expires_at&&new Date(s.expires_at).getTime()<now)return false;
+      const quota=pkgMap[s.package_id]?.listing_quota;
+      return quota==null||s.listings_used<quota;
+    })||null;
+  }catch(e){return null;}
+}
+async function memberHasActivePackage(){return !!(await getActivePackageSubscription());}
+
+async function loadNewListingNote(){
+  const sub=await getActivePackageSubscription();
+  $('nl-quota-note').textContent=sub?'You have an active seller package — this listing will count against it.':'You need an active seller package before publishing — you\'ll be redirected if you don\'t have one.';
+}
+
 async function submitListing(){
   if(!ST.profile)return;
   const title=$('nl-title').value.trim();if(!title)return;
+  const sub=await getActivePackageSubscription();
+  if(!sub){alert('You need an active seller package to list an item.');goto('marketplace-packages');return;}
   try{
     await api('marketplace_listings','','POST',{
       seller_id:ST.profile.id,title,
@@ -1658,9 +1785,73 @@ async function submitListing(){
       description:$('nl-desc').value.trim()||null,
       location:$('nl-location').value.trim()||null
     });
+    await api('seller_package_subscriptions',`?id=eq.${sub.id}`,'PATCH',{listings_used:sub.listings_used+1});
     ['nl-title','nl-category','nl-price','nl-desc','nl-location'].forEach(id=>$(id).value='');
     goto('marketplace');
   }catch(e){alert('Could not publish the listing — please try again.');}
+}
+
+// ---- Marketplace packages ----
+
+async function loadMarketplacePackages(){
+  try{
+    const pkgs=await api('marketplace_packages','?active=eq.true&order=sort_order.asc&select=*')||[];
+    $('packages-list').innerHTML=pkgs.map(p=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${p.name}</div>
+      <div style="font-size:13px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:6px">₹${p.price} / ${p.duration_days} days</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${p.listing_quota==null?'Unlimited listings':p.listing_quota+' listing'+(p.listing_quota===1?'':'s')}</div>
+      <button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:12px" onclick="requestPackage('${p.id}')">Request this package</button>
+    </div>`).join('');
+  }catch(e){$('packages-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+  if(!ST.profile)return;
+  try{
+    const mine=await api('seller_package_subscriptions',`?user_id=eq.${ST.profile.id}&order=requested_at.desc&select=id,status,requested_at,expires_at,package_id`)||[];
+    if(!mine.length){$('my-package-requests').innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No requests yet.</p>';return;}
+    const pkgs=await api('marketplace_packages',`?id=in.(${mine.map(m=>m.package_id).join(',')})&select=id,name`);
+    const pm={};(pkgs||[]).forEach(p=>pm[p.id]=p.name);
+    const statusLabel={pending_payment:'Awaiting payment confirmation',active:'Active',expired:'Expired',rejected:'Rejected'};
+    $('my-package-requests').innerHTML=mine.map(m=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${pm[m.package_id]||'Package'}</span><span style="font-size:11px;color:var(--gold)">${statusLabel[m.status]||m.status}</span></div>`).join('');
+  }catch(e){}
+}
+
+async function requestPackage(packageId){
+  if(!ST.profile)return;
+  try{
+    await api('seller_package_subscriptions','','POST',{user_id:ST.profile.id,package_id:packageId});
+    alert('Requested — an admin will activate it once payment is confirmed.');
+    await loadMarketplacePackages();
+  }catch(e){alert('Could not submit the request — please try again.');}
+}
+
+async function loadAdminPackages(){
+  const el=$('admin-packages-list');
+  try{
+    const d=await api('seller_package_subscriptions','?status=eq.pending_payment&order=requested_at.desc&select=id,user_id,package_id,requested_at')||[];
+    const b=$('pkg-badge');if(b)b.textContent=d.length>0?d.length+' pending':'';
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No pending requests.</div></div>';return;}
+    const uids=[...new Set(d.map(x=>x.user_id))],pids=[...new Set(d.map(x=>x.package_id))];
+    const[users,pkgs]=await Promise.all([api('users',`?id=in.(${uids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`),api('marketplace_packages',`?id=in.(${pids.join(',')})&select=id,name,duration_days`)]);
+    const um={};(users||[]).forEach(u=>um[u.id]=u);
+    const pm={};(pkgs||[]).forEach(p=>pm[p.id]=p);
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${dname(um[x.user_id]||{})}</div>
+      <div style="font-size:12px;color:var(--gold);margin-bottom:10px">${pm[x.package_id]?.name||'Package'}</div>
+      <div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePackageRequest('${x.id}','${pm[x.package_id]?.duration_days||90}')">Activate</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="rejectPackageRequest('${x.id}')">Reject</button></div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function decidePackageRequest(id,durationDays){
+  try{
+    const expires=new Date(Date.now()+parseInt(durationDays)*864e5).toISOString();
+    await api('seller_package_subscriptions',`?id=eq.${id}`,'PATCH',{status:'active',activated_at:new Date().toISOString(),expires_at:expires});
+    await loadAdminPackages();
+  }catch(e){alert('Could not activate — please try again.');}
+}
+
+async function rejectPackageRequest(id){
+  try{await api('seller_package_subscriptions',`?id=eq.${id}`,'PATCH',{status:'rejected'});await loadAdminPackages();}
+  catch(e){alert('Could not reject — please try again.');}
 }
 
 async function inquireListing(listingId){
@@ -2200,8 +2391,38 @@ async function submitAdCampaign(){
     });
     ['ad-headline','ad-body','ad-cta','ad-budget','ad-duration'].forEach(id=>$(id).value='');
     alert('Submitted for review — you will be notified once approved.');
-    goto('profile');
+    await loadMyAdCampaigns();
   }catch(e){alert('Could not submit — please try again.');}
+}
+
+async function loadMyAdCampaigns(){
+  if(!ST.profile)return;
+  const el=$('my-ad-campaigns');
+  try{
+    const d=await api('ad_campaigns',`?advertiser_id=eq.${ST.profile.id}&order=created_at.desc&select=id,headline,status,post_id,daily_budget,duration_days,target_bucket_ids`)||[];
+    if(!d.length){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No campaigns yet.</p>';return;}
+    const postIds=d.filter(c=>c.post_id).map(c=>c.post_id);
+    let likeCounts={},commentCounts={};
+    if(postIds.length){
+      try{const lc=await api('post_likes',`?post_id=in.(${postIds.join(',')})&select=post_id`);(lc||[]).forEach(r=>likeCounts[r.post_id]=(likeCounts[r.post_id]||0)+1);}catch(e){}
+      try{const cc=await api('post_comments',`?post_id=in.(${postIds.join(',')})&select=post_id`);(cc||[]).forEach(r=>commentCounts[r.post_id]=(commentCounts[r.post_id]||0)+1);}catch(e){}
+    }
+    let bucketCounts={};
+    if(d.some(c=>c.target_bucket_ids?.length)){
+      try{const u=await api('users',`?status=eq.active&select=bucket_id`);(u||[]).forEach(x=>{if(x.bucket_id)bucketCounts[x.bucket_id]=(bucketCounts[x.bucket_id]||0)+1;});}catch(e){}
+    }
+    const statusLabel={pending_review:'Pending review',active:'Live',paused:'Paused',ended:'Ended',rejected:'Rejected'};
+    el.innerHTML=d.map(c=>{
+      const reach=(c.target_bucket_ids||[]).reduce((s,b)=>s+(bucketCounts[b]||0),0);
+      return`<div class="card" style="margin-bottom:10px">
+        <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${c.headline}</div>
+        <div style="font-size:11px;color:var(--gold);margin-bottom:8px">${statusLabel[c.status]||c.status}</div>
+        ${c.status==='active'&&c.post_id?`<div style="font-size:12px;color:var(--muted);font-family:var(--sans)">${likeCounts[c.post_id]||0} likes · ${commentCounts[c.post_id]||0} comments</div>`:''}
+        ${c.target_bucket_ids?.length?`<div style="font-size:11px;color:rgba(16,30,51,0.4);margin-top:4px">Targeting ~${reach} active members across ${c.target_bucket_ids.length} sector${c.target_bucket_ids.length===1?'':'s'}</div>`:''}
+      </div>`;
+    }).join('');
+    el.insertAdjacentHTML('beforeend','<p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);line-height:1.6;margin-top:6px">Likes and comments on the live post are real counts. Per-view impressions aren\'t tracked yet — reach shown is the actual size of your targeted sectors, not a measured view count.</p>');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
 }
 
 async function loadAdminAds(){
