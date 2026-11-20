@@ -127,4 +127,56 @@ create policy community_members_insert_own on public.community_members for inser
   )
 );
 
+-- posts_insert_own (20261120150000, already revised once this session for
+-- the community_id bypass) had a second, worse gap: no restriction on
+-- is_sponsored or sponsor_user_id at all. Any member could self-INSERT a
+-- post with is_sponsored=true -- fully skipping the Advertise -> admin
+-- review flow that "every ad is reviewed before it goes live" (the actual
+-- copy shown in the Advertise screen) depends on -- and could even set
+-- sponsor_user_id to a DIFFERENT member's id, falsely crediting someone
+-- else as the advertiser.
+--
+-- Fixing this surfaced a second, separate bug: approveAd() in app.html
+-- creates the real post as the ADMIN's own authenticated session, but with
+-- author_id set to the ADVERTISER (so it displays correctly under their
+-- name), not the admin. Under the original policy's single
+-- "author_id must equal the caller" check, that insert would itself have
+-- been rejected by RLS -- the approval flow was never actually going to
+-- work once applied, caught here before it was ever run against a real
+-- database.
+drop policy if exists posts_insert_own on public.posts;
+create policy posts_insert_own on public.posts for insert with check (
+  (
+    author_id in (select id from public.users where auth_id = auth.uid())
+    and not coalesce(is_sponsored, false)
+    and (
+      community_id is null
+      or exists (
+        select 1 from public.community_members cm
+        where cm.community_id = posts.community_id
+          and cm.user_id = posts.author_id
+          and cm.status = 'active'
+      )
+    )
+  )
+  or (
+    -- The real ad-approval path: an admin creates the post on the
+    -- advertiser's behalf once a campaign is approved. is_sponsored must
+    -- be true here -- an admin can't use this branch to post as someone
+    -- else for free.
+    public.is_platform_admin() and coalesce(is_sponsored, false)
+  )
+);
+
+-- ad_campaigns_insert_own (20261120180000) had the same shape of gap, now
+-- low-impact rather than exploitable since the posts fix above means
+-- self-setting status='active' here no longer creates any real post --
+-- but fixing it anyway keeps the admin queue's own labels (PENDING REVIEW
+-- vs LIVE) honest rather than self-reported.
+drop policy if exists ad_campaigns_insert_own on public.ad_campaigns;
+create policy ad_campaigns_insert_own on public.ad_campaigns for insert with check (
+  advertiser_id in (select id from public.users where auth_id = auth.uid())
+  and status = 'pending_review'
+);
+
 commit;
