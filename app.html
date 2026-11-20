@@ -669,6 +669,23 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
 </div>
 
+<!-- HELP POST DETAIL -->
+<div class="screen" id="screen-help-post">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('help')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">MY Help</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div id="help-post-body"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="section-title" style="margin-top:16px">Replies</div>
+    <div id="help-post-replies"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="card" style="margin-top:14px">
+      <textarea id="help-reply-compose" rows="2" placeholder="Add a reply…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitHelpReply()">Reply</button></div>
+    </div>
+  </div></div>
+</div>
+
 <!-- COMMUNITIES -->
 <div class="screen" id="screen-forums">
   <div class="page-header gradient">
@@ -1801,8 +1818,52 @@ async function loadHelp(){
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet. Ask the first question.</div></div>';return;}
     const ids=[...new Set(d.map(p=>p.author_id))];
     let am={};try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
-    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card" style="margin-bottom:10px"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${p.type||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${am[p.author_id]?.domain||''}</span><span style="font-size:11px;color:var(--gold)">${p.reply_count||0} replies</span></div></div>`;}).join('');
+    // reply_count on help_posts is never incremented by anything -- showing
+    // a real live count from help_replies instead of that stale stored value.
+    let replyCounts={};
+    try{const r=await api('help_replies',`?help_post_id=in.(${d.map(p=>p.id).join(',')})&select=help_post_id`);(r||[]).forEach(x=>replyCounts[x.help_post_id]=(replyCounts[x.help_post_id]||0)+1);}catch(e){}
+    ST.helpPosts=d;
+    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openHelpPost('${p.id}')"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${p.type||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${am[p.author_id]?.domain||''}</span><span style="font-size:11px;color:var(--gold)">${replyCounts[p.id]||0} replies</span></div></div>`;}).join('');
   }catch(e){$('help-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function openHelpPost(id){
+  const p=(ST.helpPosts||[]).find(x=>x.id===id);if(!p)return;
+  ST.currentHelpPostId=id;
+  goto('help-post');
+  let author={};
+  try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved,domain`);author=(a||[])[0]||{};}catch(e){}
+  $('help-post-body').innerHTML=`<div class="card">
+    <div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);display:inline-block;margin-bottom:8px">${p.type||'question'}</div>
+    <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:8px;line-height:1.3">${p.title}</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px">${p.content}</div>
+    <div style="font-size:11px;color:rgba(16,30,51,0.3)">${dname(author)} · ${author.domain||''}</div>
+  </div>`;
+  await loadHelpReplies(id);
+}
+
+async function loadHelpReplies(helpPostId){
+  const el=$('help-post-replies');
+  try{
+    const replies=await api('help_replies',`?help_post_id=eq.${helpPostId}&order=created_at.asc&select=id,content,created_at,author_id`)||[];
+    if(!replies.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No replies yet.</div></div>';return;}
+    const ids=[...new Set(replies.map(r=>r.author_id))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    el.innerHTML=replies.map(r=>`<div class="card" style="margin-bottom:8px">
+      <div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${dname(am[r.author_id]||{})}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${r.content}</div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load replies</div></div>';}
+}
+
+async function submitHelpReply(){
+  const id=ST.currentHelpPostId,content=$('help-reply-compose').value.trim();
+  if(!id||!content||!ST.profile)return;
+  try{
+    await api('help_replies','','POST',{help_post_id:id,author_id:ST.profile.id,content});
+    $('help-reply-compose').value='';
+    await loadHelpReplies(id);
+  }catch(e){alert('Could not post your reply — please try again.');}
 }
 
 async function submitHelp(){
