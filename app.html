@@ -705,8 +705,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
   <div class="scroll"><div class="scroll-content">
     <div id="marketplace-cta" style="margin-bottom:10px"></div>
+    <a href="javascript:void(0)" onclick="goto('my-listings')" style="display:block;font-size:12px;color:var(--gold);font-family:var(--sans);margin-bottom:12px;text-decoration:none">My listings &amp; inquiries received →</a>
     <div id="marketplace-list"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
+</div>
+
+<!-- MY LISTINGS -->
+<div class="screen" id="screen-my-listings">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">My Listings</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="my-listings-list"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
 
 <!-- NEW LISTING -->
@@ -756,9 +766,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="page-title">The Exchange</div>
   </div>
-  <div class="scroll"><div class="scroll-content" id="exchange-list"><div class="loader"><div class="spinner"></div></div>
+  <div class="scroll"><div class="scroll-content">
+    <a href="javascript:void(0)" onclick="goto('my-briefs')" style="display:block;font-size:12px;color:var(--gold);font-family:var(--sans);margin-bottom:12px;text-decoration:none">My briefs &amp; responses received →</a>
+    <div id="exchange-list"><div class="loader"><div class="spinner"></div></div></div>
     <a href="javascript:void(0)" onclick="goto('new-brief')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Post a brief</a>
   </div></div>
+</div>
+
+<!-- MY BRIEFS -->
+<div class="screen" id="screen-my-briefs">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">My Briefs</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="my-briefs-list"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
 
 <!-- NEW BRIEF -->
@@ -1166,7 +1187,7 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs};
   if(loads[n])loads[n]();
 }
 function gotoTab(n){
@@ -2008,6 +2029,46 @@ async function inquireListing(listingId){
   const msg=prompt('Message to the seller:');if(!msg||!msg.trim()||!ST.profile)return;
   try{await api('marketplace_inquiries','','POST',{listing_id:listingId,buyer_id:ST.profile.id,message:msg.trim()});alert('Sent.');}
   catch(e){alert('Could not send — please try again.');}
+}
+
+async function loadMyListings(){
+  if(!ST.profile)return;
+  const el=$('my-listings-list');
+  try{
+    const listings=await api('marketplace_listings',`?seller_id=eq.${ST.profile.id}&order=created_at.desc&select=id,title,status`)||[];
+    if(!listings.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No listings yet.</div></div>';return;}
+    const ids=listings.map(l=>l.id);
+    const inquiries=await api('marketplace_inquiries',`?listing_id=in.(${ids.join(',')})&order=created_at.desc&select=id,listing_id,buyer_id,message,created_at`)||[];
+    const buyerIds=[...new Set(inquiries.map(i=>i.buyer_id))];let bm={};
+    if(buyerIds.length){try{const u=await api('users',`?id=in.(${buyerIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>bm[x.id]=x);}catch(e){}}
+    el.innerHTML=listings.map(l=>{
+      const myInquiries=inquiries.filter(i=>i.listing_id===l.id);
+      return`<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px;color:var(--white);font-family:var(--serif);font-weight:700">${l.title}</span><span style="font-size:10px;color:var(--gold)">${l.status}</span></div>
+        ${myInquiries.length?myInquiries.map(i=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${dname(bm[i.buyer_id]||{})}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${i.message}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No inquiries yet.</div>'}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function loadMyBriefs(){
+  if(!ST.profile)return;
+  const el=$('my-briefs-list');
+  try{
+    const briefs=await api('exchange_briefs',`?author_id=eq.${ST.profile.id}&order=created_at.desc&select=id,description,brief_type,status`)||[];
+    if(!briefs.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No briefs yet.</div></div>';return;}
+    const ids=briefs.map(b=>b.id);
+    const responses=await api('exchange_brief_responses',`?brief_id=in.(${ids.join(',')})&order=created_at.desc&select=id,brief_id,responder_id,message,created_at`)||[];
+    const responderIds=[...new Set(responses.map(r=>r.responder_id))];let rm={};
+    if(responderIds.length){try{const u=await api('users',`?id=in.(${responderIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>rm[x.id]=x);}catch(e){}}
+    el.innerHTML=briefs.map(b=>{
+      const myResponses=responses.filter(r=>r.brief_id===b.id);
+      return`<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;flex:1">${b.description}</span><span style="font-size:10px;color:var(--gold);flex-shrink:0;margin-left:8px">${b.status}</span></div>
+        ${myResponses.length?myResponses.map(r=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${dname(rm[r.responder_id]||{})}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${r.message||''}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No responses yet.</div>'}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
 
 // ---- The Exchange ----
