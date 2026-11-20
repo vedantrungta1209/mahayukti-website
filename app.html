@@ -374,6 +374,22 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
 </div>
 
+<!-- POST THREAD -->
+<div class="screen" id="screen-post-thread">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div id="thread-post"></div>
+    <div class="section-title" style="margin-top:16px">Comments</div>
+    <div id="thread-comments"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="card" style="margin-top:14px">
+      <textarea id="comment-compose" rows="2" placeholder="Add a comment…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitComment()">Reply</button></div>
+    </div>
+  </div></div>
+</div>
+
 <!-- DIRECTORY -->
 <div class="screen" id="screen-directory">
   <div class="page-header gradient">
@@ -409,7 +425,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div id="mp-badge"></div>
     </div>
     <div id="mp-info"></div>
-    <button class="btn btn-gold btn-full" id="mp-msg-btn" onclick="chatWithCurrent()" style="margin-top:20px"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Send Message</button>
+    <div style="font-size:11px;color:rgba(16,30,51,0.4);text-align:center;margin-top:16px;line-height:1.6">Connect if you know each other — needs their acceptance. Follow just to see their posts — no acceptance needed.</div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="btn btn-gold" id="mp-connect-btn" style="flex:1" onclick="connectWithCurrent()">+ Connect</button>
+      <button class="btn btn-outline" id="mp-follow-btn" style="flex:1" onclick="followWithCurrent()">+ Follow</button>
+    </div>
+    <button class="btn btn-gold btn-full" id="mp-msg-btn" onclick="chatWithCurrent()" style="margin-top:10px"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Send Message</button>
   </div></div>
 </div>
 
@@ -884,7 +905,7 @@ async function loadSocialFeed(){
         ${p.link_url?`<a href="${p.link_url}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${p.link_title||p.link_url} →</a>`:''}
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
           <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
-          <span style="color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} comments</span>
+          <button onclick="openPostThread('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} comments</button>
         </div>
       </div>`;
     }).join('');
@@ -911,6 +932,52 @@ async function toggleLike(postId){
     }
     await loadSocialFeed();
   }catch(e){}
+}
+
+async function openPostThread(postId){
+  ST.currentThreadPostId=postId;
+  $('thread-post').innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  $('thread-comments').innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  goto('post-thread');
+  try{
+    const posts=await api('posts',`?id=eq.${postId}&select=id,body,title,created_at,author_id`);
+    const p=(posts||[])[0];
+    if(!p){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Post not found</div></div>';return;}
+    let author={};
+    try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved`);author=(a||[])[0]||{};}catch(e){}
+    $('thread-post').innerHTML=`<div class="card">
+      <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${dname(author)}</div>
+      <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+      ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${p.title}</div>`:''}
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">${p.body}</div>
+    </div>`;
+  }catch(e){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load post</div></div>';}
+  loadThreadComments(postId);
+}
+
+async function loadThreadComments(postId){
+  const el=$('thread-comments');if(!el)return;
+  try{
+    const comments=await api('post_comments',`?post_id=eq.${postId}&order=created_at.asc&select=id,body,created_at,author_id`)||[];
+    if(!comments.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No comments yet</div></div>';return;}
+    const ids=[...new Set(comments.map(c=>c.author_id))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    el.innerHTML=comments.map(c=>`<div class="card" style="margin-bottom:8px">
+      <div style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600">${dname(am[c.author_id]||{})}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${c.body}</div>
+      <div style="font-size:10.5px;color:rgba(16,30,51,0.3);margin-top:4px">${new Date(c.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load comments</div></div>';}
+}
+
+async function submitComment(){
+  const postId=ST.currentThreadPostId,body=$('comment-compose').value.trim();
+  if(!postId||!body||!ST.profile)return;
+  try{
+    await api('post_comments','','POST',{post_id:postId,author_id:ST.profile.id,body});
+    $('comment-compose').value='';
+    await loadThreadComments(postId);
+  }catch(e){alert('Could not post comment — please try again.');}
 }
 
 async function loadDir(){
@@ -945,11 +1012,60 @@ function viewMember(id){
   $('mp-founding').style.display=m.founding_member&&m.founding_approved?'':'none';
   $('mp-badge').innerHTML=`<div class="layer-badge ${lbadge(m.role)}">${lbadgeLabel(m.role)}</div>`;
   $('mp-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${m.domain||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${m.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${m.experience||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${m.organisation}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${m.about}</p></div>`:''}`;
-  $('mp-msg-btn').style.display=m.id===ST.profile?.id?'none':'';
+  const isSelf=m.id===ST.profile?.id;
+  $('mp-msg-btn').style.display=isSelf?'none':'';
+  $('mp-connect-btn').style.display=isSelf?'none':'';
+  $('mp-follow-btn').style.display=isSelf?'none':'';
+  if(!isSelf)refreshConnectState(m.id);
   goto('member-profile');
 }
 
 function chatWithCurrent(){if(ST.currentMember)openChat(ST.currentMember);}
+
+async function refreshConnectState(memberId){
+  const myId=ST.profile?.id;if(!myId)return;
+  try{
+    const conns=await api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${memberId}),and(requester_id.eq.${memberId},addressee_id.eq.${myId}))&select=requester_id,status`);
+    const c=(conns||[])[0];
+    const cb=$('mp-connect-btn');
+    if(!c){cb.textContent='+ Connect';cb.disabled=false;cb.className='btn btn-gold';}
+    else if(c.status==='pending'&&c.requester_id===myId){cb.textContent='Request sent';cb.disabled=true;cb.className='btn btn-outline';}
+    else if(c.status==='pending'){cb.textContent='Accept connection';cb.disabled=false;cb.className='btn btn-gold';}
+    else{cb.textContent='Connected';cb.disabled=true;cb.className='btn btn-outline';}
+    cb.style.flex='1';
+  }catch(e){}
+  try{
+    const f=await api('follows',`?follower_id=eq.${myId}&followee_id=eq.${memberId}&select=follower_id`);
+    const fb=$('mp-follow-btn');
+    const following=f&&f.length;
+    fb.textContent=following?'Following':'+ Follow';
+    fb.className=following?'btn btn-gold':'btn btn-outline';
+    fb.style.flex='1';
+  }catch(e){}
+}
+
+async function connectWithCurrent(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  try{
+    const existing=await api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${m.id}),and(requester_id.eq.${m.id},addressee_id.eq.${myId}))&select=requester_id,status`);
+    const c=(existing||[])[0];
+    if(!c){await api('member_connections','','POST',{requester_id:myId,addressee_id:m.id});}
+    else if(c.status==='pending'&&c.requester_id===m.id){
+      await api('member_connections',`?requester_id=eq.${m.id}&addressee_id=eq.${myId}`,'PATCH',{status:'accepted',responded_at:new Date().toISOString()});
+    }
+    await refreshConnectState(m.id);
+  }catch(e){}
+}
+
+async function followWithCurrent(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  try{
+    const f=await api('follows',`?follower_id=eq.${myId}&followee_id=eq.${m.id}&select=follower_id`);
+    if(f&&f.length){await api('follows',`?follower_id=eq.${myId}&followee_id=eq.${m.id}`,'DELETE');}
+    else{await api('follows','','POST',{follower_id:myId,followee_id:m.id});}
+    await refreshConnectState(m.id);
+  }catch(e){}
+}
 
 async function loadConvos(){
   if(!ST.profile)return;
