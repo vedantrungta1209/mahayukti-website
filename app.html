@@ -182,6 +182,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <button onclick="goto('concierge')" style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">MY Concierge</button>
       <span style="color:rgba(16,30,51,0.15);font-size:10px">·</span>
       <button onclick="goto('about')" style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">About</button>
+      <span style="color:rgba(16,30,51,0.15);font-size:10px">·</span>
+      <button onclick="goto('legal')" style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">Legal</button>
     </div>
   </div>
   <div style="position:absolute;bottom:calc(24px + var(--safe-bottom));font-size:10px;color:rgba(16,30,51,0.15);font-family:var(--mono);letter-spacing:.3px">mahayukti.com</div>
@@ -235,6 +237,138 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div></div>
 </div>
 
+<!-- LEGAL HUB -->
+<div class="screen" id="screen-legal">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Legal</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="card" onclick="goto('privacy-policy')" style="cursor:pointer;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Privacy Policy</span><span style="color:var(--gold)">→</span></div>
+    <div class="card" onclick="goto('terms')" style="cursor:pointer;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Terms &amp; Conditions</span><span style="color:var(--gold)">→</span></div>
+    <div class="card" onclick="goto('community-guidelines')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Community Guidelines</span><span style="color:var(--gold)">→</span></div>
+  </div></div>
+</div>
+
+<!-- PRIVACY POLICY -->
+<div class="screen" id="screen-privacy-policy">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Privacy Policy</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE] · Applies to MahaYukti's website and app</p>
+
+    <div class="section-title">1. Who we are</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti ("MahaYukti," "we," "us") operates a private, verification-gated professional network. The entity operating MahaYukti is [LEGAL ENTITY NAME], registered at [REGISTERED ADDRESS], India. Our Grievance Officer, designated under the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, is [GRIEVANCE OFFICER NAME], reachable at [GRIEVANCE EMAIL] / [GRIEVANCE PHONE]. We acknowledge complaints within 24 hours and aim to resolve them within 15 days, except where the Rules require faster action (e.g. certain content takedowns within 24–72 hours).</p>
+
+    <div class="section-title">2. What we collect</div>
+    <p class="muted-text" style="line-height:1.8"><b>At signup:</b> name, email, phone number, city, professional domain/role, organisation, LinkedIn profile (if you choose LinkedIn sign-in), a short "about" statement, and — where applicable — company identifiers (CIN/GST) or institutional affiliation used to verify your account.<br><br>
+    <b>As you use MahaYukti:</b> posts, comments, likes, connections, follows, direct messages, group chat messages, Exchange briefs, Marketplace listings, event RSVPs, and any content or files you upload.<br><br>
+    <b>Verification signals:</b> government ID verification status, employer domain-match results, and admin notes tied to your application — never the underlying document images or ID numbers themselves beyond what verification requires.<br><br>
+    <b>Technical data:</b> login timestamps, device/browser information, and — if you generate a developer API key — hashed key material (never the raw key, which is shown to you once and never stored).<br><br>
+    <b>We do not display your phone number or email to any other member, ever</b> — this is a platform-level rule, not a setting.</p>
+
+    <div class="section-title">3. Why we process it (legal basis under the DPDP Act, 2023)</div>
+    <p class="muted-text" style="line-height:1.8">We process your personal data on the basis of your consent at signup (for your profile and verification data), for the performance of our relationship with you as a member (feed, messaging, Marketplace, Exchange, events), and in limited cases for our legitimate interest in keeping the platform trustworthy (fraud/abuse prevention, moderation). Where we rely on consent, you may withdraw it at any time by deactivating your account (Settings → Deactivate), though this does not affect processing already carried out.</p>
+
+    <div class="section-title">4. Who we share it with</div>
+    <p class="muted-text" style="line-height:1.8">We do not sell your personal data. We share it only: (a) with other members, to the extent your own visibility and audience settings allow (e.g. a post marked "Connections only" is not shared outside that audience); (b) with service providers who host or process data on our behalf (currently Supabase for database/auth, and standard cloud infrastructure) under contracts that bind them to protect it; (c) with an approved Platform Partner, and only the specific data you've consented to share with that partner, never a bulk export (see Settings → Platform Partners if you are an admin, or Developer Access if you connect a third-party tool yourself); (d) where required by Indian law, a court order, or a government authority with lawful power to demand it.</p>
+
+    <div class="section-title">5. Your rights</div>
+    <p class="muted-text" style="line-height:1.8">Under the DPDP Act, you have the right to: access the personal data we hold about you, correct or update it, request erasure, and withdraw consent. In the app: <b>Settings → Download my data</b> gives you a real export of your own profile, posts, comments, and likes. <b>Settings → Deactivate account</b> reversibly suspends your account. <b>Settings → Request permanent deletion</b> submits a deletion request that an admin reviews and actions — we do this as a reviewed step, not instant self-service, to prevent account takeover from being used to destroy a member's history irreversibly. You may also contact our Grievance Officer directly for any of the above.</p>
+
+    <div class="section-title">6. Data retention</div>
+    <p class="muted-text" style="line-height:1.8">We retain your account data for as long as your account is active, and for a limited period after deactivation or deletion to meet legal, accounting, or dispute-resolution obligations, after which it is deleted or anonymised. Moderation records (reports, admin actions) are retained longer where needed to protect the integrity of the register.</p>
+
+    <div class="section-title">7. Security</div>
+    <p class="muted-text" style="line-height:1.8">We use row-level access controls so a member can only read or write what their role and relationships actually permit, encrypted connections for all data in transit, and hashed storage for API credentials. No system is perfectly secure; if we become aware of a breach affecting your personal data, we will notify you and the relevant authority as required by law.</p>
+
+    <div class="section-title">8. Children</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti is a professional network and is not directed at, or intended for use by, anyone under 18.</p>
+
+    <div class="section-title">9. Changes to this policy</div>
+    <p class="muted-text" style="line-height:1.8">We may update this policy as the platform evolves. Material changes will be notified to members in-app before they take effect.</p>
+
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.35);margin-top:16px">Questions about this policy or your data: [PRIVACY CONTACT EMAIL]</p>
+  </div></div>
+</div>
+
+<!-- TERMS & CONDITIONS -->
+<div class="screen" id="screen-terms">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Terms &amp; Conditions</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE]</p>
+
+    <div class="section-title">1. Eligibility</div>
+    <p class="muted-text" style="line-height:1.8">You must be at least 18 years old, able to form a binding contract under Indian law, and provide accurate professional information at signup. Membership is granted at MahaYukti's discretion following our verification process (Section 2); we may decline or revoke membership for applications that fail verification or misrepresent the applicant's identity, organisation, or credentials.</p>
+
+    <div class="section-title">2. Your account</div>
+    <p class="muted-text" style="line-height:1.8">You are responsible for your login credentials and everything done through your account. Impersonating another person or organisation, maintaining more than one account, or misrepresenting your real-name/verification status is a violation of these Terms and our Community Guidelines, and may result in suspension.</p>
+
+    <div class="section-title">3. Content you post</div>
+    <p class="muted-text" style="line-height:1.8">You retain ownership of everything you post. By posting, you grant MahaYukti a limited, non-exclusive license to host, display, and distribute that content to the audience you select, solely to operate the platform. You are solely responsible for your content's legality and accuracy. We may remove content, or suspend the account behind it, where it violates these Terms, our Community Guidelines, or applicable law — our moderation process (Report → admin review → remove/dismiss/warn) is described in the Community Guidelines.</p>
+
+    <div class="section-title">4. The Exchange and Marketplace</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti is a venue connecting members — we are not a party to, and do not guarantee, warrant, or arbitrate, any deal, sale, service engagement, or introduction made through The Exchange or the Marketplace. Buyers and sellers deal directly with each other and at their own risk; inspect goods and verify counterparties before transacting. Marketplace listings require an active seller package (Settings → Marketplace → Seller Packages); package fees, once a package is activated, are non-refundable except where required by law, as the quota it grants begins consuming from activation.</p>
+
+    <div class="section-title">5. Advertising</div>
+    <p class="muted-text" style="line-height:1.8">Sponsored posts are reviewed by MahaYukti before going live and are labelled "Sponsored" in the feed. Approval is not an endorsement of the advertiser or their offering. We do not currently guarantee a specific number of impressions or clicks for any campaign.</p>
+
+    <div class="section-title">6. Developer &amp; API access</div>
+    <p class="muted-text" style="line-height:1.8">If you generate a developer API key, you are responsible for keeping it secret and for everything done with it, including by a third-party tool you connect. We may revoke a key or a Platform Partner's access at any time if we reasonably believe it is being used to abuse the platform, scrape data at scale, or act outside the scope it was granted for.</p>
+
+    <div class="section-title">7. Prohibited conduct</div>
+    <p class="muted-text" style="line-height:1.8">Without limiting the Community Guidelines, you agree not to: misrepresent your identity or credentials; harass, defame, or threaten another member; post unlawful, infringing, or fraudulent content; attempt to bypass verification, rate limits, or access controls; or use the platform to send unsolicited bulk messages.</p>
+
+    <div class="section-title">8. Suspension and termination</div>
+    <p class="muted-text" style="line-height:1.8">We may suspend or terminate your access for violating these Terms, on reasonable notice except where immediate action is needed to protect the platform or other members. You may deactivate or request deletion of your own account at any time (Settings).</p>
+
+    <div class="section-title">9. Disclaimers and limitation of liability</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti is provided "as is." To the maximum extent permitted by Indian law, we disclaim warranties of any kind and are not liable for indirect, incidental, or consequential damages arising from your use of the platform, including losses from a Marketplace or Exchange transaction between members.</p>
+
+    <div class="section-title">10. Governing law</div>
+    <p class="muted-text" style="line-height:1.8">These Terms are governed by the laws of India. Courts at [CITY], India have exclusive jurisdiction over any dispute arising from these Terms, subject to the grievance process in our Privacy Policy being followed first.</p>
+
+    <div class="section-title">11. Changes</div>
+    <p class="muted-text" style="line-height:1.8">We may update these Terms as the platform evolves; continued use after a material change constitutes acceptance of the updated Terms, which will be notified in-app.</p>
+  </div></div>
+</div>
+
+<!-- COMMUNITY GUIDELINES -->
+<div class="screen" id="screen-community-guidelines">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Community Guidelines</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="line-height:1.8;margin-bottom:16px">MahaYukti works because the register is real — real people, real credentials, real organisations. These guidelines protect that.</p>
+
+    <div class="section-title">Be who you say you are</div>
+    <p class="muted-text" style="line-height:1.8">One account per person. Your professional details must be accurate. Claiming an employer, qualification, or institutional affiliation you don't have — including falsely claiming to work at a verified organisation, or requesting institution-community membership you're not entitled to — is treated as a trust violation, not a minor error.</p>
+
+    <div class="section-title">Disagree without attacking</div>
+    <p class="muted-text" style="line-height:1.8">Sharp professional disagreement is fine. Harassment, personal attacks, hate speech, or threats aren't — regardless of seniority, tier, or how the other person started it.</p>
+
+    <div class="section-title">Confidentiality where it's promised</div>
+    <p class="muted-text" style="line-height:1.8">Some spaces on MahaYukti (Exchange briefs, client inquiries) are explicitly marked confidential. Screenshotting or forwarding that content outside the platform defeats the reason members use it, and is a guideline violation even if nothing "illegal" is shared.</p>
+
+    <div class="section-title">Sell honestly</div>
+    <p class="muted-text" style="line-height:1.8">Marketplace listings must accurately describe the item, its condition, and its price. Exchange briefs must be genuine requests, not a backdoor to spam the register. Misleading listings get removed and may cost you your seller package without a refund.</p>
+
+    <div class="section-title">No spam, no scraping</div>
+    <p class="muted-text" style="line-height:1.8">Don't mass-message members who haven't connected with you, cross-post unrelated promotional content into every sector, or use a developer API key to scrape the directory. Posting as an advertiser is only legitimate through the reviewed Advertise flow.</p>
+
+    <div class="section-title">How moderation actually works</div>
+    <p class="muted-text" style="line-height:1.8">Any post can be reported. Reports go to a real admin queue (not an automated filter) where an admin can remove the post, dismiss the report, or warn the author. Repeated or serious violations escalate to account suspension. We tell you why when we act on your content, except where doing so would compromise an active investigation.</p>
+
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.35);margin-top:16px">These guidelines work alongside our <a href="javascript:void(0)" onclick="goto('terms')" style="color:var(--gold)">Terms &amp; Conditions</a> and <a href="javascript:void(0)" onclick="goto('privacy-policy')" style="color:var(--gold)">Privacy Policy</a>.</p>
+  </div></div>
+</div>
+
 <!-- APPLY: CHOOSE MANUAL OR LINKEDIN -->
 <!-- APPLY -->
 <div class="screen" id="screen-apply">
@@ -265,7 +399,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     </div>
     <div class="step-content" id="apply-s2">
       <div class="field"><label>About you (optional)</label><textarea id="a-about" placeholder="A line or two — what you do, and what you're hoping to find here." rows="4"></textarea></div>
-      <div style="background:rgba(16,30,51,0.02);border:1px solid var(--border2);border-radius:0;padding:12px;margin-bottom:16px"><p style="font-size:11px;color:rgba(16,30,51,0.35);font-family:var(--sans);line-height:1.7">By submitting, I confirm the information provided is accurate and agree to uphold MahaYukti's network standards.</p></div>
+      <div style="background:rgba(16,30,51,0.02);border:1px solid var(--border2);border-radius:0;padding:12px;margin-bottom:16px"><p style="font-size:11px;color:rgba(16,30,51,0.35);font-family:var(--sans);line-height:1.7">By submitting, I confirm the information provided is accurate and agree to MahaYukti's <a href="javascript:void(0)" onclick="goto('terms')" style="color:var(--gold)">Terms &amp; Conditions</a>, <a href="javascript:void(0)" onclick="goto('privacy-policy')" style="color:var(--gold)">Privacy Policy</a>, and <a href="javascript:void(0)" onclick="goto('community-guidelines')" style="color:var(--gold)">Community Guidelines</a>.</p></div>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-outline" id="apply-prev" onclick="applyPrev()" style="display:none;flex:1">← Back</button>
@@ -909,6 +1043,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="btn btn-outline btn-full" onclick="deactivateAccount()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:12px">Deactivate account</button>
     <button class="btn btn-outline btn-full" onclick="requestAccountDeletion()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:10px">Request permanent deletion</button>
     <p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);margin-top:8px;line-height:1.6">Permanent deletion is reviewed by an admin, same as every account-level action here — it isn't instant self-service, by design.</p>
+    <div class="divider"></div>
+    <div class="card" onclick="goto('legal')" style="cursor:pointer;margin-top:12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Privacy Policy, Terms &amp; Community Guidelines</span><span style="color:var(--gold)">→</span></div>
   </div></div>
 </div>
 
