@@ -162,9 +162,25 @@ create policy posts_select_active_members on public.posts for select using (
   or public.is_platform_admin()
 );
 
+-- Originally just checked author identity -- anyone could set community_id
+-- to ANY community, including one they were never approved into (an
+-- institution community's pending-verification queue existed specifically
+-- to gate this), and post there directly via a plain API call bypassing the
+-- UI's own joinCommunityIfNeeded flow entirely. community_id is nullable on
+-- purpose (an ordinary feed post has none) so the check only applies when
+-- it's actually set.
 drop policy if exists posts_insert_own on public.posts;
 create policy posts_insert_own on public.posts for insert with check (
   author_id in (select id from public.users where auth_id = auth.uid())
+  and (
+    community_id is null
+    or exists (
+      select 1 from public.community_members cm
+      where cm.community_id = posts.community_id
+        and cm.user_id = posts.author_id
+        and cm.status = 'active'
+    )
+  )
 );
 
 drop policy if exists posts_delete_own_or_admin on public.posts;
