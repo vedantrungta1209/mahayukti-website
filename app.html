@@ -498,13 +498,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="section-title" style="margin-top:20px">Your Feed</div>
     <div class="card" style="margin-bottom:14px">
       <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div id="feed-image-preview" style="display:none;margin-top:8px"><img style="max-width:100%;border-radius:4px;max-height:160px;object-fit:cover" id="feed-image-preview-img"><button onclick="clearFeedImage()" style="display:block;margin-top:4px;background:none;border:none;color:rgba(224,85,85,0.7);font-size:11px;cursor:pointer;padding:0">Remove photo</button></div>
+      <input type="file" id="feed-image-input" accept="image/*" style="display:none" onchange="onFeedImageSelected(this)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px">
-        <select id="feed-audience" style="background:rgba(16,30,51,0.04);border:1px solid rgba(16,30,51,0.08);border-radius:4px;padding:6px 8px;font-size:11.5px;color:var(--white);font-family:var(--sans)">
+        <button onclick="document.getElementById('feed-image-input').click()" style="background:none;border:1px solid rgba(16,30,51,0.1);border-radius:4px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:4px"><svg style="width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></button>
+        <select id="feed-audience" style="background:rgba(16,30,51,0.04);border:1px solid rgba(16,30,51,0.08);border-radius:4px;padding:6px 8px;font-size:11.5px;color:var(--white);font-family:var(--sans);flex:1">
           <option value="sector">My sector only</option>
           <option value="connections">Connections only</option>
           <option value="everyone">Everyone</option>
         </select>
-        <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitPost()">Post</button>
+        <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" id="feed-post-btn" onclick="submitPost()">Post</button>
       </div>
     </div>
     <div id="trending-hashtags" style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px"></div>
@@ -1411,7 +1414,7 @@ async function loadSocialFeed(){
   const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
   const el=$('social-feed');if(!el)return;
   try{
-    const candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored`)||[];
+    const candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url`)||[];
     if(!candidates.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
     const sponsored=candidates.filter(p=>p.is_sponsored);
     const organic=candidates.filter(p=>!p.is_sponsored);
@@ -1466,6 +1469,7 @@ async function renderPostCards(containerId,posts){
         <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
         ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
         <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(esc(p.body))}</div>
+        ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:280px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
         ${href?`<a href="${href}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${esc(p.link_title)||href} →</a>`:''}
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
           <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
@@ -1499,6 +1503,30 @@ function extractLinkUrl(text){
   return m?m[0]:null;
 }
 
+// Shared by the feed composer and (eventually) the Marketplace listing
+// form -- uploads into the member's own folder in the public "uploads"
+// bucket (storage RLS enforces that path prefix) and returns the public
+// URL to store on the row, or null if nothing was ever selected or the
+// upload failed.
+async function uploadImage(file){
+  if(!file||!ST.user)return null;
+  const path=`${ST.user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_')}`;
+  const{error}=await sb.storage.from('uploads').upload(path,file);
+  if(error)return null;
+  const{data}=sb.storage.from('uploads').getPublicUrl(path);
+  return data?.publicUrl||null;
+}
+
+let feedImageFile=null;
+function onFeedImageSelected(input){
+  const file=input.files?.[0];if(!file)return;
+  feedImageFile=file;
+  const reader=new FileReader();
+  reader.onload=()=>{$('feed-image-preview-img').src=reader.result;$('feed-image-preview').style.display='';};
+  reader.readAsDataURL(file);
+}
+function clearFeedImage(){feedImageFile=null;$('feed-image-preview').style.display='none';$('feed-image-input').value='';}
+
 async function createPostWithExtras(fields){
   // Needs the new post's real id back to attach hashtags -- same reasoning
   // as approveAd: the shared api() helper deliberately doesn't request a
@@ -1526,16 +1554,25 @@ async function createPostWithExtras(fields){
 
 async function submitPost(){
   const body=$('feed-compose').value.trim();if(!body||!ST.profile)return;
+  const btn=$('feed-post-btn');
   try{
+    let image_url=null;
+    if(feedImageFile){
+      btn.disabled=true;btn.textContent='Uploading…';
+      image_url=await uploadImage(feedImageFile);
+      btn.disabled=false;btn.textContent='Post';
+    }
     await createPostWithExtras({
       author_id:ST.profile.id,body,
       bucket_id:ST.profile.bucket_id||null,
       audience:$('feed-audience').value,
-      link_url:extractLinkUrl(body)
+      link_url:extractLinkUrl(body),
+      image_url
     });
     $('feed-compose').value='';
+    clearFeedImage();
     await loadSocialFeed();
-  }catch(e){alert('Could not post — please try again.');}
+  }catch(e){btn.disabled=false;btn.textContent='Post';alert('Could not post — please try again.');}
 }
 
 async function loadTrendingHashtags(){
@@ -1565,7 +1602,7 @@ async function openHashtag(tag){
     if(!hashtagId){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
     const links=await api('post_hashtags',`?hashtag_id=eq.${hashtagId}&select=post_id`)||[];
     if(!links.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
-    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored`);
+    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored,image_url`);
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
 
@@ -1575,7 +1612,7 @@ async function submitCommunityPost(){
   try{
     await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.currentCommunity.bucket_id||null,audience:'everyone',community_id:cid});
     $('community-compose').value='';
-    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned`);
+    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url`);
   }catch(e){alert('Could not post — please try again.');}
 }
 
@@ -1598,7 +1635,7 @@ async function openPostThread(postId){
   $('thread-comments').innerHTML='<div class="loader"><div class="spinner"></div></div>';
   goto('post-thread');
   try{
-    const posts=await api('posts',`?id=eq.${postId}&select=id,body,title,created_at,author_id`);
+    const posts=await api('posts',`?id=eq.${postId}&select=id,body,title,created_at,author_id,image_url`);
     const p=(posts||[])[0];
     if(!p){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Post not found</div></div>';return;}
     let author={};
@@ -1607,7 +1644,8 @@ async function openPostThread(postId){
       <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${esc(dname(author))}</div>
       <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
       ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
-      <div style="font-size:14px;color:var(--muted);line-height:1.6">${linkifyHashtags(esc(p.body))}</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:${p.image_url?'10px':'0'}">${linkifyHashtags(esc(p.body))}</div>
+      ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:320px;object-fit:cover" loading="lazy">`:''}
     </div>`;
   }catch(e){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load post</div></div>';}
   loadThreadComments(postId);
@@ -1950,7 +1988,7 @@ async function openCommunity(id){
   await joinCommunityIfNeeded(c);
   if(c.requires_verification&&ST.profile?.role==='admin')await loadPendingCommunityMembers(c.id);
   else $('community-pending-members').innerHTML='';
-  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned`);
+  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url`);
 }
 
 async function loadPendingCommunityMembers(communityId){
