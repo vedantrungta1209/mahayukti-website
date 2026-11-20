@@ -434,6 +434,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <button class="btn btn-outline" id="mp-follow-btn" style="flex:1" onclick="followWithCurrent()">+ Follow</button>
     </div>
     <button class="btn btn-gold btn-full" id="mp-msg-btn" onclick="chatWithCurrent()" style="margin-top:10px"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Send Message</button>
+    <div style="display:flex;justify-content:center;gap:16px;margin-top:10px" id="mp-safety-actions">
+      <button onclick="muteCurrentMember()" style="background:none;border:none;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);cursor:pointer">Mute</button>
+      <button onclick="blockCurrentMember()" style="background:none;border:none;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);cursor:pointer">Block</button>
+    </div>
   </div></div>
 </div>
 
@@ -655,6 +659,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="divider"></div>
     <div class="card" onclick="goto('advertise')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:12px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Advertise on MahaYukti</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <div class="card" onclick="goto('developer-settings')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Developer &amp; API access</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('settings')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Settings &amp; privacy</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('feed-preferences')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Feed preferences</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <button onclick="handleSignOut()" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:rgba(16,30,51,0.35);font-size:13px;font-family:var(--sans);cursor:pointer;padding:16px 0"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
   </div></div>
   <div class="nav-bar">
@@ -816,6 +822,48 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div></div>
 </div>
 
+<!-- SETTINGS -->
+<div class="screen" id="screen-settings">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('profile')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Settings &amp; Privacy</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="section-title">Who can message you</div>
+    <div class="chips" id="msg-perm-chips" style="margin-bottom:20px"></div>
+
+    <div class="section-title">Blocked</div>
+    <div id="blocked-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <div class="section-title">Your data</div>
+    <button class="btn btn-outline btn-full" onclick="downloadMyData()" style="margin-bottom:10px">Download my data</button>
+    <div class="divider"></div>
+    <button class="btn btn-outline btn-full" onclick="deactivateAccount()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:12px">Deactivate account</button>
+    <button class="btn btn-outline btn-full" onclick="requestAccountDeletion()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:10px">Request permanent deletion</button>
+    <p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);margin-top:8px;line-height:1.6">Permanent deletion is reviewed by an admin, same as every account-level action here — it isn't instant self-service, by design.</p>
+  </div></div>
+</div>
+
+<!-- FEED PREFERENCES -->
+<div class="screen" id="screen-feed-preferences">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Feed Preferences</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="section-title">Sector weighting</div>
+    <div id="bucket-weights-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <div class="section-title">Muted</div>
+    <div id="muted-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <div class="section-title">Saved for later</div>
+    <div id="saved-posts-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);line-height:1.6">Weighting changes how much of each sector you see — it never hides Official Updates, which reach every member regardless of preference.</p>
+  </div></div>
+</div>
+
 <!-- MODAL: MY HELP COMPOSE -->
 <div class="modal-overlay" id="modal-help">
   <div class="modal">
@@ -914,7 +962,7 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences};
   if(loads[n])loads[n]();
 }
 function gotoTab(n){
@@ -1042,13 +1090,36 @@ function openPost(id,ctx){
   goto('blog-post');
 }
 
-async function loadSocialFeed(){ await renderPostList('social-feed','?community_id=is.null&order=created_at.desc&limit=30&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored'); }
+async function loadSocialFeed(){
+  let exclude=[],weights={};
+  if(ST.profile){
+    try{
+      const[mu,bu1,bu2,w]=await Promise.all([
+        api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),
+        api('blocked_users',`?blocker_id=eq.${ST.profile.id}&select=blocked_id`),
+        api('blocked_users',`?blocked_id=eq.${ST.profile.id}&select=blocker_id`),
+        api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&weight=neq.normal&select=bucket_id,weight`)
+      ]);
+      exclude=[...(mu||[]).map(x=>x.muted_id),...(bu1||[]).map(x=>x.blocked_id),...(bu2||[]).map(x=>x.blocker_id)];
+      (w||[]).forEach(x=>weights[x.bucket_id]=x.weight);
+    }catch(e){}
+  }
+  const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
+  await renderPostList('social-feed',`?community_id=is.null&order=created_at.desc&limit=30${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored`,weights);
+}
 
-async function renderPostList(containerId,query){
+async function renderPostList(containerId,query,weights){
   const el=$(containerId);if(!el)return;
   try{
-    const posts=await api('posts',query)||[];
+    let posts=await api('posts',query)||[];
     if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
+    // Weighting only reorders within the already-fetched recent window (lighter
+    // sectors sink, heavier ones rise) -- it never hides anything and never
+    // touches Official Updates, which aren't posts at all.
+    if(weights&&Object.keys(weights).length){
+      const rank=b=>weights[b]==='more'?-1:weights[b]==='less'?1:0;
+      posts=posts.map((p,i)=>({p,i})).sort((a,b)=>rank(a.p.bucket_id)-rank(b.p.bucket_id)||a.i-b.i).map(x=>x.p);
+    }
     const ids=[...new Set(posts.map(p=>p.author_id).filter(Boolean))];let am={};
     if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     const myId=ST.profile?.id;
@@ -1069,7 +1140,8 @@ async function renderPostList(containerId,query){
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
           <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
           <button onclick="openPostThread('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} comments</button>
-          <button onclick="reportPost('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);margin-left:auto">Report</button>
+          <button onclick="toggleSavePost('${p.id}',this)" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans);margin-left:auto">Save</button>
+          <button onclick="reportPost('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans)">Report</button>
         </div>
       </div>`;
     }).join('');
@@ -1198,6 +1270,7 @@ function viewMember(id){
   $('mp-msg-btn').style.display=isSelf?'none':'';
   $('mp-connect-btn').style.display=isSelf?'none':'';
   $('mp-follow-btn').style.display=isSelf?'none':'';
+  $('mp-safety-actions').style.display=isSelf?'none':'';
   if(!isSelf)refreshConnectState(m.id);
   goto('member-profile');
 }
@@ -1247,6 +1320,19 @@ async function followWithCurrent(){
     else{await api('follows','','POST',{follower_id:myId,followee_id:m.id});}
     await refreshConnectState(m.id);
   }catch(e){}
+}
+
+async function muteCurrentMember(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  try{await api('muted_users','','POST',{muter_id:myId,muted_id:m.id});alert(dname(m)+' muted — their posts won\'t show in your feed.');}
+  catch(e){alert('Could not mute — please try again.');}
+}
+
+async function blockCurrentMember(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  if(!confirm('Block '+dname(m)+'? They won\'t be able to message or connect with you.'))return;
+  try{await api('blocked_users','','POST',{blocker_id:myId,blocked_id:m.id});goto('directory');}
+  catch(e){alert('Could not block — please try again.');}
 }
 
 async function loadConvos(){
@@ -2048,6 +2134,123 @@ async function generateApiKey(){
 async function revokeApiKey(id){
   try{await api('api_keys',`?id=eq.${id}`,'PATCH',{revoked_at:new Date().toISOString()});await loadDeveloperSettings();}
   catch(e){alert('Could not revoke — please try again.');}
+}
+
+// ---- Settings & privacy ----
+
+async function loadSettings(){
+  if(!ST.profile)return;
+  const perm=ST.profile.allow_messages_from||'everyone';
+  $('msg-perm-chips').innerHTML=[['everyone','Everyone'],['connections','Connections only']].map(([v,l])=>`<div class="chip${v===perm?' active':''}" onclick="setMsgPerm('${v}')">${l}</div>`).join('');
+  const el=$('blocked-list');
+  try{
+    const d=await api('blocked_users',`?blocker_id=eq.${ST.profile.id}&select=blocked_id`)||[];
+    if(!d.length){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No blocked members.</p>';return;}
+    const ids=d.map(x=>x.blocked_id);const u=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const um={};(u||[]).forEach(x=>um[x.id]=x);
+    el.innerHTML=d.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.blocked_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unblockUser('${x.blocked_id}')">Unblock</button></div>`).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Unable to load</p>';}
+}
+
+async function setMsgPerm(v){
+  if(!ST.profile)return;
+  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{allow_messages_from:v});ST.profile.allow_messages_from=v;await loadSettings();}
+  catch(e){alert('Could not update — please try again.');}
+}
+
+async function blockUser(userId){
+  if(!ST.profile)return;
+  try{await api('blocked_users','','POST',{blocker_id:ST.profile.id,blocked_id:userId});alert('Blocked.');}
+  catch(e){alert('Could not block — please try again.');}
+}
+
+async function unblockUser(userId){
+  if(!ST.profile)return;
+  try{await api('blocked_users',`?blocker_id=eq.${ST.profile.id}&blocked_id=eq.${userId}`,'DELETE');await loadSettings();}
+  catch(e){}
+}
+
+async function downloadMyData(){
+  if(!ST.profile)return;
+  try{
+    const [posts,comments,likes]=await Promise.all([
+      api('posts',`?author_id=eq.${ST.profile.id}&select=*`),
+      api('post_comments',`?author_id=eq.${ST.profile.id}&select=*`),
+      api('post_likes',`?user_id=eq.${ST.profile.id}&select=*`)
+    ]);
+    const bundle={profile:ST.profile,posts:posts||[],comments:comments||[],likes:likes||[]};
+    const blob=new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='mahayukti-my-data.json';document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){alert('Could not prepare your data — please try again.');}
+}
+
+async function deactivateAccount(){
+  if(!ST.profile||!confirm('Deactivate your account? You can ask an admin to reactivate it later.'))return;
+  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{status:'deactivated'});await handleSignOut();}
+  catch(e){alert('Could not deactivate — please try again.');}
+}
+
+async function requestAccountDeletion(){
+  if(!ST.profile||!confirm('Request permanent deletion? An admin reviews every request before anything is removed.'))return;
+  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{admin_notes:'MEMBER REQUESTED PERMANENT ACCOUNT DELETION on '+new Date().toISOString()});alert('Request sent — an admin will process it.');}
+  catch(e){alert('Could not submit the request — please try again.');}
+}
+
+// ---- Feed preferences ----
+
+async function loadFeedPreferences(){
+  if(!ST.profile)return;
+  try{
+    const[buckets,weights]=await Promise.all([api('buckets','?order=sort_order.asc&select=id,name'),api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&select=bucket_id,weight`)]);
+    const wm={};(weights||[]).forEach(w=>wm[w.bucket_id]=w.weight);
+    $('bucket-weights-list').innerHTML=(buckets||[]).map(b=>{const w=wm[b.id]||'normal';return`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${b.name}</span>
+      <div class="chips" style="gap:6px">
+        <div class="chip${w==='more'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','more')">More</div>
+        <div class="chip${w==='normal'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','normal')">Normal</div>
+        <div class="chip${w==='less'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','less')">Less</div>
+      </div>
+    </div>`;}).join('');
+  }catch(e){$('bucket-weights-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+
+  try{
+    const[mu,mh]=await Promise.all([api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`)]);
+    let rows=[];
+    if(mu&&mu.length){const u=await api('users',`?id=in.(${mu.map(x=>x.muted_id).join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);const um={};(u||[]).forEach(x=>um[x.id]=x);rows=rows.concat(mu.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.muted_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteUser('${x.muted_id}')">Unmute</button></div>`));}
+    if(mh&&mh.length){const h=await api('hashtags',`?id=in.(${mh.map(x=>x.hashtag_id).join(',')})&select=id,tag`);const hm={};(h||[]).forEach(x=>hm[x.id]=x);rows=rows.concat(mh.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">#${hm[x.hashtag_id]?.tag||''}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteHashtag('${x.hashtag_id}')">Unmute</button></div>`));}
+    $('muted-list').innerHTML=rows.length?rows.join(''):'<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing muted.</p>';
+  }catch(e){$('muted-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+
+  try{
+    const sp=await api('saved_posts',`?user_id=eq.${ST.profile.id}&order=created_at.desc&select=post_id`)||[];
+    if(!sp.length){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing saved yet.</p>';return;}
+    const posts=await api('posts',`?id=in.(${sp.map(x=>x.post_id).join(',')})&select=id,body,title`);
+    $('saved-posts-list').innerHTML=(posts||[]).map(p=>`<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openPostThread('${p.id}')"><div style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.title||p.body}</div></div>`).join('');
+  }catch(e){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+}
+
+async function setBucketWeight(bucketId,weight){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&bucket_id=eq.${bucketId}&select=bucket_id`);
+    if(existing&&existing.length)await api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&bucket_id=eq.${bucketId}`,'PATCH',{weight});
+    else await api('user_bucket_weights','','POST',{user_id:ST.profile.id,bucket_id:bucketId,weight});
+    await loadFeedPreferences();
+  }catch(e){}
+}
+
+async function unmuteUser(userId){try{await api('muted_users',`?muter_id=eq.${ST.profile.id}&muted_id=eq.${userId}`,'DELETE');await loadFeedPreferences();}catch(e){}}
+async function unmuteHashtag(hashtagId){try{await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&hashtag_id=eq.${hashtagId}`,'DELETE');await loadFeedPreferences();}catch(e){}}
+
+async function toggleSavePost(postId,btn){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('saved_posts',`?user_id=eq.${ST.profile.id}&post_id=eq.${postId}&select=post_id`);
+    if(existing&&existing.length){await api('saved_posts',`?user_id=eq.${ST.profile.id}&post_id=eq.${postId}`,'DELETE');if(btn)btn.textContent='Save';}
+    else{await api('saved_posts','','POST',{user_id:ST.profile.id,post_id:postId});if(btn)btn.textContent='Saved';}
+  }catch(e){}
 }
 
 let allAdmApps=[];

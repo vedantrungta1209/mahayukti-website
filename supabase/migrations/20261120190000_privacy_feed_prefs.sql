@@ -133,6 +133,11 @@ create policy messages_insert_own on public.messages for insert
   to authenticated
   with check (
     from_id in (select id from public.users where auth_id = auth.uid())
+    and not exists (
+      select 1 from public.blocked_users bu
+      where (bu.blocker_id = messages.to_id and bu.blocked_id = messages.from_id)
+         or (bu.blocker_id = messages.from_id and bu.blocked_id = messages.to_id)
+    )
     and (
       (select allow_messages_from from public.users where id = messages.to_id) = 'everyone'
       or exists (
