@@ -148,8 +148,15 @@ create policy exchange_brief_responses_insert_own on public.exchange_brief_respo
 
 drop policy if exists events_select_all on public.events;
 create policy events_select_all on public.events for select using (true);
+-- Original version only checked auth.role() = 'authenticated' with no tie
+-- to host_user_id at all -- any signed-in member could have created an
+-- event crediting a DIFFERENT member as host. Require host_user_id be
+-- either null (admin-posted, no personal host) or the caller themselves.
 drop policy if exists events_insert_authenticated on public.events;
-create policy events_insert_authenticated on public.events for insert with check (auth.role() = 'authenticated');
+create policy events_insert_authenticated on public.events for insert with check (
+  host_user_id is null
+  or host_user_id in (select id from public.users where auth_id = auth.uid())
+);
 drop policy if exists events_update_host_or_admin on public.events;
 create policy events_update_host_or_admin on public.events for update using (
   host_user_id in (select id from public.users where auth_id = auth.uid()) or public.is_platform_admin()

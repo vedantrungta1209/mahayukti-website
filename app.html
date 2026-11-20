@@ -1488,7 +1488,7 @@ async function refreshConnectState(memberId){
     if(!c){cb.textContent='+ Connect';cb.disabled=false;cb.className='btn btn-gold';}
     else if(c.status==='pending'&&c.requester_id===myId){cb.textContent='Request sent';cb.disabled=true;cb.className='btn btn-outline';}
     else if(c.status==='pending'){cb.textContent='Accept connection';cb.disabled=false;cb.className='btn btn-gold';}
-    else{cb.textContent='Connected';cb.disabled=true;cb.className='btn btn-outline';}
+    else{cb.textContent='Connected — tap to disconnect';cb.disabled=false;cb.className='btn btn-outline';}
     cb.style.flex='1';
   }catch(e){}
   try{
@@ -1509,6 +1509,9 @@ async function connectWithCurrent(){
     if(!c){await api('member_connections','','POST',{requester_id:myId,addressee_id:m.id});}
     else if(c.status==='pending'&&c.requester_id===m.id){
       await api('member_connections',`?requester_id=eq.${m.id}&addressee_id=eq.${myId}`,'PATCH',{status:'accepted',responded_at:new Date().toISOString()});
+    }else if(c.status==='accepted'){
+      if(!confirm('Disconnect from '+dname(m)+'?'))return;
+      await api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${m.id}),and(requester_id.eq.${m.id},addressee_id.eq.${myId}))`,'DELETE');
     }
     await refreshConnectState(m.id);
   }catch(e){}
@@ -1532,9 +1535,20 @@ async function muteCurrentMember(){
 
 async function blockCurrentMember(){
   const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
-  if(!confirm('Block '+dname(m)+'? They won\'t be able to message or connect with you.'))return;
-  try{await api('blocked_users','','POST',{blocker_id:myId,blocked_id:m.id});goto('directory');}
-  catch(e){alert('Could not block — please try again.');}
+  if(!confirm('Block '+dname(m)+'? They won\'t be able to message or connect with you, and any existing connection or follow between you is removed.'))return;
+  try{
+    await api('blocked_users','','POST',{blocker_id:myId,blocked_id:m.id});
+    // A block should actually sever the relationship, not just stop new
+    // messages -- otherwise both sides keep showing as "connected"/
+    // "following" while messaging between them is silently refused, which
+    // reads as broken, not blocked.
+    await Promise.all([
+      api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${m.id}),and(requester_id.eq.${m.id},addressee_id.eq.${myId}))`,'DELETE'),
+      api('follows',`?follower_id=eq.${myId}&followee_id=eq.${m.id}`,'DELETE'),
+      api('follows',`?follower_id=eq.${m.id}&followee_id=eq.${myId}`,'DELETE')
+    ]);
+    goto('directory');
+  }catch(e){alert('Could not block — please try again.');}
 }
 
 async function loadConvos(){

@@ -233,6 +233,16 @@ create policy member_connections_update_addressee on public.member_connections f
   addressee_id in (select id from public.users where auth_id = auth.uid())
 );
 
+-- No delete policy existed at all -- neither disconnecting from someone
+-- normally, nor the block flow's own connection cleanup, could ever work;
+-- both would be silently rejected by RLS's default deny. Either side of a
+-- connection can remove it, same as either side being able to see it.
+drop policy if exists member_connections_delete_participant on public.member_connections;
+create policy member_connections_delete_participant on public.member_connections for delete using (
+  requester_id in (select id from public.users where auth_id = auth.uid())
+  or addressee_id in (select id from public.users where auth_id = auth.uid())
+);
+
 -- Follows: public read (an active member's follow graph isn't private), write
 -- only as yourself.
 drop policy if exists follows_select_all on public.follows;
@@ -271,6 +281,18 @@ create policy community_members_insert_own on public.community_members for inser
 drop policy if exists community_members_delete_own on public.community_members;
 create policy community_members_delete_own on public.community_members for delete using (
   user_id in (select id from public.users where auth_id = auth.uid())
+  or public.is_platform_admin()
+);
+
+-- No update policy existed at all -- approving a pending institution-
+-- community member (PATCH status='active') would have been silently
+-- rejected by RLS's default deny, same class of bug as the delete-only-own
+-- policy above blocking an admin's deny action.
+drop policy if exists community_members_update_admin on public.community_members;
+create policy community_members_update_admin on public.community_members for update using (
+  public.is_platform_admin()
+) with check (
+  public.is_platform_admin()
 );
 
 -- Realtime: the feed and comment thread want live updates the same way
