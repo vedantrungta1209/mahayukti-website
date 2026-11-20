@@ -16,10 +16,24 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        // Real upload keystore for release builds. Path/passwords come from
+        // env vars (set in Codemagic from the `android_signing` variable
+        // group) so the actual keystore/passwords are never committed.
+        // Falls back to the repo-root keystore for a local release build —
+        // only ever needed if CM_KEYSTORE_PASSWORD is also exported locally.
+        release {
+            storeFile file(System.getenv("CM_KEYSTORE_PATH") ?: "../../mahayukti-upload-keystore.jks")
+            storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("CM_KEY_ALIAS") ?: "mahayukti"
+            keyPassword System.getenv("CM_KEYSTORE_PASSWORD")
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

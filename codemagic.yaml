@@ -17,6 +17,37 @@ workflows:
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
 
+  mahayukti-android-release:
+    name: MahaYukti Android (signed release AAB)
+    max_build_duration: 30
+    environment:
+      groups:
+        - android_signing
+      node: 22
+      java: 21
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Capacitor sync
+        script: npx cap sync android
+      - name: Write google-services.json from secure var
+        script: |
+          echo "$GOOGLE_SERVICES_JSON_B64" | base64 --decode > android/app/google-services.json
+      - name: Write upload keystore from secure var
+        script: |
+          echo "$ANDROID_KEYSTORE_B64" | base64 --decode > /tmp/mahayukti-upload-keystore.jks
+        # CM_KEYSTORE_PATH/PASSWORD/ALIAS are read by android/app/build.gradle's
+        # release signingConfig.
+      - name: Build signed release AAB
+        script: |
+          cd android
+          export CM_KEYSTORE_PATH=/tmp/mahayukti-upload-keystore.jks
+          export CM_KEYSTORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD"
+          export CM_KEY_ALIAS="$ANDROID_KEY_ALIAS"
+          ./gradlew bundleRelease --no-daemon
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
+
   mahayukti-ios-debug:
     name: MahaYukti iOS (debug build, unsigned, no distribution)
     max_build_duration: 30
@@ -38,3 +69,52 @@ workflows:
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER="" DEVELOPMENT_TEAM="" CODE_SIGN_ENTITLEMENTS="" \
             build
+
+  mahayukti-ios-release:
+    name: MahaYukti iOS (signed, TestFlight)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.mahayukti.app
+      vars:
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+      groups:
+        - app_store_credentials
+      node: 22
+      xcode: latest
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Capacitor sync iOS
+        script: npx cap sync ios
+      - name: Set aps-environment to production for App Store distribution
+        script: |
+          PLIST=ios/App/App/App.entitlements
+          /usr/libexec/PlistBuddy -c "Set :aps-environment production" "$PLIST"
+      - name: Set build number from Codemagic
+        script: |
+          agvtool new-version -all $BUILD_NUMBER
+          agvtool new-marketing-version "1.0.$BUILD_NUMBER"
+        working_directory: ios/App
+      - name: Build and export IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --config Release
+      - name: Upload to TestFlight
+        script: |
+          printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/asc_key.p8
+          chmod 600 /tmp/asc_key.p8
+          app-store-connect publish \
+            --path "$(find build/ios/ipa -name '*.ipa' | head -1)" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --private-key @file:/tmp/asc_key.p8 \
+            --testflight
+    artifacts:
+      - build/ios/ipa/*.ipa
