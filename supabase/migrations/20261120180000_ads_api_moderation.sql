@@ -5,18 +5,27 @@ begin;
 
 -- ---- Ads -------------------------------------------------------------------
 -- posts.is_sponsored / posts.sponsor_user_id already exist (social-core
--- migration) -- a sponsored post IS a post. ad_campaigns adds the
--- targeting/budget/review wrapper around one.
+-- migration) -- a sponsored post IS a post. ad_campaigns holds the actual
+-- ad content (headline/body/cta) itself, NOT just a wrapper around an
+-- already-created post: post_id stays null until an admin approves the
+-- campaign, at which point the real posts row gets created and linked.
+-- Submitting a campaign must never make its content visible in the feed
+-- before review -- that only happens through posts RLS, which has no
+-- awareness of campaign status, so the post itself cannot exist yet.
 
 create table if not exists public.ad_campaigns (
-  id               uuid primary key default gen_random_uuid(),
-  post_id          uuid references public.posts(id) on delete cascade,
-  advertiser_id    uuid not null references public.users(id) on delete cascade,
+  id                uuid primary key default gen_random_uuid(),
+  advertiser_id     uuid not null references public.users(id) on delete cascade,
+  headline          text not null,
+  body              text,
+  cta_label         text,
   target_bucket_ids uuid[],
-  daily_budget     numeric,
-  duration_days    int,
-  status           text not null default 'pending_review' check (status in ('pending_review','active','paused','ended','rejected')),
-  created_at       timestamptz not null default now()
+  daily_budget      numeric,
+  duration_days     int,
+  status            text not null default 'pending_review' check (status in ('pending_review','active','paused','ended','rejected')),
+  post_id           uuid references public.posts(id) on delete set null,  -- set only on approval
+  created_at        timestamptz not null default now(),
+  decided_at        timestamptz
 );
 
 create index if not exists ad_campaigns_advertiser_idx on public.ad_campaigns(advertiser_id);
