@@ -777,6 +777,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   <div class="scroll"><div class="scroll-content-no-nav" id="admin-packages-list"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
 
+<!-- ADMIN: ACCOUNT DELETION REQUESTS -->
+<div class="screen" id="screen-admin-deletions">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Deletion Requests</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="admin-deletions-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
 <!-- THE EXCHANGE -->
 <div class="screen" id="screen-exchange">
   <div class="page-header gradient">
@@ -918,7 +927,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="card" onclick="goto('admin-publish-update')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Publish an Official Update</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <div class="card" onclick="goto('admin-ads')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Ad Campaigns</span><span id="ads-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <div class="card" onclick="goto('admin-partners')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Platform Partners</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-    <div class="card" onclick="goto('admin-packages')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Marketplace Package Requests</span><span id="pkg-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-packages')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Marketplace Package Requests</span><span id="pkg-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-deletions')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Account Deletion Requests</span><span id="del-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
@@ -1204,7 +1214,7 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs,'admin-deletions':loadAdminDeletions};
   if(loads[n])loads[n]();
 }
 function gotoTab(n){
@@ -2611,14 +2621,45 @@ async function loadAdminHome(){
     const[apps,briefs]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100')]);
     const pc=(apps||[]).length,bc=(briefs||[]).length;
     $('admin-stats').innerHTML=[{l:'Pending Applications',v:pc,u:pc>0,s:'admin-applications'},{l:'Client Briefs',v:bc,u:bc>0,s:'admin-briefs'},{l:'Network Members',v:'—',u:false,s:'admin-applications'},{l:'Blog Posts Live',v:ST.blogPosts.length||'—',u:false,s:'admin-applications'}].map(s=>`<div class="alert-card${s.u?' urgent':''}" onclick="goto('${s.s}')"><div class="alert-val${s.u?' gold':''}">${s.v}</div><div class="alert-lbl">${s.l}</div></div>`).join('');
-    if(!apps||!apps.length){$('admin-apps').innerHTML='<p style="font-size:13px;color:var(--muted)">No pending applications</p>';return;}
-    $('admin-apps').innerHTML=(apps||[]).slice(0,5).map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${esc((a.real_name||a.username||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${esc(a.real_name||a.username)}</div><div style="font-size:12px;color:var(--muted)">${esc(a.domain)} · ${esc(a.city)}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold);white-space:nowrap">Review →</div></div>`;}).join('');
+    // Was `return`-ing here on an empty application list, which -- since
+    // this is a bare return, not a continue past just this block --
+    // skipped every try block written after it, including both badge
+    // fetches below. Restructured so the empty-state render doesn't exit
+    // the function.
+    if(!apps||!apps.length){$('admin-apps').innerHTML='<p style="font-size:13px;color:var(--muted)">No pending applications</p>';}
+    else{
+      $('admin-apps').innerHTML=apps.slice(0,5).map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${esc((a.real_name||a.username||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${esc(a.real_name||a.username)}</div><div style="font-size:12px;color:var(--muted)">${esc(a.domain)} · ${esc(a.city)}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold);white-space:nowrap">Review →</div></div>`;}).join('');
+    }
   }catch(e){}
   try{
     const reports=await api('post_reports','?status=eq.open&select=id');
     const n=(reports||[]).length;
     const b=$('mod-badge');if(b)b.textContent=n>0?n+' open':'';
   }catch(e){}
+  try{
+    const dels=await api('users','?deletion_requested_at=not.is.null&select=id');
+    const n=(dels||[]).length;
+    const b=$('del-badge');if(b)b.textContent=n>0?n+' pending':'';
+  }catch(e){}
+}
+
+async function loadAdminDeletions(){
+  const el=$('admin-deletions-list');
+  try{
+    const d=await api('users','?deletion_requested_at=not.is.null&order=deletion_requested_at.desc&select=id,real_name,username,email,deletion_requested_at')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No pending deletion requests.</div></div>';return;}
+    el.innerHTML='<p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:14px">Permanently removing an account (including its auth login) has to be done from the Supabase dashboard\'s Admin API, not from here -- "Mark as processed" just clears the request once you\'ve actually done that.</p>'
+      +d.map(u=>`<div class="card" style="margin-bottom:10px">
+        <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${esc(u.real_name||u.username)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${esc(u.email)} · requested ${new Date(u.deletion_requested_at).toLocaleDateString('en-IN')}</div>
+        <button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="markDeletionProcessed('${u.id}')">Mark as processed</button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function markDeletionProcessed(userId){
+  try{await api('users',`?id=eq.${userId}`,'PATCH',{deletion_requested_at:null});await loadAdminDeletions();}
+  catch(e){alert('Could not update — please try again.');}
 }
 
 async function loadModerationQueue(){
@@ -2865,7 +2906,7 @@ async function deactivateAccount(){
 
 async function requestAccountDeletion(){
   if(!ST.profile||!confirm('Request permanent deletion? An admin reviews every request before anything is removed.'))return;
-  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{admin_notes:'MEMBER REQUESTED PERMANENT ACCOUNT DELETION on '+new Date().toISOString()});alert('Request sent — an admin will process it.');}
+  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{deletion_requested_at:new Date().toISOString()});alert('Request sent — an admin will process it.');}
   catch(e){alert('Could not submit the request — please try again.');}
 }
 
