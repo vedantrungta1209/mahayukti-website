@@ -752,6 +752,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="field"><label>Price</label><input type="text" id="nl-price" placeholder="e.g. ₹1,20,000"></div>
     <div class="field"><label>Description</label><textarea id="nl-desc" rows="3" placeholder="Condition, age, reason for selling"></textarea></div>
     <div class="field"><label>Location</label><input type="text" id="nl-location"></div>
+    <div class="field">
+      <label>Photos</label>
+      <div id="nl-photo-previews" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <input type="file" id="nl-photo-input" accept="image/*" multiple style="display:none" onchange="onListingPhotosSelected(this)">
+      <button type="button" onclick="document.getElementById('nl-photo-input').click()" class="btn btn-outline" style="width:auto;padding:8px 14px;font-size:12px">+ Add photos</button>
+    </div>
     <button class="btn btn-gold btn-full" style="margin-top:4px" onclick="submitListing()">Publish listing</button>
   </div></div>
 </div>
@@ -2035,11 +2041,12 @@ async function loadMarketplace(){
       :'<a href="javascript:void(0)" onclick="goto(\'marketplace-packages\')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">Get a seller package to list an item</a>';
   }catch(e){}
   try{
-    const d=await api('marketplace_listings','?status=eq.active&order=created_at.desc&limit=50&select=id,title,category,price_text,description,location,seller_id')||[];
+    const d=await api('marketplace_listings','?status=eq.active&order=created_at.desc&limit=50&select=id,title,category,price_text,description,location,seller_id,photo_urls')||[];
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No listings yet.</div></div>';return;}
     const ids=[...new Set(d.map(x=>x.seller_id))];let am={};
     try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      ${x.photo_urls?.length?`<img src="${esc(x.photo_urls[0])}" style="width:100%;max-height:200px;object-fit:cover;border-radius:4px;margin-bottom:10px" loading="lazy">`:''}
       <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.title)}</div>
       <div style="font-size:14px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:4px">${esc(x.price_text)}</div>
       <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${esc(dname(am[x.seller_id]||{}))} · ${esc(x.location)}</div>
@@ -2070,21 +2077,36 @@ async function loadNewListingNote(){
   $('nl-quota-note').textContent=sub?'You have an active seller package — this listing will count against it.':'You need an active seller package before publishing — you\'ll be redirected if you don\'t have one.';
 }
 
+let listingPhotoFiles=[];
+function onListingPhotosSelected(input){
+  listingPhotoFiles=listingPhotoFiles.concat(Array.from(input.files||[]).slice(0,6-listingPhotoFiles.length));
+  const el=$('nl-photo-previews');
+  el.innerHTML=listingPhotoFiles.map((f,i)=>`<div style="position:relative"><img src="${URL.createObjectURL(f)}" style="width:56px;height:56px;object-fit:cover;border-radius:4px"><button onclick="removeListingPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1">×</button></div>`).join('');
+  input.value='';
+}
+function removeListingPhoto(i){
+  listingPhotoFiles.splice(i,1);
+  $('nl-photo-previews').innerHTML=listingPhotoFiles.map((f,j)=>`<div style="position:relative"><img src="${URL.createObjectURL(f)}" style="width:56px;height:56px;object-fit:cover;border-radius:4px"><button onclick="removeListingPhoto(${j})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1">×</button></div>`).join('');
+}
+
 async function submitListing(){
   if(!ST.profile)return;
   const title=$('nl-title').value.trim();if(!title)return;
   const sub=await getActivePackageSubscription();
   if(!sub){alert('You need an active seller package to list an item.');goto('marketplace-packages');return;}
   try{
+    const photo_urls=(await Promise.all(listingPhotoFiles.map(f=>uploadImage(f)))).filter(Boolean);
     await api('marketplace_listings','','POST',{
       seller_id:ST.profile.id,title,
       category:$('nl-category').value.trim()||null,
       price_text:$('nl-price').value.trim()||null,
       description:$('nl-desc').value.trim()||null,
-      location:$('nl-location').value.trim()||null
+      location:$('nl-location').value.trim()||null,
+      photo_urls:photo_urls.length?photo_urls:null
     });
     await api('seller_package_subscriptions',`?id=eq.${sub.id}`,'PATCH',{listings_used:sub.listings_used+1});
     ['nl-title','nl-category','nl-price','nl-desc','nl-location'].forEach(id=>$(id).value='');
+    listingPhotoFiles=[];$('nl-photo-previews').innerHTML='';
     goto('marketplace');
   }catch(e){alert('Could not publish the listing — please try again.');}
 }
