@@ -1223,6 +1223,18 @@ function routeInitialHash(){
   goto(n);
 }
 function dname(u){return(u?.show_real_name&&u?.real_name_approved&&u?.real_name)?u.real_name:u?.username||'?'}
+// Every piece of member-authored text (post body, comments, messages, listing
+// descriptions, help replies, event titles...) gets rendered via innerHTML
+// template literals throughout this file. None of it was escaped anywhere --
+// a member could post <img src=x onerror=...> as a "post" and it would
+// execute in every other member's browser who viewed their feed. esc() is
+// the fix, applied at every point user-authored text reaches innerHTML.
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+// link_url is only ever auto-captured from body text via a http(s)-only
+// regex at post time, but nothing stops a direct API call from writing
+// anything into that column -- javascript:/data: hrefs are a real XSS/
+// phishing vector in an <a href>, so render only genuine http(s) links.
+function safeHref(url){return url&&/^https?:\/\//i.test(url)?esc(url):null;}
 function subId(){return'MY-'+new Date().getFullYear()+String(new Date().getMonth()+1).padStart(2,'0')+String(new Date().getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substr(2,6).toUpperCase()}
 function lbadge(r){return'badge-'+(r||'member')}
 function lbadgeLabel(r){return r==='member'?'○ Network Member':r==='participant'?'◇ Network Participant':r==='acg'?'◆ Advisory & Consulting Group':r==='council'?'◈ Network Council':'◈ Admin'}
@@ -1287,7 +1299,7 @@ async function loadMemberHome(){
   const p=ST.profile;
   $('home-name').textContent=dname(p);
   $('home-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>${p.founding_member&&p.founding_approved?'<div class="badge-founding" style="margin-left:8px">◈ Founding Member</div>':''}`;
-  $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${p.domain_group||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${p.city||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${p.role.charAt(0).toUpperCase()+p.role.slice(1)}</div><div class="stat-lbl">Level</div></div>`;
+  $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${esc(p.domain_group)||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${esc(p.city)||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${esc(p.role.charAt(0).toUpperCase()+p.role.slice(1))}</div><div class="stat-lbl">Level</div></div>`;
   goto('home');gotoTab('home');
   loadBlogFeed('home-blog','home');
   loadSocialFeed();
@@ -1306,10 +1318,10 @@ async function loadBlogPublic(){
   if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet</div></div>';return;}
   el.innerHTML=posts.map((p,i)=>`
     <div class="${i===0?'card gold-border':'card'}" onclick="openPost('${p.id}','public')" style="cursor:pointer;margin-bottom:${i===0?'16px':'10px'}">
-      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:8px">${p.category||''}</div>
-      <div style="font-size:${i===0?'20px':'17px'};color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${p.title}</div>
-      ${i===0?`<div style="font-size:13px;color:rgba(16,30,51,0.42);font-family:var(--sans);font-weight:400;line-height:1.7;margin-bottom:12px">${p.excerpt||''}</div>`:''}
-      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${p.date||''}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${p.read_time||''} →</span></div>
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:8px">${esc(p.category)}</div>
+      <div style="font-size:${i===0?'20px':'17px'};color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${esc(p.title)}</div>
+      ${i===0?`<div style="font-size:13px;color:rgba(16,30,51,0.42);font-family:var(--sans);font-weight:400;line-height:1.7;margin-bottom:12px">${esc(p.excerpt)}</div>`:''}
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${esc(p.date)}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${esc(p.read_time)} →</span></div>
     </div>`).join('');
 }
 
@@ -1317,9 +1329,9 @@ async function loadBlogFeed(cid,ctx){
   const posts=await loadBlog();const el=$(cid);if(!el)return;
   el.innerHTML=posts.slice(0,5).map(p=>`
     <div class="card" onclick="openPost('${p.id}','${ctx}')" style="cursor:pointer;margin-bottom:10px">
-      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${p.category||''}</div>
-      <div style="font-size:17px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${p.title}</div>
-      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${p.date||''}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${p.read_time||''} →</span></div>
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(p.category)}</div>
+      <div style="font-size:17px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${esc(p.title)}</div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${esc(p.date)}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${esc(p.read_time)} →</span></div>
     </div>`).join('');
 }
 
@@ -1328,7 +1340,12 @@ function openPost(id,ctx){
   $('bp-cat').textContent=p.category||'';
   $('bp-title').textContent=p.title;
   $('bp-meta').textContent=`Admin · MahaYukti · ${p.date||''} · ${p.read_time||''}`;
-  $('bp-body').innerHTML=p.body||'';
+  // blog_posts.body is only ever admin-written (RLS restricts insert to
+  // is_platform_admin()), and the Publish Update composer is a plain
+  // textarea with no rich-text editor -- there's no legitimate reason for
+  // this to contain real HTML, so it's escaped like everything else, with
+  // line breaks preserved since that's the one thing plain text needs here.
+  $('bp-body').innerHTML=esc(p.body).replace(/\n/g,'<br>');
   $('bp-back').onclick=()=>goto(ctx==='public'?'blog-public':'home');
   goto('blog-post');
 }
@@ -1431,14 +1448,15 @@ async function renderPostCards(containerId,posts){
     try{const lc=await api('post_likes',`?post_id=in.(${posts.map(p=>p.id).join(',')})&select=post_id`);(lc||[]).forEach(r=>likeCounts[r.post_id]=(likeCounts[r.post_id]||0)+1);}catch(e){}
     try{const cc=await api('post_comments',`?post_id=in.(${posts.map(p=>p.id).join(',')})&select=post_id`);(cc||[]).forEach(r=>commentCounts[r.post_id]=(commentCounts[r.post_id]||0)+1);}catch(e){}
     el.innerHTML=posts.map(p=>{
-      const n=dname(am[p.author_id]||{});
+      const n=esc(dname(am[p.author_id]||{}));
       const liked=likeSet.has(p.id);
+      const href=safeHref(p.link_url);
       return`<div class="card" style="margin-bottom:10px">
         <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${p.is_sponsored?'Sponsored':n}</div>
         <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
-        ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${p.title}</div>`:''}
-        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(p.body)}</div>
-        ${p.link_url?`<a href="${p.link_url}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${p.link_title||p.link_url} →</a>`:''}
+        ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
+        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(esc(p.body))}</div>
+        ${href?`<a href="${href}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${esc(p.link_title)||href} →</a>`:''}
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
           <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
           <button onclick="openPostThread('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} comments</button>
@@ -1576,10 +1594,10 @@ async function openPostThread(postId){
     let author={};
     try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved`);author=(a||[])[0]||{};}catch(e){}
     $('thread-post').innerHTML=`<div class="card">
-      <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${dname(author)}</div>
+      <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${esc(dname(author))}</div>
       <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
-      ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${p.title}</div>`:''}
-      <div style="font-size:14px;color:var(--muted);line-height:1.6">${linkifyHashtags(p.body)}</div>
+      ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">${linkifyHashtags(esc(p.body))}</div>
     </div>`;
   }catch(e){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load post</div></div>';}
   loadThreadComments(postId);
@@ -1593,8 +1611,8 @@ async function loadThreadComments(postId){
     const ids=[...new Set(comments.map(c=>c.author_id))];let am={};
     if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     el.innerHTML=comments.map(c=>`<div class="card" style="margin-bottom:8px">
-      <div style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600">${dname(am[c.author_id]||{})}</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${c.body}</div>
+      <div style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600">${esc(dname(am[c.author_id]||{}))}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${esc(c.body)}</div>
       <div style="font-size:10.5px;color:rgba(16,30,51,0.3);margin-top:4px">${new Date(c.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load comments</div></div>';}
@@ -1630,7 +1648,7 @@ function filterDir(){
   const el=$('dir-list');
   if(!f.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No members found</div></div>';return;}
   const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(156,135,106,0.3)',council:'rgba(194,176,148,0.3)'};
-  el.innerHTML=f.map(m=>{const n=dname(m);const bc=colors[m.role]||colors.member;return`<div class="member-card" onclick="viewMember('${m.id}')"><div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${n.charAt(0).toUpperCase()}</div><div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${m.domain||''}</div><div class="member-city">${m.city||''}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
+  el.innerHTML=f.map(m=>{const n=esc(dname(m));const bc=colors[m.role]||colors.member;return`<div class="member-card" onclick="viewMember('${m.id}')"><div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${esc(dname(m).charAt(0).toUpperCase())}</div><div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${esc(m.domain)}</div><div class="member-city">${esc(m.city)}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
 }
 
 function viewMember(id){
@@ -1641,7 +1659,7 @@ function viewMember(id){
   $('mp-rname').textContent=(m.show_real_name&&m.real_name_approved&&m.real_name)?m.real_name:'';
   $('mp-founding').style.display=m.founding_member&&m.founding_approved?'':'none';
   $('mp-badge').innerHTML=`<div class="layer-badge ${lbadge(m.role)}">${lbadgeLabel(m.role)}</div>`;
-  $('mp-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${m.domain||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${m.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${m.experience||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${m.organisation}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${m.about}</p></div>`:''}`;
+  $('mp-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(m.domain)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(m.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(m.experience)||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${esc(m.organisation)}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${esc(m.about)}</p></div>`:''}`;
   const isSelf=m.id===ST.profile?.id;
   $('mp-msg-btn').style.display=isSelf?'none':'';
   $('mp-connect-btn').style.display=isSelf?'none':'';
@@ -1737,9 +1755,9 @@ async function loadConvos(){
     const um={};(users||[]).forEach(u=>um[u.id]=u);
     $('convos-list').innerHTML=convos.map(m=>{
       const oid=m.from_id===ST.profile.id?m.to_id:m.from_id;
-      const o=um[oid]||{username:'Unknown'};const n=dname(o);const unread=!m.read&&m.to_id===ST.profile.id;
+      const o=um[oid]||{username:'Unknown'};const n=esc(dname(o));const unread=!m.read&&m.to_id===ST.profile.id;
       const enc=JSON.stringify(o).replace(/"/g,'&quot;');
-      return`<div onclick="openChat(${enc})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border2);cursor:pointer"><div class="avatar avatar-md" style="border-color:rgba(201,148,58,0.3);color:var(--gold)">${n.charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:2px">${n}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px">${o.domain||''}</div><div style="font-size:12px;color:rgba(16,30,51,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.content}</div></div>${unread?'<div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>':''}</div>`;
+      return`<div onclick="openChat(${enc})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border2);cursor:pointer"><div class="avatar avatar-md" style="border-color:rgba(201,148,58,0.3);color:var(--gold)">${esc(dname(o).charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:2px">${n}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px">${esc(o.domain)}</div><div style="font-size:12px;color:rgba(16,30,51,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.content)}</div></div>${unread?'<div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>':''}</div>`;
     }).join('');
   }catch(e){$('convos-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
@@ -1757,7 +1775,7 @@ async function loadDMs(){
     const d=await api('messages',`?or=(and(from_id.eq.${ST.profile.id},to_id.eq.${ST.currentChat.id}),and(from_id.eq.${ST.currentChat.id},to_id.eq.${ST.profile.id}))&order=created_at.asc&select=*`);
     const el=$('chat-msgs');
     if(!d||!d.length){el.innerHTML='<div class="empty-state" style="padding:40px 20px"><div class="empty-text">No messages yet. Say hello.</div></div>';return;}
-    el.innerHTML=d.map(m=>{const me=m.from_id===ST.profile.id;const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div class="bubble ${me?'me':'them'}">${m.content}<div class="bubble-time">${t}</div></div>`;}).join('');
+    el.innerHTML=d.map(m=>{const me=m.from_id===ST.profile.id;const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div>`;}).join('');
     const sc=$('chat-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
   }catch(e){}
 }
@@ -1781,7 +1799,7 @@ async function loadGCs(){
   try{
     const d=await api('group_chats','?select=*&order=name');const el=$('gc-list');
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-text">No group chats</div></div>';return;}
-    el.innerHTML=d.map(c=>{const enc=JSON.stringify(c).replace(/"/g,'&quot;');return`<div class="card" onclick="openGC(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer"><div style="width:40px;height:40px;border-radius:50%;background:rgba(201,148,58,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:var(--serif);font-size:18px;flex-shrink:0">${c.type==='help'?'?':'◆'}</div><div style="flex:1"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:3px">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.description||''}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`;}).join('');
+    el.innerHTML=d.map(c=>{const enc=JSON.stringify(c).replace(/"/g,'&quot;');return`<div class="card" onclick="openGC(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer"><div style="width:40px;height:40px;border-radius:50%;background:rgba(201,148,58,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:var(--serif);font-size:18px;flex-shrink:0">${c.type==='help'?'?':'◆'}</div><div style="flex:1"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:3px">${esc(c.name)}</div><div style="font-size:12px;color:var(--muted)">${esc(c.description)}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`;}).join('');
   }catch(e){}
 }
 
@@ -1799,7 +1817,7 @@ async function loadGCMsgs(){
     const aids=[...new Set(d.map(m=>m.from_id))];
     const authors=await api('users',`?id=in.(${aids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
     const am={};(authors||[]).forEach(a=>am[a.id]=a);
-    $('gc-msgs').innerHTML=d.map(m=>{const me=m.from_id===ST.profile?.id;const n=dname(am[m.from_id]||{username:'Member'});const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${m.content}<div class="bubble-time">${t}</div></div></div>`;}).join('');
+    $('gc-msgs').innerHTML=d.map(m=>{const me=m.from_id===ST.profile?.id;const n=esc(dname(am[m.from_id]||{username:'Member'}));const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div></div>`;}).join('');
     const sc=$('gc-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
   }catch(e){}
 }
@@ -1823,7 +1841,7 @@ async function loadHelp(){
     let replyCounts={};
     try{const r=await api('help_replies',`?help_post_id=in.(${d.map(p=>p.id).join(',')})&select=help_post_id`);(r||[]).forEach(x=>replyCounts[x.help_post_id]=(replyCounts[x.help_post_id]||0)+1);}catch(e){}
     ST.helpPosts=d;
-    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openHelpPost('${p.id}')"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${p.type||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${am[p.author_id]?.domain||''}</span><span style="font-size:11px;color:var(--gold)">${replyCounts[p.id]||0} replies</span></div></div>`;}).join('');
+    el.innerHTML=d.map(p=>{const n=esc(dname(am[p.author_id]||{username:'Member'}));return`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openHelpPost('${p.id}')"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${esc(p.title)}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.content)}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${esc(am[p.author_id]?.domain)}</span><span style="font-size:11px;color:var(--gold)">${replyCounts[p.id]||0} replies</span></div></div>`;}).join('');
   }catch(e){$('help-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
 
@@ -1834,10 +1852,10 @@ async function openHelpPost(id){
   let author={};
   try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved,domain`);author=(a||[])[0]||{};}catch(e){}
   $('help-post-body').innerHTML=`<div class="card">
-    <div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);display:inline-block;margin-bottom:8px">${p.type||'question'}</div>
-    <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:8px;line-height:1.3">${p.title}</div>
-    <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px">${p.content}</div>
-    <div style="font-size:11px;color:rgba(16,30,51,0.3)">${dname(author)} · ${author.domain||''}</div>
+    <div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div>
+    <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:8px;line-height:1.3">${esc(p.title)}</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px">${esc(p.content)}</div>
+    <div style="font-size:11px;color:rgba(16,30,51,0.3)">${esc(dname(author))} · ${esc(author.domain)}</div>
   </div>`;
   await loadHelpReplies(id);
 }
@@ -1850,8 +1868,8 @@ async function loadHelpReplies(helpPostId){
     const ids=[...new Set(replies.map(r=>r.author_id))];let am={};
     if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     el.innerHTML=replies.map(r=>`<div class="card" style="margin-bottom:8px">
-      <div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${dname(am[r.author_id]||{})}</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${r.content}</div>
+      <div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(am[r.author_id]||{}))}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${esc(r.content)}</div>
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load replies</div></div>';}
 }
@@ -1888,7 +1906,7 @@ async function loadForums(){
     ST.communities=communities;
     el.innerHTML=communities.map(c=>`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openCommunity('${c.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3">${c.name}</div>
+        <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3">${esc(c.name)}</div>
         ${c.kind==='institution'?'<div class="layer-badge" style="flex-shrink:0;margin-left:8px">Institution-verified</div>':''}
       </div>
       <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-top:6px">${counts[c.id]||0} members</div>
@@ -1934,7 +1952,7 @@ async function loadPendingCommunityMembers(communityId){
     const u=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
     const um={};(u||[]).forEach(x=>um[x.id]=x);
     el.innerHTML=`<div class="section-title">Pending verification (admin)</div>`+pending.map(p=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[p.user_id]||{})}</span>
+      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${esc(dname(um[p.user_id]||{}))}</span>
       <div style="display:flex;gap:6px"><button class="btn btn-gold" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="decideCommunityMember('${communityId}','${p.user_id}','active')">Approve</button><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="decideCommunityMember('${communityId}','${p.user_id}','denied')">Deny</button></div>
     </div>`).join('');
   }catch(e){el.innerHTML='';}
@@ -1974,10 +1992,10 @@ async function loadMarketplace(){
     const ids=[...new Set(d.map(x=>x.seller_id))];let am={};
     try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${x.title}</div>
-      <div style="font-size:14px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:4px">${x.price_text||''}</div>
-      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${dname(am[x.seller_id]||{})} · ${x.location||''}</div>
-      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${x.description}</div>`:''}
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.title)}</div>
+      <div style="font-size:14px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:4px">${esc(x.price_text)}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${esc(dname(am[x.seller_id]||{}))} · ${esc(x.location)}</div>
+      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${esc(x.description)}</div>`:''}
       <button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:12px" onclick="inquireListing('${x.id}')">Message seller</button>
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the marketplace</div></div>';}
@@ -2029,7 +2047,7 @@ async function loadMarketplacePackages(){
   try{
     const pkgs=await api('marketplace_packages','?active=eq.true&order=sort_order.asc&select=*')||[];
     $('packages-list').innerHTML=pkgs.map(p=>`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${p.name}</div>
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(p.name)}</div>
       <div style="font-size:13px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:6px">₹${p.price} / ${p.duration_days} days</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${p.listing_quota==null?'Unlimited listings':p.listing_quota+' listing'+(p.listing_quota===1?'':'s')}</div>
       <button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:12px" onclick="requestPackage('${p.id}')">Request this package</button>
@@ -2066,8 +2084,8 @@ async function loadAdminPackages(){
     const um={};(users||[]).forEach(u=>um[u.id]=u);
     const pm={};(pkgs||[]).forEach(p=>pm[p.id]=p);
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${dname(um[x.user_id]||{})}</div>
-      <div style="font-size:12px;color:var(--gold);margin-bottom:10px">${pm[x.package_id]?.name||'Package'}</div>
+      <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${esc(dname(um[x.user_id]||{}))}</div>
+      <div style="font-size:12px;color:var(--gold);margin-bottom:10px">${esc(pm[x.package_id]?.name)||'Package'}</div>
       <div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePackageRequest('${x.id}','${pm[x.package_id]?.duration_days||90}')">Activate</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="rejectPackageRequest('${x.id}')">Reject</button></div>
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
@@ -2105,8 +2123,8 @@ async function loadMyListings(){
     el.innerHTML=listings.map(l=>{
       const myInquiries=inquiries.filter(i=>i.listing_id===l.id);
       return`<div class="card" style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px;color:var(--white);font-family:var(--serif);font-weight:700">${l.title}</span><span style="font-size:10px;color:var(--gold)">${l.status}</span></div>
-        ${myInquiries.length?myInquiries.map(i=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${dname(bm[i.buyer_id]||{})}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${i.message}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No inquiries yet.</div>'}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px;color:var(--white);font-family:var(--serif);font-weight:700">${esc(l.title)}</span><span style="font-size:10px;color:var(--gold)">${esc(l.status)}</span></div>
+        ${myInquiries.length?myInquiries.map(i=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(bm[i.buyer_id]||{}))}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${esc(i.message)}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No inquiries yet.</div>'}
       </div>`;
     }).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
@@ -2125,8 +2143,8 @@ async function loadMyBriefs(){
     el.innerHTML=briefs.map(b=>{
       const myResponses=responses.filter(r=>r.brief_id===b.id);
       return`<div class="card" style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;flex:1">${b.description}</span><span style="font-size:10px;color:var(--gold);flex-shrink:0;margin-left:8px">${b.status}</span></div>
-        ${myResponses.length?myResponses.map(r=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${dname(rm[r.responder_id]||{})}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${r.message||''}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No responses yet.</div>'}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;flex:1">${esc(b.description)}</span><span style="font-size:10px;color:var(--gold);flex-shrink:0;margin-left:8px">${esc(b.status)}</span></div>
+        ${myResponses.length?myResponses.map(r=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(rm[r.responder_id]||{}))}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${esc(r.message)}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No responses yet.</div>'}
       </div>`;
     }).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
@@ -2152,8 +2170,8 @@ async function loadExchange(){
     const labels=Object.fromEntries(BRIEF_TYPES);
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
       <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${labels[x.brief_type]||x.brief_type}</div>
-      <div style="font-size:14px;color:var(--white);font-family:var(--sans);line-height:1.5;margin-bottom:8px">${x.description}</div>
-      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">${x.anonymous?'Posted anonymously':dname(am[x.author_id]||{})}</div>
+      <div style="font-size:14px;color:var(--white);font-family:var(--sans);line-height:1.5;margin-bottom:8px">${esc(x.description)}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">${x.anonymous?'Posted anonymously':esc(dname(am[x.author_id]||{}))}</div>
       <button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:12px" onclick="respondToBrief('${x.id}')">Respond</button>
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load The Exchange</div></div>';}
@@ -2194,9 +2212,9 @@ async function loadEventsList(){
     try{const c=await api('event_rsvps',`?event_id=in.(${d.map(x=>x.id).join(',')})&select=event_id`);(c||[]).forEach(x=>counts[x.event_id]=(counts[x.event_id]||0)+1);}catch(e){}
     el.innerHTML=d.map(x=>{const going=myRsvps.has(x.id);return`<div class="card" style="margin-bottom:10px">
       <div style="font-size:11px;color:var(--gold);font-family:var(--sans);font-weight:600;margin-bottom:4px">${new Date(x.starts_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-      <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${x.title}</div>
-      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${x.is_virtual?'Virtual':x.location||''}${x.host_label?' · Hosted by '+x.host_label:''}</div>
-      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${x.description}</div>`:''}
+      <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(x.title)}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${x.is_virtual?'Virtual':esc(x.location)}${x.host_label?' · Hosted by '+esc(x.host_label):''}</div>
+      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${esc(x.description)}</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:11px;color:rgba(16,30,51,0.4)">${counts[x.id]||0} going</span>
         <button class="btn ${going?'btn-outline':'btn-gold'}" style="width:auto;padding:8px 16px;font-size:12px" onclick="toggleRsvp('${x.id}')">${going?"You're going":'RSVP'}</button>
@@ -2243,7 +2261,7 @@ async function loadNotifs(){
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No notifications</div></div>';return;}
     const unread=d.filter(n=>!n.read).length;
     const badge=$('notif-badge');if(unread>0){badge.textContent=unread;badge.style.display='';}else badge.style.display='none';
-    el.innerHTML=d.map(n=>`<div class="card${!n.read?' gold-border':''}" onclick="markNotifRead('${n.id}')" style="cursor:pointer;margin-bottom:10px;position:relative">${!n.read?'<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>':''}<div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:4px;padding-right:20px">${n.title}</div>${n.body?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">${n.body}</div>`:''}<div style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(n.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');
+    el.innerHTML=d.map(n=>`<div class="card${!n.read?' gold-border':''}" onclick="markNotifRead('${n.id}')" style="cursor:pointer;margin-bottom:10px;position:relative">${!n.read?'<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>':''}<div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:4px;padding-right:20px">${esc(n.title)}</div>${n.body?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">${esc(n.body)}</div>`:''}<div style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(n.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');
   }catch(e){}
 }
 
@@ -2262,8 +2280,8 @@ function renderProfile(){
   $('my-rname').textContent=(p.show_real_name&&p.real_name_approved&&p.real_name)?p.real_name:'';
   $('my-founding').style.display=p.founding_member&&p.founding_approved?'':'none';
   $('my-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>`;
-  $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${p.domain||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${p.domain_group||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${p.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${p.experience||'—'}</div></div>`;
-  $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${p.about}</p>`:'<p style="font-size:13px;color:rgba(16,30,51,0.25);font-family:var(--sans)">No about text yet.</p>';
+  $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(p.domain)||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${esc(p.domain_group)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(p.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(p.experience)||'—'}</div></div>`;
+  $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${esc(p.about)}</p>`:'<p style="font-size:13px;color:rgba(16,30,51,0.25);font-family:var(--sans)">No about text yet.</p>';
   $('about-inp').value=p.about||'';
   renderUpgradeCard(p);
   loadLiStatus();
@@ -2594,7 +2612,7 @@ async function loadAdminHome(){
     const pc=(apps||[]).length,bc=(briefs||[]).length;
     $('admin-stats').innerHTML=[{l:'Pending Applications',v:pc,u:pc>0,s:'admin-applications'},{l:'Client Briefs',v:bc,u:bc>0,s:'admin-briefs'},{l:'Network Members',v:'—',u:false,s:'admin-applications'},{l:'Blog Posts Live',v:ST.blogPosts.length||'—',u:false,s:'admin-applications'}].map(s=>`<div class="alert-card${s.u?' urgent':''}" onclick="goto('${s.s}')"><div class="alert-val${s.u?' gold':''}">${s.v}</div><div class="alert-lbl">${s.l}</div></div>`).join('');
     if(!apps||!apps.length){$('admin-apps').innerHTML='<p style="font-size:13px;color:var(--muted)">No pending applications</p>';return;}
-    $('admin-apps').innerHTML=(apps||[]).slice(0,5).map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${(a.real_name||a.username||'?').charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${a.real_name||a.username}</div><div style="font-size:12px;color:var(--muted)">${a.domain||''} · ${a.city||''}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold);white-space:nowrap">Review →</div></div>`;}).join('');
+    $('admin-apps').innerHTML=(apps||[]).slice(0,5).map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${esc((a.real_name||a.username||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${esc(a.real_name||a.username)}</div><div style="font-size:12px;color:var(--muted)">${esc(a.domain)} · ${esc(a.city)}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold);white-space:nowrap">Review →</div></div>`;}).join('');
   }catch(e){}
   try{
     const reports=await api('post_reports','?status=eq.open&select=id');
@@ -2611,9 +2629,9 @@ async function loadModerationQueue(){
     const postIds=[...new Set(reports.map(r=>r.post_id))];let pm={};
     try{const p=await api('posts',`?id=in.(${postIds.join(',')})&select=id,body,author_id`);(p||[]).forEach(x=>pm[x.id]=x);}catch(e){}
     el.innerHTML=reports.map(r=>{const p=pm[r.post_id]||{};return`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${r.reason}</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.body||'(post no longer exists)'}</div>
-      ${r.detail?`<div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">"${r.detail}"</div>`:''}
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(r.reason)}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.body?esc(p.body):'(post no longer exists)'}</div>
+      ${r.detail?`<div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">"${esc(r.detail)}"</div>`:''}
       <div style="display:flex;gap:8px">
         <button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="resolveReport('${r.id}','resolved_removed','${r.post_id}')">Remove post</button>
         <button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="resolveReport('${r.id}','resolved_dismissed')">Dismiss</button>
@@ -2687,7 +2705,7 @@ async function loadMyAdCampaigns(){
     el.innerHTML=d.map(c=>{
       const reach=(c.target_bucket_ids||[]).reduce((s,b)=>s+(bucketCounts[b]||0),0);
       return`<div class="card" style="margin-bottom:10px">
-        <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${c.headline}</div>
+        <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${esc(c.headline)}</div>
         <div style="font-size:11px;color:var(--gold);margin-bottom:8px">${statusLabel[c.status]||c.status}</div>
         ${c.status==='active'&&c.post_id?`<div style="font-size:12px;color:var(--muted);font-family:var(--sans)">${likeCounts[c.post_id]||0} likes · ${commentCounts[c.post_id]||0} comments</div>`:''}
         ${c.target_bucket_ids?.length?`<div style="font-size:11px;color:rgba(16,30,51,0.4);margin-top:4px">Targeting ~${reach} active members across ${c.target_bucket_ids.length} sector${c.target_bucket_ids.length===1?'':'s'}</div>`:''}
@@ -2707,9 +2725,9 @@ async function loadAdminAds(){
     const ids=[...new Set(d.map(x=>x.advertiser_id))];let am={};
     try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${x.status==='active'?'LIVE':'PENDING REVIEW'} · ${dname(am[x.advertiser_id]||{})}</div>
-      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${x.headline}</div>
-      ${x.body?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:8px">${x.body}</div>`:''}
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${x.status==='active'?'LIVE':'PENDING REVIEW'} · ${esc(dname(am[x.advertiser_id]||{}))}</div>
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.headline)}</div>
+      ${x.body?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:8px">${esc(x.body)}</div>`:''}
       <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:10px">₹${x.daily_budget||0}/day · ${x.duration_days||'—'} days</div>
       ${x.status==='pending_review'?`<div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="approveAd('${x.id}')">Approve</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="rejectAd('${x.id}')">Reject</button></div>`:'<div style="font-size:11px;color:var(--green)">Live in feed</div>'}
     </div>`).join('');
@@ -2744,8 +2762,8 @@ async function loadAdminPartners(){
     const d=await api('platform_partners','?order=created_at.desc&select=*')||[];
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No partner requests yet.</div></div>';return;}
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${x.name}</div>
-      <div style="font-size:11px;color:var(--gold);margin-bottom:6px">${x.kind==='data_partner'?'Data partner':'Publishing partner'} · ${x.status}</div>
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.name)}</div>
+      <div style="font-size:11px;color:var(--gold);margin-bottom:6px">${x.kind==='data_partner'?'Data partner':'Publishing partner'} · ${esc(x.status)}</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Requesting: ${(x.requested_scopes||[]).join(', ')||'—'}</div>
       ${x.status==='pending'?`<div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePartner('${x.id}','approved')">Approve</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePartner('${x.id}','denied')">Deny</button></div>`:''}
     </div>`).join('');
@@ -2859,7 +2877,7 @@ async function loadFeedPreferences(){
     const[buckets,weights]=await Promise.all([api('buckets','?order=sort_order.asc&select=id,name'),api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&select=bucket_id,weight`)]);
     const wm={};(weights||[]).forEach(w=>wm[w.bucket_id]=w.weight);
     $('bucket-weights-list').innerHTML=(buckets||[]).map(b=>{const w=wm[b.id]||'normal';return`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${b.name}</span>
+      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${esc(b.name)}</span>
       <div class="chips" style="gap:6px">
         <div class="chip${w==='more'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','more')">More</div>
         <div class="chip${w==='normal'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','normal')">Normal</div>
@@ -2880,7 +2898,7 @@ async function loadFeedPreferences(){
     const sp=await api('saved_posts',`?user_id=eq.${ST.profile.id}&order=created_at.desc&select=post_id`)||[];
     if(!sp.length){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing saved yet.</p>';return;}
     const posts=await api('posts',`?id=in.(${sp.map(x=>x.post_id).join(',')})&select=id,body,title`);
-    $('saved-posts-list').innerHTML=(posts||[]).map(p=>`<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openPostThread('${p.id}')"><div style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.title||p.body}</div></div>`).join('');
+    $('saved-posts-list').innerHTML=(posts||[]).map(p=>`<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openPostThread('${p.id}')"><div style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.title||p.body)}</div></div>`).join('');
   }catch(e){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
 }
 
@@ -2917,7 +2935,7 @@ async function loadAdmApps(){
 function filterAdmApps(){
   const q=($('adm-app-search')?.value||'').toLowerCase();
   const f=allAdmApps.filter(a=>!q||(a.real_name||'').toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q)||(a.domain||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q));
-  $('adm-apps-list').innerHTML=f.length?f.map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${(a.real_name||a.username||'?').charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${a.real_name||a.username||'Unknown'}</div><div style="font-size:11px;color:rgba(16,30,51,0.35);margin-bottom:2px">${a.email||''}</div><div style="font-size:12px;color:var(--muted)">${a.domain||''} · ${a.city||''}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold)">Review →</div></div>`;}).join(''):'<div class="empty-state"><div class="empty-text">No pending applications</div></div>';
+  $('adm-apps-list').innerHTML=f.length?f.map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${esc((a.real_name||a.username||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${esc(a.real_name||a.username)||'Unknown'}</div><div style="font-size:11px;color:rgba(16,30,51,0.35);margin-bottom:2px">${esc(a.email)}</div><div style="font-size:12px;color:var(--muted)">${esc(a.domain)} · ${esc(a.city)}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold)">Review →</div></div>`;}).join(''):'<div class="empty-state"><div class="empty-text">No pending applications</div></div>';
 }
 
 function reviewApp(a){
@@ -2927,10 +2945,10 @@ function reviewApp(a){
       <span style="font-size:10px;color:rgba(16,30,51,0.28)">${new Date(a.created_at).toLocaleDateString('en-IN')}</span>
     </div>
     <div class="section-title">Personal Details</div>
-    <div class="card">${[['Full Name',a.real_name],['Email',a.email],['Phone',a.phone],['City',a.city+(a.state?', '+a.state:'')],['LinkedIn',a.linkedin]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${l}</div><div class="info-value">${v}</div></div>`:'').join('')}</div>
+    <div class="card">${[['Full Name',a.real_name],['Email',a.email],['Phone',a.phone],['City',a.city+(a.state?', '+a.state:'')],['LinkedIn',a.linkedin]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${esc(l)}</div><div class="info-value">${esc(v)}</div></div>`:'').join('')}</div>
     <div class="section-title" style="margin-top:16px">Professional Details</div>
-    <div class="card">${[['Domain',a.domain],['Domain Group',a.domain_group],['Role',a.role],['Experience',a.experience],['Qualification',a.qualification],['Organisation',a.organisation]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${l}</div><div class="info-value">${v}</div></div>`:'').join('')}</div>
-    ${a.about?`<div class="section-title" style="margin-top:16px">About</div><div class="card"><p style="font-size:14px;color:var(--muted);font-weight:400;line-height:1.75">${a.about}</p></div>`:''}
+    <div class="card">${[['Domain',a.domain],['Domain Group',a.domain_group],['Role',a.role],['Experience',a.experience],['Qualification',a.qualification],['Organisation',a.organisation]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${esc(l)}</div><div class="info-value">${esc(v)}</div></div>`:'').join('')}</div>
+    ${a.about?`<div class="section-title" style="margin-top:16px">About</div><div class="card"><p style="font-size:14px;color:var(--muted);font-weight:400;line-height:1.75">${esc(a.about)}</p></div>`:''}
     <div class="section-title" style="margin-top:16px">Admin Notes</div>
     <textarea id="rev-notes" style="width:100%;background:rgba(16,30,51,0.04);border:1.5px solid rgba(16,30,51,0.08);border-radius:0;padding:12px;font-size:14px;color:var(--white);font-family:var(--sans);min-height:80px;resize:none;outline:none;margin-bottom:14px" placeholder="Add notes (required for rejection)..."></textarea>
     <div style="display:flex;gap:10px">
@@ -2960,7 +2978,7 @@ async function loadAdmBriefs(tab){
     const d=await api('client_briefs',`?status=eq.${curBriefTab}&select=*&order=created_at.desc`);
     const el=$('adm-briefs-list');
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-text">No '+curBriefTab+' briefs</div></div>';return;}
-    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${b.urgency}</div><div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">${b.confidentiality}</div></div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${b.domain_needed}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${b.description}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px"><button onclick="updBrief('${b.id}','reviewing')" style="background:none;border:1px solid var(--border2);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Review</button><button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button></div></div></div>`).join('');
+    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${esc(b.urgency)}</div><div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">${esc(b.confidentiality)}</div></div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(b.domain_needed)}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(b.description)}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px"><button onclick="updBrief('${b.id}','reviewing')" style="background:none;border:1px solid var(--border2);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Review</button><button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button></div></div></div>`).join('');
   }catch(e){}
 }
 
