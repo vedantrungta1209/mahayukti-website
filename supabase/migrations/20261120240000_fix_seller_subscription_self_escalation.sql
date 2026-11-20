@@ -105,4 +105,26 @@ create trigger trg_enforce_self_update_api_keys
   for each row
   execute function public.enforce_self_update_api_keys();
 
+-- The most serious of this batch: community_members_insert_own
+-- (20261120150000) only checked that the inserted row's user_id matched
+-- the caller -- nothing stopped anyone from directly INSERTing their own
+-- row with status='active' for an institution-verified community, fully
+-- bypassing the pending-approval queue the admin "Create an institution-
+-- verified community" / approve-or-deny UI exists specifically to enforce.
+-- Combined with posts_insert_own's community membership check (which only
+-- looks for an 'active' row, exactly what this let you fake for free),
+-- this meant the entire institution-verification premise -- "this is
+-- really IIT Delhi Alumni, really verified" -- had no actual backing.
+-- A self-inserted row into a verified community may now only ever be
+-- 'pending'; only an admin update (the real approve flow) can set 'active'.
+drop policy if exists community_members_insert_own on public.community_members;
+create policy community_members_insert_own on public.community_members for insert with check (
+  user_id in (select id from public.users where auth_id = auth.uid())
+  and (
+    public.is_platform_admin()
+    or not exists (select 1 from public.communities c where c.id = community_members.community_id and c.requires_verification)
+    or community_members.status = 'pending'
+  )
+);
+
 commit;
