@@ -363,8 +363,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div id="home-blog"><div class="loader"><div class="spinner"></div></div></div>
     <div class="section-title" style="margin-top:20px">Your Feed</div>
     <div class="card" style="margin-bottom:14px">
-      <textarea id="feed-compose" rows="2" placeholder="Share an update with the register…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
-      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitPost()">Post</button></div>
+      <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px">
+        <select id="feed-audience" style="background:rgba(16,30,51,0.04);border:1px solid rgba(16,30,51,0.08);border-radius:4px;padding:6px 8px;font-size:11.5px;color:var(--white);font-family:var(--sans)">
+          <option value="sector">My sector only</option>
+          <option value="connections">Connections only</option>
+          <option value="everyone">Everyone</option>
+        </select>
+        <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitPost()">Post</button>
+      </div>
     </div>
     <div id="social-feed"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
@@ -535,6 +542,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
   <div class="scroll"><div class="scroll-content" id="forum-list"><div class="loader"><div class="spinner"></div></div>
     <a href="javascript:void(0)" onclick="promptNewCommunity()" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create a community</a>
+    <a href="javascript:void(0)" id="create-institution-link" onclick="promptNewInstitutionCommunity()" style="display:none;align-items:center;justify-content:center;padding:14px;border:1.5px dashed rgba(16,30,51,0.2);border-radius:4px;color:rgba(16,30,51,0.5);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create an institution-verified community (admin)</a>
   </div></div>
 </div>
 
@@ -549,6 +557,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <textarea id="community-compose" rows="2" placeholder="Post in this community…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
       <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitCommunityPost()">Post</button></div>
     </div>
+    <div id="community-pending-members"></div>
     <div id="community-posts"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
 </div>
@@ -611,7 +620,26 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="page-title">Events</div>
   </div>
-  <div class="scroll"><div class="scroll-content" id="events-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="scroll"><div class="scroll-content" id="events-list"><div class="loader"><div class="spinner"></div></div>
+    <a href="javascript:void(0)" onclick="goto('new-event')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Host an event</a>
+  </div></div>
+</div>
+
+<!-- NEW EVENT -->
+<div class="screen" id="screen-new-event">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('events')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Host an event</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="field"><label>Title</label><input type="text" id="ne-title"></div>
+    <div class="field"><label>Description</label><textarea id="ne-desc" rows="3"></textarea></div>
+    <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="ne-starts"></div>
+    <label style="display:flex;align-items:center;gap:8px;margin:4px 0 14px;font-size:13px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="ne-virtual" onchange="$('f-ne-location').style.display=this.checked?'none':''">Virtual event</label>
+    <div class="field" id="f-ne-location"><label>Location</label><input type="text" id="ne-location"></div>
+    <div class="field"><label>Hosting as (optional)</label><input type="text" id="ne-host-label" placeholder="e.g. Mehta &amp; Co Advocates — leave blank to host as yourself"></div>
+    <button class="btn btn-gold btn-full" onclick="submitEvent()">Publish event</button>
+  </div></div>
 </div>
 
 <!-- NOTIFICATIONS -->
@@ -820,6 +848,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="section-title">This month</div>
     <div id="api-key-stats" style="font-size:13px;color:var(--muted);font-family:var(--sans)"></div>
   </div></div>
+</div>
+
+<!-- HASHTAG FEED -->
+<div class="screen" id="screen-hashtag">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title" id="hashtag-title">#</div>
+  </div>
+  <div class="scroll"><div class="scroll-content" id="hashtag-posts"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
 
 <!-- SETTINGS -->
@@ -1091,21 +1128,31 @@ function openPost(id,ctx){
 }
 
 async function loadSocialFeed(){
-  let exclude=[],weights={};
+  let exclude=[],weights={},audienceClause='or=(audience.eq.everyone)';
   if(ST.profile){
     try{
-      const[mu,bu1,bu2,w]=await Promise.all([
+      const[mu,bu1,bu2,w,myConns]=await Promise.all([
         api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),
         api('blocked_users',`?blocker_id=eq.${ST.profile.id}&select=blocked_id`),
         api('blocked_users',`?blocked_id=eq.${ST.profile.id}&select=blocker_id`),
-        api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&weight=neq.normal&select=bucket_id,weight`)
+        api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&weight=neq.normal&select=bucket_id,weight`),
+        api('member_connections',`?status=eq.accepted&or=(requester_id.eq.${ST.profile.id},addressee_id.eq.${ST.profile.id})&select=requester_id,addressee_id`)
       ]);
       exclude=[...(mu||[]).map(x=>x.muted_id),...(bu1||[]).map(x=>x.blocked_id),...(bu2||[]).map(x=>x.blocker_id)];
       (w||[]).forEach(x=>weights[x.bucket_id]=x.weight);
+      const connIds=(myConns||[]).map(c=>c.requester_id===ST.profile.id?c.addressee_id:c.requester_id);
+      const parts=['audience.eq.everyone'];
+      if(ST.profile.bucket_id){
+        parts.push(`and(audience.eq.sector,bucket_id.eq.${ST.profile.bucket_id})`);
+        parts.push(`audience_bucket_ids.cs.{${ST.profile.bucket_id}}`);
+      }
+      if(connIds.length)parts.push(`and(audience.eq.connections,author_id.in.(${connIds.join(',')}))`);
+      parts.push(`author_id.eq.${ST.profile.id}`); // always see your own posts regardless of their audience
+      audienceClause=`or=(${parts.join(',')})`;
     }catch(e){}
   }
   const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
-  await renderPostList('social-feed',`?community_id=is.null&order=created_at.desc&limit=30${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored`,weights);
+  await renderPostList('social-feed',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=30${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored`,weights);
 }
 
 async function renderPostList(containerId,query,weights){
@@ -1135,7 +1182,7 @@ async function renderPostList(containerId,query,weights){
         <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${p.is_sponsored?'Sponsored':n}</div>
         <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
         ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${p.title}</div>`:''}
-        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${p.body}</div>
+        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(p.body)}</div>
         ${p.link_url?`<a href="${p.link_url}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${p.link_title||p.link_url} →</a>`:''}
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
           <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
@@ -1156,13 +1203,70 @@ async function reportPost(postId){
   catch(e){alert('Could not submit the report — please try again.');}
 }
 
+function extractHashtags(text){
+  const m=text.match(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g)||[];
+  return [...new Set(m.map(t=>t.slice(1).toLowerCase()))];
+}
+function linkifyHashtags(text){
+  if(!text)return'';
+  return text.replace(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g,(full,tag)=>`<a href="javascript:void(0)" onclick="openHashtag('${tag.toLowerCase()}')" style="color:var(--gold)">#${tag}</a>`);
+}
+function extractLinkUrl(text){
+  const m=text.match(/https?:\/\/[^\s]+/);
+  return m?m[0]:null;
+}
+
+async function createPostWithExtras(fields){
+  // Needs the new post's real id back to attach hashtags -- same reasoning
+  // as approveAd: the shared api() helper deliberately doesn't request a
+  // representation, so this one call does it directly instead.
+  const r=await fetch(`${SB_URL}/rest/v1/posts`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(fields)});
+  if(!r.ok)throw new Error('post creation failed');
+  const created=await r.json();
+  const post=(created||[])[0];
+  const tags=extractHashtags(fields.body);
+  if(post&&tags.length){
+    for(const tag of tags){
+      try{
+        let existing=await api('hashtags',`?tag=eq.${encodeURIComponent(tag)}&select=id`);
+        let hashtagId=(existing||[])[0]?.id;
+        if(!hashtagId){
+          const hr=await fetch(`${SB_URL}/rest/v1/hashtags`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json',Prefer:'return=representation,resolution=merge-duplicates'},body:JSON.stringify({tag})});
+          const hcreated=await hr.json();hashtagId=(hcreated||[])[0]?.id;
+        }
+        if(hashtagId)await api('post_hashtags','','POST',{post_id:post.id,hashtag_id:hashtagId});
+      }catch(e){}
+    }
+  }
+  return post;
+}
+
 async function submitPost(){
   const body=$('feed-compose').value.trim();if(!body||!ST.profile)return;
   try{
-    await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.profile.bucket_id||null,audience:'sector'});
+    await createPostWithExtras({
+      author_id:ST.profile.id,body,
+      bucket_id:ST.profile.bucket_id||null,
+      audience:$('feed-audience').value,
+      link_url:extractLinkUrl(body)
+    });
     $('feed-compose').value='';
     await loadSocialFeed();
   }catch(e){alert('Could not post — please try again.');}
+}
+
+async function openHashtag(tag){
+  $('hashtag-title').textContent='#'+tag;
+  goto('hashtag');
+  const el=$('hashtag-posts');
+  try{
+    const h=await api('hashtags',`?tag=eq.${encodeURIComponent(tag)}&select=id`);
+    const hashtagId=(h||[])[0]?.id;
+    if(!hashtagId){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
+    const links=await api('post_hashtags',`?hashtag_id=eq.${hashtagId}&select=post_id`)||[];
+    if(!links.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
+    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored`);
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
 
 async function submitCommunityPost(){
@@ -1203,7 +1307,7 @@ async function openPostThread(postId){
       <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${dname(author)}</div>
       <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
       ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${p.title}</div>`:''}
-      <div style="font-size:14px;color:var(--muted);line-height:1.6">${p.body}</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">${linkifyHashtags(p.body)}</div>
     </div>`;
   }catch(e){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load post</div></div>';}
   loadThreadComments(postId);
@@ -1445,6 +1549,7 @@ async function submitHelp(){
 
 async function loadForums(){
   const el=$('forum-list');
+  const il=$('create-institution-link');if(il)il.style.display=ST.profile?.role==='admin'?'flex':'none';
   try{
     const communities=await api('communities','?order=created_at.asc&select=id,name,kind,bucket_id,institution_name,requires_verification')||[];
     if(!communities.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No communities yet — start one.</div></div>';return;}
@@ -1469,13 +1574,48 @@ async function promptNewCommunity(){
   }catch(e){alert('Could not create the community — please try again.');}
 }
 
+async function promptNewInstitutionCommunity(){
+  if(ST.profile?.role!=='admin')return;
+  const institutionName=prompt('Institution name (e.g. "IIT Delhi"):');if(!institutionName||!institutionName.trim())return;
+  const displayName=prompt('Community display name:',institutionName.trim()+' Alumni');if(!displayName||!displayName.trim())return;
+  try{
+    await api('communities','','POST',{name:displayName.trim(),kind:'institution',institution_name:institutionName.trim(),requires_verification:true,created_by:ST.profile.id});
+    await loadForums();
+  }catch(e){alert('Could not create the community — please try again.');}
+}
+
 async function openCommunity(id){
   const c=(ST.communities||[]).find(x=>x.id===id);if(!c)return;
   ST.currentCommunity=c;
   $('community-title').textContent=c.name;
   goto('community');
   await joinCommunityIfNeeded(c);
+  if(c.requires_verification&&ST.profile?.role==='admin')await loadPendingCommunityMembers(c.id);
+  else $('community-pending-members').innerHTML='';
   await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned`);
+}
+
+async function loadPendingCommunityMembers(communityId){
+  const el=$('community-pending-members');
+  try{
+    const pending=await api('community_members',`?community_id=eq.${communityId}&status=eq.pending&select=user_id`)||[];
+    if(!pending.length){el.innerHTML='';return;}
+    const ids=pending.map(x=>x.user_id);
+    const u=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const um={};(u||[]).forEach(x=>um[x.id]=x);
+    el.innerHTML=`<div class="section-title">Pending verification (admin)</div>`+pending.map(p=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[p.user_id]||{})}</span>
+      <div style="display:flex;gap:6px"><button class="btn btn-gold" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="decideCommunityMember('${communityId}','${p.user_id}','active')">Approve</button><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="decideCommunityMember('${communityId}','${p.user_id}','denied')">Deny</button></div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='';}
+}
+
+async function decideCommunityMember(communityId,userId,decision){
+  try{
+    if(decision==='denied')await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${userId}`,'DELETE');
+    else await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${userId}`,'PATCH',{status:'active'});
+    await loadPendingCommunityMembers(communityId);
+  }catch(e){alert('Could not update — please try again.');}
 }
 
 async function joinCommunityIfNeeded(c){
@@ -1610,6 +1750,26 @@ async function toggleRsvp(eventId){
     else{await api('event_rsvps','','POST',{event_id:eventId,user_id:ST.profile.id});}
     await loadEventsList();
   }catch(e){}
+}
+
+async function submitEvent(){
+  if(!ST.profile)return;
+  const title=$('ne-title').value.trim(),startsRaw=$('ne-starts').value;
+  if(!title||!startsRaw)return;
+  try{
+    await api('events','','POST',{
+      host_user_id:ST.profile.id,
+      host_label:$('ne-host-label').value.trim()||null,
+      title,
+      description:$('ne-desc').value.trim()||null,
+      starts_at:new Date(startsRaw).toISOString(),
+      is_virtual:$('ne-virtual').checked,
+      location:$('ne-virtual').checked?null:($('ne-location').value.trim()||null)
+    });
+    ['ne-title','ne-desc','ne-starts','ne-location','ne-host-label'].forEach(id=>$(id).value='');
+    $('ne-virtual').checked=false;
+    goto('events');
+  }catch(e){alert('Could not publish the event — please try again.');}
 }
 
 async function loadNotifs(){
