@@ -1,5 +1,11 @@
 ext {
-    minSdkVersion = 24
+    // 26 = Android 8.0, the first version with adaptive icons. Below it,
+    // the launcher falls back to a flattened ic_launcher.png rendered with
+    // a transparent background (foreground-only; no flat composite is
+    // generated), so the icon would show wrong on API 24-25 -- a
+    // vanishingly small, shrinking slice of real devices by now. Raising
+    // the floor instead of generating/maintaining a separate flat fallback.
+    minSdkVersion = 26
     compileSdkVersion = 36
     targetSdkVersion = 36
     androidxActivityVersion = '1.11.0'

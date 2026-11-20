@@ -54,7 +54,13 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       node: 22
-      xcode: latest
+      # Pinned, not "latest" -- Apple requires apps built with the current
+      # SDK (flagged 2026-11-20: a build landed on the iOS 26.5 SDK when
+      # Apple already required 27). "latest" can lag behind Codemagic's own
+      # newest image; same class of issue already hit once this session
+      # with `node: latest` silently resolving to an alpha release on Vee's
+      # pipeline. Bump this explicitly when Apple's requirement moves again.
+      xcode: 27.2
     scripts:
       - name: Install dependencies
         script: npm install
@@ -84,7 +90,7 @@ workflows:
       groups:
         - app_store_credentials
       node: 22
-      xcode: latest
+      xcode: 27.2 # pinned -- see note on the debug workflow's xcode field
     scripts:
       - name: Install dependencies
         script: npm install
