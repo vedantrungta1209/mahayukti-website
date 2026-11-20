@@ -1076,7 +1076,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-hashtag">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title" id="hashtag-title">#</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="page-title" id="hashtag-title">#</div>
+      <button id="hashtag-mute-btn" onclick="toggleMuteHashtag()" style="background:none;border:1px solid rgba(255,255,255,0.3);border-radius:999px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,0.8);cursor:pointer">Mute</button>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content" id="hashtag-posts"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
@@ -1420,7 +1423,18 @@ async function loadSocialFeed(){
   const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
   const el=$('social-feed');if(!el)return;
   try{
-    const candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url`)||[];
+    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url`)||[];
+    if(ST.profile&&candidates.length){
+      try{
+        const muted=await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`);
+        if(muted&&muted.length){
+          const mutedIds=muted.map(x=>x.hashtag_id);
+          const tagged=await api('post_hashtags',`?post_id=in.(${candidates.map(p=>p.id).join(',')})&hashtag_id=in.(${mutedIds.join(',')})&select=post_id`);
+          const mutedPostIds=new Set((tagged||[]).map(t=>t.post_id));
+          if(mutedPostIds.size)candidates=candidates.filter(p=>!mutedPostIds.has(p.id));
+        }
+      }catch(e){}
+    }
     if(!candidates.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
     const sponsored=candidates.filter(p=>p.is_sponsored);
     const organic=candidates.filter(p=>!p.is_sponsored);
@@ -1602,14 +1616,34 @@ async function openHashtag(tag){
   $('hashtag-title').textContent='#'+tag;
   goto('hashtag');
   const el=$('hashtag-posts');
+  ST.currentHashtagId=null;ST.currentHashtagTag=tag;
+  $('hashtag-mute-btn').textContent='Mute';
   try{
     const h=await api('hashtags',`?tag=eq.${encodeURIComponent(tag)}&select=id`);
     const hashtagId=(h||[])[0]?.id;
     if(!hashtagId){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
+    ST.currentHashtagId=hashtagId;
+    if(ST.profile){
+      try{const m=await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&hashtag_id=eq.${hashtagId}&select=hashtag_id`);if(m&&m.length)$('hashtag-mute-btn').textContent='Unmute';}catch(e){}
+    }
     const links=await api('post_hashtags',`?hashtag_id=eq.${hashtagId}&select=post_id`)||[];
     if(!links.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
     await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored,image_url`);
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function toggleMuteHashtag(){
+  if(!ST.profile||!ST.currentHashtagId)return;
+  const btn=$('hashtag-mute-btn');
+  try{
+    if(btn.textContent==='Unmute'){
+      await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&hashtag_id=eq.${ST.currentHashtagId}`,'DELETE');
+      btn.textContent='Mute';
+    }else{
+      await api('muted_hashtags','','POST',{user_id:ST.profile.id,hashtag_id:ST.currentHashtagId});
+      btn.textContent='Unmute';
+    }
+  }catch(e){alert('Could not update — please try again.');}
 }
 
 async function submitCommunityPost(){
