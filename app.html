@@ -989,8 +989,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div id="my-badge"></div>
     </div>
     <div id="my-upgrade" style="display:none"></div>
-    <div class="section-title">Professional Info</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0">
+      <div class="section-title" style="margin:0">Professional Info</div>
+      <button onclick="toggleInfoEdit()" id="info-edit-btn" style="background:none;border:none;color:var(--gold);font-size:12px;cursor:pointer">Edit</button>
+    </div>
     <div id="my-info"></div>
+    <div id="my-info-edit" style="display:none">
+      <div class="field"><label>Domain / Role</label><input type="text" id="info-domain" placeholder="e.g. Senior Advocate, CTO"></div>
+      <div class="field"><label>Your vertical</label><select id="info-domain-group"></select></div>
+      <div class="field"><label>City</label><input type="text" id="info-city"></div>
+      <div class="field"><label>Experience</label><input type="text" id="info-experience" placeholder="e.g. 8 years"></div>
+      <button class="btn btn-gold btn-full" onclick="saveProfileInfo()" style="margin-top:4px">Save Changes</button>
+    </div>
     <div class="divider"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px">
       <div class="section-title" style="margin:0">About</div>
@@ -2807,6 +2817,12 @@ function renderProfile(){
   $('my-founding').style.display=p.founding_member&&p.founding_approved?'':'none';
   $('my-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>`;
   $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(p.domain)||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${esc(p.domain_group)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(p.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(p.experience)||'—'}</div></div>`;
+  const dgSel=$('info-domain-group');
+  if(dgSel&&!dgSel.options.length)dgSel.innerHTML=BUCKETS.map(b=>`<option value="${b}">${b}</option>`).join('');
+  if(dgSel)dgSel.value=p.domain_group||'Other';
+  if($('info-domain'))$('info-domain').value=p.domain||'';
+  if($('info-city'))$('info-city').value=p.city||'';
+  if($('info-experience'))$('info-experience').value=p.experience||'';
   $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${esc(p.about)}</p>`:'<p style="font-size:13px;color:rgba(16,30,51,0.25);font-family:var(--sans)">No about text yet.</p>';
   $('about-inp').value=p.about||'';
   renderUpgradeCard(p);
@@ -2929,6 +2945,26 @@ function toggleAboutEdit(){
   const e=$('my-about-edit'),v=$('my-about-view'),b=$('edit-btn');
   if(e.style.display==='none'){e.style.display='';v.style.display='none';b.textContent='Cancel';}
   else{e.style.display='none';v.style.display='';b.textContent='Edit';}
+}
+
+// Domain/Domain Group/City/Experience were previously read-only on the member's own
+// profile -- nothing in the UI ever let you change them after applying, even though
+// none of them are admin-locked at the database level (unlike real_name_approved,
+// founding_approved, etc. -- see enforce_self_update_restrictions). Confirmed with the
+// user this should be freely self-editable, same as About.
+function toggleInfoEdit(){
+  const e=$('my-info-edit'),v=$('my-info'),b=$('info-edit-btn');
+  if(e.style.display==='none'){e.style.display='';v.style.display='none';b.textContent='Cancel';}
+  else{e.style.display='none';v.style.display='';b.textContent='Edit';}
+}
+
+async function saveProfileInfo(){
+  const domain=$('info-domain').value.trim(),domain_group=$('info-domain-group').value,city=$('info-city').value.trim(),experience=$('info-experience').value.trim();
+  try{
+    await api('users','?id=eq.'+ST.profile.id,'PATCH',{domain,domain_group,city,experience});
+    Object.assign(ST.profile,{domain,domain_group,city,experience});
+    toggleInfoEdit();renderProfile();toast('Updated','success');
+  }catch(e){toast('Failed','error');}
 }
 
 async function saveAbout(){
