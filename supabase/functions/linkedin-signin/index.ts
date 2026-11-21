@@ -1,34 +1,29 @@
 // supabase/functions/linkedin-signin/index.ts
 //
-// Server-side half of "Apply via LinkedIn" — plain LinkedIn Sign-In (OIDC: openid + profile +
-// email), used ONLY to prefill a new applicant's name/email/headline on the apply form.
+// Server-side half of "Login with LinkedIn" -- plain LinkedIn Sign-In (OIDC: openid + profile +
+// email), used as a real, passwordless authentication bridge for BOTH returning members and
+// brand-new ones (see handleLogin below). The client-side completion modal then collects the
+// few things LinkedIn's OIDC scope can't provide (phone, city, vertical) for a brand-new member.
 //
 // This is a SEPARATE concern from supabase/functions/linkedin-oauth/index.ts (the member-level
 // "Connect LinkedIn" / "Share to LinkedIn" posting feature, which uses w_member_social and
 // writes to the linkedin_connections table). The two share the same LinkedIn Developer app and
 // Client ID (86dpuqc5ufkfhp) because that's the one app Mahayukti has registered, but they use
-// different registered redirect URIs, different scopes, and this function:
-//   - requires NO Supabase session (an applicant filling out this form has no account yet)
-//   - never writes to the database — it only reads LinkedIn's /v2/userinfo and hands back the
-//     display fields the apply form needs
-//   - never returns the LinkedIn access token to the browser, even though it never stores one
-//     either — the token lives only for the duration of this request
+// different registered redirect URIs and different scopes.
 //
-// One action, POST only:
+// Two actions, POST only:
+//   { action: "login", code, redirect_uri }
+//     The real flow (see handleLogin below): verifies LinkedIn's email_verified claim, then
+//     mints a Supabase magic-link token for that email via the Admin API -- creating the
+//     auth.users identity if none exists yet, or reusing the existing one.
 //   { action: "userinfo", code, redirect_uri }
-//     Exchanges a LinkedIn authorization code for an access token (server-side, using
-//     LINKEDIN_CLIENT_SECRET — the same Supabase project secret the posting feature uses), then
-//     calls LinkedIn's OIDC userinfo endpoint and returns { profile: { name, given_name,
-//     family_name, email, headline, picture } }. `redirect_uri` must exactly match what was
-//     sent to LinkedIn's /authorization endpoint
-//     (https://mahayukti.com/auth/linkedin-signin/callback/) and what's registered as an
-//     additional "Authorized redirect URL" on the LinkedIn app.
+//     Legacy/unused by the current client -- exchanges a code for just the display profile
+//     fields, no session. Left in place in case a prefill-only use ever comes back, but nothing
+//     calls it right now.
 //
-// Note: LinkedIn's OIDC userinfo response does not include a headline/job-title field — that's
-// only available via the older /v2/me profile API, which needs the r_liteprofile scope this app
-// does not currently request. `headline` is included in the response shape for forward
-// compatibility (e.g. if r_liteprofile is ever added) but will be null until then; the apply
-// form falls back to asking the applicant for their domain/role directly, which it needs anyway.
+// `redirect_uri` must exactly match what was sent to LinkedIn's /authorization endpoint
+// (https://mahayukti.com/auth/linkedin-signin/callback/) and what's registered as an additional
+// "Authorized redirect URL" on the LinkedIn app.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -106,13 +101,13 @@ async function handleUserinfo(body: { code?: string; redirect_uri?: string }) {
 
 // "Login with LinkedIn" -- a real authentication bridge, not just prefill. LinkedIn (via OIDC)
 // is only ever used here to PROVE the person owns a given, already-verified email address.
-// It never creates an account: if no public.users row matches that email, this returns an
-// error telling them to apply first, exactly like a normal login attempt with an unknown email
-// would. If one does match, this uses the Supabase Admin API (service-role, Edge-Function-only)
-// to mint a one-time magic-link token for that EXISTING auth.users identity and hands the token
-// back to the browser, which redeems it via supabase.auth.verifyOtp({type:'magiclink'}) to get a
-// real session for the member's existing account -- no separate "LinkedIn identity" is ever
-// created, so this can't fork a member into two accounts.
+// Serves BOTH returning members and brand-new ones, exactly like googleAuth() on the client
+// side: this always mints a Supabase magic-link token for the verified email -- Supabase's
+// own generateLink creates the auth.users identity if one doesn't already exist for that email,
+// or reuses the existing one if it does. Either way, no password is ever set, and the browser
+// redeems the token via supabase.auth.verifyOtp({type:'magiclink'}); the client's handleSess()
+// then decides what happens next (straight to the member's existing profile, or -- if no
+// public.users row matches yet -- a short completion form for the missing details).
 async function handleLogin(body: { code?: string; redirect_uri?: string }) {
   if (!LINKEDIN_CLIENT_SECRET) {
     return json({ error: "LINKEDIN_CLIENT_SECRET is not set on this Supabase project." }, 500);
@@ -129,8 +124,7 @@ async function handleLogin(body: { code?: string; redirect_uri?: string }) {
   }
 
   // Trust the email only if LinkedIn itself has verified it -- a claimed-but-unverified email on
-  // an OIDC identity is not proof of ownership, and this path exists specifically to authenticate
-  // someone into an existing account by email.
+  // an OIDC identity is not proof of ownership, and this path can create a real account from it.
   if (!userinfo.email || userinfo.email_verified !== true) {
     return json({ error: "Your LinkedIn account's email isn't verified, so it can't be used to sign in. Please verify your email with LinkedIn, or use password/Google login instead." }, 400);
   }
@@ -139,19 +133,21 @@ async function handleLogin(body: { code?: string; redirect_uri?: string }) {
   const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-  const { data: rows, error: lookupErr } = await admin
-    .from("users")
-    .select("id")
-    .ilike("email", userinfo.email)
-    .limit(1);
-  if (lookupErr) return json({ error: "Could not look up your account", detail: lookupErr.message }, 500);
-  if (!rows || !rows.length) {
-    return json({ error: "No MahaYukti account found for " + userinfo.email + ". Apply for membership first." }, 404);
-  }
-
+  // options.data seeds user_metadata the same way supabase.auth.signUp()'s options.data would --
+  // only takes effect if this email is actually new, so it never overwrites an existing member's
+  // metadata. This is what lets the client's OAuth-completion popup prefill "Full Name" for a
+  // brand-new LinkedIn signup the same way it already does for Google.
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email: userinfo.email,
+    options: {
+      data: {
+        full_name: userinfo.name ?? null,
+        given_name: userinfo.given_name ?? null,
+        family_name: userinfo.family_name ?? null,
+        picture: userinfo.picture ?? null,
+      },
+    },
   });
   if (linkErr || !linkData?.properties?.hashed_token) {
     return json({ error: "Could not sign you in", detail: linkErr?.message }, 500);

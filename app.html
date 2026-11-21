@@ -199,7 +199,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <a href="index.html" style="font-size:32px;font-family:var(--serif);color:var(--navy);text-decoration:none">Maha<span style="color:var(--gold)">Yukti</span></a>
     <div class="page-title" style="margin-top:8px">Member Login</div>
-    <div class="page-subtitle">Approved members only.</div>
+    <div class="page-subtitle">Members, log in below. New here? Google or LinkedIn signs you up instantly.</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocapitalize="none"></div>
@@ -207,11 +207,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div style="text-align:right;margin:-8px 0 16px"><button onclick="handleForgotPassword()" style="background:none;border:none;color:rgba(16,30,51,0.4);font-size:12px;cursor:pointer;font-family:var(--sans)">Forgot password?</button></div>
     <button class="btn btn-gold btn-full" id="login-btn" onclick="handleLogin()">Login to MahaYukti</button>
     <div style="display:flex;align-items:center;gap:10px;margin:20px 0"><div style="flex:1;height:1px;background:var(--border2)"></div><span style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans)">OR</span><div style="flex:1;height:1px;background:var(--border2)"></div></div>
-    <button class="btn btn-outline btn-full" onclick="handleGoogleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
+    <button class="btn btn-outline btn-full" onclick="googleAuth()" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.46c-.28 1.5-1.13 2.77-2.4 3.62v3.01h3.49c2.04-1.88 3.22-4.64 3.22-8.66z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.49-3.01c-.97.65-2.21 1.03-4.44 1.03-3.42 0-6.32-2.31-7.35-5.41H.9v3.39C2.86 21.3 7.07 24 12 24z"/><path fill="#FBBC05" d="M4.65 13.7c-.26-.76-.4-1.57-.4-2.4s.14-1.64.4-2.4V5.51H.9A11.98 11.98 0 0 0 0 11.3c0 1.93.46 3.76 1.28 5.4l3.37-2.99z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.1-3.1C17.95 1.19 15.24 0 12 0 7.07 0 2.86 2.7.9 6.61l3.75 3.09C5.68 7.06 8.58 4.75 12 4.75z"/></svg>
       Continue with Google
     </button>
-    <button class="btn btn-outline btn-full" onclick="liLoginStart()" style="display:flex;align-items:center;justify-content:center;gap:10px">
+    <button class="btn btn-outline btn-full" onclick="linkedInAuth()" style="display:flex;align-items:center;justify-content:center;gap:10px">
       <div style="width:18px;height:18px;border-radius:3px;background:#0A66C2;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--sans)">in</div>
       Continue with LinkedIn
     </button>
@@ -409,9 +409,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="step-content active" id="apply-s1">
-      <div id="apply-li-chip" class="prefill-chip" style="display:none">◆ Name and email filled in from LinkedIn</div>
-      <div class="choice-card" id="google-apply-btn" onclick="handleGoogleApply()" style="margin-bottom:14px"><div class="choice-icon" style="border-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.46c-.28 1.5-1.13 2.77-2.4 3.62v3.01h3.49c2.04-1.88 3.22-4.64 3.22-8.66z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.49-3.01c-.97.65-2.21 1.03-4.44 1.03-3.42 0-6.32-2.31-7.35-5.41H.9v3.39C2.86 21.3 7.07 24 12 24z"/><path fill="#FBBC05" d="M4.65 13.7c-.26-.76-.4-1.57-.4-2.4s.14-1.64.4-2.4V5.51H.9A11.98 11.98 0 0 0 0 11.3c0 1.93.46 3.76 1.28 5.4l3.37-2.99z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.1-3.1C17.95 1.19 15.24 0 12 0 7.07 0 2.86 2.7.9 6.61l3.75 3.09C5.68 7.06 8.58 4.75 12 4.75z"/></svg></div><div><div class="choice-name">Continue with Google</div><div class="choice-desc">Creates your account instantly — no password to set. You'll still pick your vertical and add a line about yourself.</div></div></div>
-      <div class="choice-card" id="li-autofill-btn" onclick="liSignInStart()" style="margin-bottom:18px"><div class="choice-icon">in</div><div><div class="choice-name">Fill this in with LinkedIn</div><div class="choice-desc">Brings over your name, email, and headline — you'll still pick your vertical and add a line about yourself.<span id="li-signin-status"></span></div></div></div>
+      <div style="text-align:center;padding:14px;border:1px dashed var(--border2);border-radius:var(--r);margin-bottom:18px;font-size:12.5px;color:var(--muted)">
+        Faster option: <a href="#" onclick="goto('login');return false" style="color:var(--gold);font-weight:600">use Google or LinkedIn on the Login screen</a> — no password to set, and it signs you up instantly if you're new.
+      </div>
       <div class="field" id="f-fname"><label>First Name *</label><input type="text" id="a-fname" autocapitalize="words"></div>
       <div class="field" id="f-lname"><label>Last Name</label><input type="text" id="a-lname" autocapitalize="words"></div>
       <div class="field" id="f-email"><label>Email Address *</label><input type="email" id="a-email" autocapitalize="none"></div>
@@ -1187,6 +1187,34 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
 </div>
 
+<!-- MODAL: COMPLETE PROFILE AFTER GOOGLE/LINKEDIN SIGN-IN -->
+<!-- Shown when a Google or LinkedIn sign-in succeeds but no public.users row matches the
+     account yet -- i.e. this is a brand-new member, not a returning one. Collects only what
+     neither provider can give us (phone, city, role/vertical); name and email come prefilled
+     from the provider and are not re-entered. Cancelling signs the half-created auth session
+     back out rather than leaving it dangling. -->
+<div class="modal-overlay" id="modal-oauth-complete">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:4px">Just a few more details</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px" id="oauth-complete-sub">Signed in as <span id="oauth-complete-email"></span> — this completes your MahaYukti membership.</div>
+    <div class="field"><label>Full Name *</label><input type="text" id="oc-name" placeholder="Your full name"></div>
+    <div class="field"><label>Mobile Number *</label><input type="tel" id="oc-phone" placeholder="+91 XXXXX XXXXX"></div>
+    <div class="field"><label>City *</label><input type="text" id="oc-city" placeholder="Your city"></div>
+    <div class="field"><label>Your role *</label><input type="text" id="oc-domain" placeholder="e.g. Senior Advocate, VP Engineering…" oninput="ocUpdBucketSuggestion()"></div>
+    <div class="field" id="oc-f-bucket" style="display:none">
+      <label>Vertical *</label>
+      <select id="oc-bucket"></select>
+      <div id="oc-bucket-note" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+    </div>
+    <div class="field"><label>About you (optional)</label><textarea id="oc-about" placeholder="A line about what you do" rows="2"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" id="oc-cancel" onclick="cancelOAuthComplete()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="oc-submit" onclick="submitOAuthComplete()" style="flex:2">Join MahaYukti</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
 
@@ -1303,8 +1331,6 @@ async function api(t,p='',m='GET',b=null){
 
 async function init(){
   renderAbout();renderConciergeChips();loadBlogPublic();
-  ST.googleApplyPending=sessionStorage.getItem('google_apply_pending')==='1';
-  sessionStorage.removeItem('google_apply_pending');
   const{data:{session}}=await sb.auth.getSession();
   if(session){
     await handleSess(session);
@@ -1333,8 +1359,7 @@ async function init(){
     if(s)await handleSess(s);else{ST.user=null;ST.profile=null;goto('splash');}
   });
   checkLinkedInReturn();
-  checkLiSignInReturn();
-  checkLiLoginReturn();
+  checkLiAuthReturn();
 }
 
 function renderPendingScreen(status,note){
@@ -1354,15 +1379,13 @@ async function handleSess(s){
   try{
     const p=await api('users','?auth_id=eq.'+s.user.id+'&select=*');
     if(!p||!p.length){
-      // A session with no matching MahaYukti profile -- either a brand-new
-      // Google sign-in that was actually meant to apply, or someone who
-      // somehow got a session without ever applying. Route the first case
-      // to a prefilled apply form instead of a silent, unexplained return
-      // to the splash screen.
-      if(ST.googleApplyPending){await startGoogleApply();return;}
-      await sb.auth.signOut();ST.user=null;ST.profile=null;
-      toast('No MahaYukti account found for that sign-in. Apply for membership first.','error');
-      goto('splash');return;
+      // A real, authenticated session (Google or LinkedIn, from either the
+      // Login screen's buttons -- there's only one set now) with no
+      // matching MahaYukti profile yet means this is a brand-new member.
+      // Collect the few things neither provider can give us (phone, city,
+      // role/vertical) in a single compact popup instead of a silent
+      // return to splash or a separate multi-step apply screen.
+      openOAuthCompleteModal();return;
     }
     ST.profile=p[0];
     if(ST.profile.status==='pending'||ST.profile.status==='rejected'){renderPendingScreen(ST.profile.status,ST.profile.admin_notes);goto('pending');return;}
@@ -1411,44 +1434,91 @@ async function handleSetNewPassword(){
   }catch(e){toast(e.message||'Could not update password','error');btn.disabled=false;btn.textContent='Set new password';}
 }
 
-async function handleGoogleLogin(){
-  // No hash suffix here -- see the comment on resetPasswordForEmail above;
-  // same Supabase redirect, same double-hash bug, confirmed live by
-  // actually completing this OAuth round-trip in a browser.
+// Single entry point for Google sign-in, used by the Login screen's one
+// "Continue with Google" button -- serves both returning members (handleSess
+// finds their profile and logs them straight in) and brand-new ones
+// (handleSess finds no profile and opens the completion modal instead).
+// There is deliberately no separate "apply via Google" path any more.
+async function googleAuth(){
+  // No hash suffix here -- Supabase's own implicit-grant redirect appends
+  // "#access_token=...&..." to this URL, and anything already in front of
+  // that produces a malformed double hash its own parser silently fails to
+  // read -- confirmed live by actually completing this OAuth round-trip.
   const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});
   if(error)toast(error.message||'Could not start Google sign-in','error');
 }
 
-async function handleGoogleApply(){
-  sessionStorage.setItem('google_apply_pending','1');
-  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});
-  if(error){sessionStorage.removeItem('google_apply_pending');toast(error.message||'Could not start Google sign-in','error');}
+// --- OAuth profile completion (Google or LinkedIn, brand-new member) -------------------
+// BUCKETS/classifyBucket are shared with the manual apply form (see constants above);
+// these oc* functions are a separate, parallel copy of initBucketSelect/updBucketSuggestion
+// scoped to this modal's own field ids, so nothing here can affect the manual apply screen.
+let ocBucketManuallySet=false;
+function ocInitBucketSelect(){
+  const sel=$('oc-bucket');
+  if(sel&&!sel.options.length){
+    sel.innerHTML='<option value="">Select your vertical…</option>'+BUCKETS.map(b=>`<option value="${b}">${b}</option>`).join('');
+    sel.onchange=()=>{ocBucketManuallySet=true;$('oc-bucket-note').textContent='';};
+  }
+}
+function ocUpdBucketSuggestion(){
+  ocInitBucketSelect();
+  const text=$('oc-domain').value;
+  const guess=classifyBucket(text);
+  const f=$('oc-f-bucket'),sel=$('oc-bucket'),note=$('oc-bucket-note');
+  if(!text.trim()){f.style.display='none';return;}
+  f.style.display='';
+  if(guess&&!ocBucketManuallySet){
+    sel.value=guess;
+    note.textContent='Suggested based on what you typed — change it above if this isn\'t right.';
+  }else if(!guess&&!ocBucketManuallySet){
+    note.textContent='Pick the closest vertical — or "Other" if nothing above fits.';
+  }
 }
 
-// Called from handleSess() when a session exists with no matching MahaYukti
-// profile AND the member clicked "Continue with Google" from the Apply
-// screen specifically (not a plain login attempt) -- prefills the apply
-// form from the Google account instead of signing them straight back out.
-async function startGoogleApply(){
-  ST.googleApplyPending=false;
+function openOAuthCompleteModal(){
+  ocBucketManuallySet=false;
+  ocInitBucketSelect();
   const meta=ST.user?.user_metadata||{};
-  const full=(meta.full_name||meta.name||'').trim();
-  const parts=full.split(' ');
-  $('a-fname').value=parts[0]||'';
-  $('a-lname').value=parts.slice(1).join(' ')||'';
-  $('a-email').value=ST.user?.email||meta.email||'';
-  applyVia='google';
-  ST.applyViaOAuth=true;
-  $('a-password').closest('.field').style.display='none';
-  $('a-password2').closest('.field').style.display='none';
-  $('apply-li-chip').textContent='◆ Signed in with Google — name and email filled in';
-  $('apply-li-chip').style.display='';
-  // Deliberately not calling startManualApply() here -- it resets
-  // applyVia back to 'manual' and re-hides apply-li-chip, which would
-  // immediately undo everything just set above.
-  ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f){f.removeAttribute('data-locked');f.querySelector('input').readOnly=false;}});
-  applyStep=1;bucketManuallySet=false;initBucketSelect();updApply();
-  goto('apply');
+  $('oc-name').value=(meta.full_name||meta.name||'').trim();
+  $('oc-phone').value='';$('oc-city').value='';$('oc-domain').value='';$('oc-about').value='';
+  $('oc-f-bucket').style.display='none';$('oc-bucket-note').textContent='';
+  $('oc-bucket').value='';
+  $('oauth-complete-email').textContent=ST.user?.email||meta.email||'';
+  document.getElementById('modal-oauth-complete').classList.add('open');
+}
+
+// Cancel leaves a real, authenticated-but-profileless session sitting around if simply
+// closed -- sign out so a half-finished signup doesn't dead-end the person on reload.
+async function cancelOAuthComplete(){
+  document.getElementById('modal-oauth-complete').classList.remove('open');
+  await sb.auth.signOut();ST.user=null;ST.profile=null;
+  goto('splash');
+}
+
+async function submitOAuthComplete(){
+  const name=$('oc-name').value.trim(),phone=$('oc-phone').value.trim(),city=$('oc-city').value.trim();
+  const domain=$('oc-domain').value.trim(),dg=$('oc-bucket').value,about=$('oc-about').value.trim();
+  if(!name||!phone||!city||!domain){toast('Please fill all required fields','error');return;}
+  if(!dg){toast('Please select your vertical','error');return;}
+  const btn=$('oc-submit');btn.disabled=true;btn.textContent='Joining…';
+  const email=(ST.user?.email||'').toLowerCase();
+  const username=name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20)+Math.floor(1000+Math.random()*9000);
+  // role/status are forced server-side (trg_enforce_self_signup_defaults) regardless of
+  // what's sent here -- every self-signup becomes an active Member immediately, same as
+  // the manual apply form.
+  const userRow={auth_id:ST.user.id,username,real_name:name,email,phone,city,domain,domain_group:dg,about,source:'oauth',submission_id:subId()};
+  try{
+    const ires=await fetch(`${SB_URL}/rest/v1/users`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+ST.user.access_token,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(userRow)});
+    if(!ires.ok){const eb=await ires.json().catch(()=>({}));throw new Error(eb.message||eb.hint||('HTTP '+ires.status));}
+    ST.profile=(await ires.json())[0]||userRow;
+  }catch(e){
+    toast('Could not save your profile: '+(e.message||'unknown error'),'error');
+    btn.disabled=false;btn.textContent='Join MahaYukti';return;
+  }
+  document.getElementById('modal-oauth-complete').classList.remove('open');
+  btn.disabled=false;btn.textContent='Join MahaYukti';
+  toast('Welcome to MahaYukti','success');
+  loadMemberHome();
 }
 
 async function handleSignOut(){
@@ -2675,19 +2745,12 @@ async function saveAbout(){
 // Participant is an earned promotion (see maybe_promote_to_participant in Supabase),
 // never a signup-time choice; Bucket Head/Council were never selectable here either.
 let applyStep=1;
-let applyVia='manual'; // 'manual' | 'linkedin'
 let bucketManuallySet=false; // true once the applicant has touched the vertical dropdown themselves
 function applyBack(){if(applyStep===1)goto('splash');else applyPrev();}
 
 // Entry point for "Apply manually" on the choice screen — a plain, un-prefilled run of the
 // same 2-step flow "Apply via LinkedIn" also lands on (see liApplyPrefill below).
 function startManualApply(){
-  applyVia='manual';
-  ST.applyViaOAuth=false;
-  $('a-password').closest('.field').style.display='';
-  $('a-password2').closest('.field').style.display='';
-  $('apply-li-chip').style.display='none';
-  ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f){f.removeAttribute('data-locked');f.querySelector('input').readOnly=false;}});
   applyStep=1;bucketManuallySet=false;initBucketSelect();updApply();
   goto('apply');
 }
@@ -2723,10 +2786,8 @@ function applyNext(){
   if(applyStep===1){
     if(!$('a-fname').value.trim()||!$('a-email').value.trim()||!$('a-phone').value.trim()||!$('a-city').value.trim()||!$('a-domain').value.trim()){toast('Please fill required fields','error');return;}
     if(!$('a-bucket').value){toast('Please select your vertical','error');return;}
-    if(!ST.applyViaOAuth){
-      if($('a-password').value.length<8){toast('Password must be at least 8 characters','error');return;}
-      if($('a-password').value!==$('a-password2').value){toast('Passwords do not match','error');return;}
-    }
+    if($('a-password').value.length<8){toast('Password must be at least 8 characters','error');return;}
+    if($('a-password').value!==$('a-password2').value){toast('Passwords do not match','error');return;}
   }
   if(applyStep===2){doApply();return;}
   applyStep++;updApply();
@@ -2744,10 +2805,8 @@ function updApply(){
 async function doApply(){
   const about=$('a-about').value.trim(); // optional — simplified per the "too exhaustive" feedback
   const pw=$('a-password').value;
-  if(!ST.applyViaOAuth){
-    if(pw.length<8){toast('Password must be at least 8 characters','error');return;}
-    if(pw!==$('a-password2').value){toast('Passwords do not match','error');return;}
-  }
+  if(pw.length<8){toast('Password must be at least 8 characters','error');return;}
+  if(pw!==$('a-password2').value){toast('Passwords do not match','error');return;}
   const btn=$('apply-next');btn.disabled=true;btn.textContent='Submitting...';
   const sid=subId();const domain=$('a-domain').value.trim();
   const email=$('a-email').value.trim().toLowerCase();
@@ -2758,33 +2817,27 @@ async function doApply(){
   // requires this to be set before getting here.
   const dg=$('a-bucket').value;
 
-  // 1) Create the Supabase Auth account -- unless the applicant already has
-  // one via Google OAuth (ST.applyViaOAuth), in which case ST.user is
-  // already the real, authenticated account and signUp() would be both
-  // unnecessary and wrong (Google-created accounts don't have a password
-  // to pass it).
+  // 1) Create the Supabase Auth account. (Google/LinkedIn signups no longer come through
+  // this screen at all -- see googleAuth()/linkedInAuth() and the OAuth completion modal --
+  // so this is always a plain password signup now.)
   let signData;
-  if(ST.applyViaOAuth){
-    signData={user:ST.user,session:{access_token:ST.user.access_token}};
-  }else{
-    try{
-      const r=await sb.auth.signUp({email,password:pw});
-      if(r.error)throw r.error;
-      signData=r.data;
-      if(signData?.user&&Array.isArray(signData.user.identities)&&signData.user.identities.length===0){
-        throw new Error('An account with this email already exists. Please use Login instead.');
-      }
-    }catch(e){
-      const msg=/already|exists|registered/i.test(e.message||'')?'An account with this email already exists. Please use Login instead.':(e.message||'Could not create your account.');
-      toast(msg,'error');btn.disabled=false;btn.textContent='Submit Application';return;
+  try{
+    const r=await sb.auth.signUp({email,password:pw});
+    if(r.error)throw r.error;
+    signData=r.data;
+    if(signData?.user&&Array.isArray(signData.user.identities)&&signData.user.identities.length===0){
+      throw new Error('An account with this email already exists. Please use Login instead.');
     }
+  }catch(e){
+    const msg=/already|exists|registered/i.test(e.message||'')?'An account with this email already exists. Please use Login instead.':(e.message||'Could not create your account.');
+    toast(msg,'error');btn.disabled=false;btn.textContent='Submit Application';return;
   }
 
   // 2) Create the pending profile row in the `users` table
   const username=(fname+lname).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20)+Math.floor(1000+Math.random()*9000);
   // role/status are forced server-side (trg_enforce_self_signup_defaults) regardless of
   // what's sent here -- every self-signup becomes an active Member immediately.
-  const userRow={auth_id:signData.user.id,username,real_name:fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,domain_group:dg,about,source:applyVia==='linkedin'?'linkedin_signin':'manual',submission_id:sid};
+  const userRow={auth_id:signData.user.id,username,real_name:fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,domain_group:dg,about,source:'manual',submission_id:sid};
   try{
     const token=signData.session?.access_token||SB_KEY;
     const ires=await fetch(`${SB_URL}/rest/v1/users`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(userRow)});
@@ -2802,7 +2855,7 @@ async function doApply(){
 
   // 3) Keep the existing Google Form POST for admin's own visibility/backup
   try{
-    await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:sid,submissionDate:new Date().toISOString(),track:'Network Member',firstName:fname,lastName:lname,fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,about,domainGroup:dg,appliedVia:applyVia,source:'MahaYukti PWA',status:'New'}))});
+    await fetch(FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(JSON.stringify({submissionId:sid,submissionDate:new Date().toISOString(),track:'Network Member',firstName:fname,lastName:lname,fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,about,domainGroup:dg,appliedVia:'manual',source:'MahaYukti PWA',status:'New'}))});
   }catch(e){}
 
   btn.disabled=false;btn.textContent='Continue →';
@@ -2814,41 +2867,28 @@ async function doApply(){
   loadMemberHome();
 }
 
-// --- Apply via LinkedIn (sign-in prefill) -----------------------------------------------
-// Separate, unauthenticated OIDC flow — NOT the member-posting "Connect LinkedIn" feature
-// further down this file. Used only before an applicant has any Mahayukti account, to prefill
-// name/email/headline on the apply form. See the LI_SIGNIN_* constants above this block and
-// supabase/functions/linkedin-signin/index.ts.
-function liSignInStart(){
+// --- Login with LinkedIn (real auth, same role as googleAuth() above) ------------------
+// Single entry point, used by the Login screen's one "Continue with LinkedIn" button.
+// linkedin-signin's "login" action verifies LinkedIn's own email_verified claim, then mints
+// a Supabase magic-link token for that email -- creating a brand-new auth.users identity if
+// none exists yet, or reusing the existing one. Either way, the browser redeems it with
+// verifyOtp() below, and handleSess() decides what happens next (home, or the completion
+// modal for a brand-new member) exactly like it does for Google.
+function linkedInAuth(){
   const state=liRandomState();
   sessionStorage.setItem('li_signin_state',state);
-  sessionStorage.setItem('li_signin_return','apply');
   const u='https://www.linkedin.com/oauth/v2/authorization?'+new URLSearchParams({
     response_type:'code',client_id:LI_CLIENT_ID,redirect_uri:LI_SIGNIN_REDIRECT_URI,scope:LI_SIGNIN_SCOPE,state
   }).toString();
   window.location.href=u;
 }
 
-// Real "Login with LinkedIn" -- same LinkedIn app/redirect_uri as liSignInStart() above, but
-// li_signin_return='login' tells the callback page (and the linkedin-signin Edge Function) this
-// is an authentication attempt against an EXISTING account, not an apply-form prefill.
-function liLoginStart(){
-  const state=liRandomState();
-  sessionStorage.setItem('li_signin_state',state);
-  sessionStorage.setItem('li_signin_return','login');
-  const u='https://www.linkedin.com/oauth/v2/authorization?'+new URLSearchParams({
-    response_type:'code',client_id:LI_CLIENT_ID,redirect_uri:LI_SIGNIN_REDIRECT_URI,scope:LI_SIGNIN_SCOPE,state
-  }).toString();
-  window.location.href=u;
-}
-
-// Called on every app.html load. If the LinkedIn LOGIN callback just ran, it will have stashed
+// Called on every app.html load. If the LinkedIn callback just ran, it will have stashed
 // {email, token_hash} in sessionStorage under 'li_login_bridge' and redirected back here with
-// ?li_login=1. token_hash is a single-use Supabase magic-link token for the member's EXISTING
-// account (minted server-side, see linkedin-signin's handleLogin) -- redeeming it via verifyOtp
-// establishes a real session; onAuthStateChange's own SIGNED_IN handling then takes over exactly
-// like any other login method.
-async function checkLiLoginReturn(){
+// ?li_login=1. token_hash is a single-use Supabase magic-link token (minted server-side, see
+// linkedin-signin's handleLogin) -- redeeming it via verifyOtp establishes a real session;
+// onAuthStateChange's own SIGNED_IN handling then takes over exactly like any other login method.
+async function checkLiAuthReturn(){
   const p=new URLSearchParams(window.location.search);
   if(p.get('li_login')!=='1')return;
   history.replaceState(null,'',window.location.pathname+window.location.hash);
@@ -2858,36 +2898,6 @@ async function checkLiLoginReturn(){
   if(!bridge){toast('Could not complete LinkedIn sign-in. Please try again.','error');return;}
   const{error}=await sb.auth.verifyOtp({email:bridge.email,token_hash:bridge.token_hash,type:'magiclink'});
   if(error)toast(error.message||'Could not complete LinkedIn sign-in','error');
-}
-
-// Called on every app.html load. If the LinkedIn sign-in callback page just ran, it will have
-// stashed the fetched profile (name/email/headline/picture — never a token) in sessionStorage
-// under 'li_signin_profile' and redirected back here with ?li_signin=1.
-function checkLiSignInReturn(){
-  const p=new URLSearchParams(window.location.search);
-  if(p.get('li_signin')!=='1')return;
-  history.replaceState(null,'',window.location.pathname+window.location.hash);
-  let profile=null;
-  try{profile=JSON.parse(sessionStorage.getItem('li_signin_profile')||'null');}catch(e){}
-  sessionStorage.removeItem('li_signin_profile');
-  if(!profile){toast('Could not read your LinkedIn profile. Please try again or apply manually.','error');startManualApply();return;}
-  liApplyPrefill(profile);
-}
-
-function liApplyPrefill(profile){
-  applyVia='linkedin';
-  applyStep=1;bucketManuallySet=false;initBucketSelect();updApply();
-  goto('apply');
-  const given=profile.given_name||((profile.name||'').split(' ')[0])||'';
-  const family=profile.family_name||((profile.name||'').split(' ').slice(1).join(' '))||'';
-  $('a-fname').value=given;$('a-lname').value=family;$('a-email').value=profile.email||'';
-  if(given)$('f-fname').setAttribute('data-locked','');
-  if(family)$('f-lname').setAttribute('data-locked','');
-  if(profile.email)$('f-email').setAttribute('data-locked','');
-  ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f&&f.hasAttribute('data-locked'))f.querySelector('input').readOnly=true;});
-  $('apply-li-chip').style.display='';
-  if(profile.headline)$('a-domain').placeholder='From LinkedIn: '+profile.headline;
-  toast('Welcome, '+(given||'there')+' — just a couple more fields','success');
 }
 
 // CONCIERGE
