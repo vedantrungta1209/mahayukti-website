@@ -2461,7 +2461,7 @@ async function loadMarketplace(){
       <div style="font-size:14px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:4px">${esc(x.price_text)}</div>
       <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${esc(dname(am[x.seller_id]||{}))} · ${esc(x.location)}</div>
       ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${esc(x.description)}</div>`:''}
-      <button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:12px" onclick="inquireListing('${x.id}')">Message seller</button>
+      ${x.seller_id===ST.profile?.id?'':`<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:12px" onclick="inquireListing('${x.id}')">Message seller</button>`}
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the marketplace</div></div>';}
 }
