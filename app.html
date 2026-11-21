@@ -199,12 +199,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     padding:16px 10px;overflow-y:auto;
   }
 }
-.shell-logo{font-family:var(--serif);font-size:19px;font-weight:700;color:var(--white)}
+/* Literal light color, not var(--white) -- that token is actually dark navy (#101E33) in
+   this app's system, meant for text on the LIGHT page-header gradient, not a real dark
+   background like this topbar's. Using it here made "Maha" nearly invisible. */
+.shell-logo{font-family:var(--serif);font-size:19px;font-weight:700;color:#F2F0EA}
 .shell-logo span{color:var(--gold)}
 .shell-top-right{display:flex;align-items:center;gap:16px}
 .shell-bell{background:none;border:none;cursor:pointer;position:relative;padding:4px;display:flex}
-.shell-bell svg{width:21px;height:21px;stroke:var(--white);fill:none;stroke-width:1.8}
-.shell-profile{display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:none;color:var(--white);font-family:var(--sans);font-size:13px}
+.shell-bell svg{width:21px;height:21px;stroke:#F2F0EA;fill:none;stroke-width:1.8}
+.shell-profile{display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:none;color:#F2F0EA;font-family:var(--sans);font-size:13px}
 .shell-nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:4px;cursor:pointer;color:var(--white);font-family:var(--sans);font-size:14px;transition:background .15s}
 .shell-nav-item svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
 .shell-nav-item:hover{background:rgba(19,51,94,0.06)}
