@@ -306,8 +306,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-pending">
   <div class="pending-inner">
     <div style="font-size:56px;color:var(--gold)" id="pending-icon">◈</div>
-    <div style="font-size:26px;font-family:var(--serif);font-weight:700;color:var(--white)" id="pending-title">Application Under Review</div>
-    <div class="muted-text" style="max-width:280px;line-height:1.8" id="pending-text">Admin reviews every application personally. You will hear from us within 5–7 working days.</div>
+    <div style="font-size:26px;font-family:var(--serif);font-weight:700;color:var(--white)" id="pending-title">Account Under Review</div>
+    <div class="muted-text" style="max-width:280px;line-height:1.8" id="pending-text">An admin has placed your account under review. We'll be in touch.</div>
     <p style="font-size:11px;color:rgba(16,30,51,0.25);font-family:var(--sans)">info@mahayukti.com</p>
     <button class="btn btn-outline" onclick="handleSignOut()">Sign out</button>
   </div>
@@ -506,16 +506,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div></div>
 </div>
 
-<!-- APPLY SUCCESS -->
-<div class="screen" id="screen-apply-success">
-  <div class="pending-inner">
-    <div style="font-size:56px;color:var(--gold)">◈</div>
-    <div style="font-size:26px;font-family:var(--serif);font-weight:700;color:var(--white)">Application Received</div>
-    <div class="muted-text" style="max-width:280px;line-height:1.8">Admin will review personally and be in touch within 5–7 working days.</div>
-    <div id="apply-subid" style="font-size:10px;color:var(--gold);font-family:var(--mono);letter-spacing:.2px"></div>
-    <button class="btn btn-outline" onclick="goto('splash')">Back to Home</button>
-  </div>
-</div>
 
 <!-- CONCIERGE -->
 <div class="screen" id="screen-concierge">
@@ -1241,8 +1231,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
     <div class="section-title">Frequently asked</div>
     <div class="card" style="margin-bottom:10px">
-      <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">How long does membership review take?</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.6">An admin reviews every application personally — usually within 5–7 working days. There's no paid fast-track.</div>
+      <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">How do I become a Member, and what about higher tiers?</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Member tier approves instantly when you apply — no waiting on a reviewer. Participant and above are earned automatically through real activity on the register later; nobody applies for them directly or pays their way in.</div>
     </div>
     <div class="card" style="margin-bottom:10px">
       <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">Who can message me?</div>
@@ -1515,8 +1505,8 @@ function renderPendingScreen(status,note){
     $('pending-text').textContent='This account was deactivated. Contact an admin to reactivate it.';
   }else{
     $('pending-icon').textContent='◈';
-    $('pending-title').textContent='Application under review';
-    $('pending-text').textContent='Admin reviews every application personally. You will hear from us within 5–7 working days.';
+    $('pending-title').textContent='Account under review';
+    $('pending-text').textContent='An admin has placed your account under review. We\'ll be in touch.';
   }
 }
 
