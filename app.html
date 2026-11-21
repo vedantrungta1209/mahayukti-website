@@ -2880,6 +2880,16 @@ function renderAbout(){
 
 // ADMIN
 async function loadAdminHome(){
+  // Every other role's loader (see loadMemberHome) navigates to its own
+  // home screen itself -- this one never did. It only ever populated
+  // screen-admin-home's own elements, so an admin logging in (by any
+  // method: password, Google, anything routing through handleSess) stayed
+  // on whatever screen they were already on -- normally splash or the
+  // login form itself -- with the real dashboard silently loaded behind
+  // it, invisible. Caught only by actually completing a real admin login
+  // in a browser and watching the screen not change, not by reading the
+  // code or by any DB-level check.
+  goto('admin-home');
   try{
     const[apps,briefs]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100')]);
     const pc=(apps||[]).length,bc=(briefs||[]).length;
