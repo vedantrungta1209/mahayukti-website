@@ -182,6 +182,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <button onclick="goto('concierge')" style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">MY Concierge</button>
       <span style="color:rgba(16,30,51,0.15);font-size:10px">·</span>
       <button onclick="goto('about')" style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">About</button>
+      <span style="color:rgba(16,30,51,0.15);font-size:10px">·</span>
+      <button onclick="goto('legal')" style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);background:none;border:none;cursor:pointer">Legal</button>
     </div>
   </div>
   <div style="position:absolute;bottom:calc(24px + var(--safe-bottom));font-size:10px;color:rgba(16,30,51,0.15);font-family:var(--mono);letter-spacing:.3px">mahayukti.com</div>
@@ -235,6 +237,138 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div></div>
 </div>
 
+<!-- LEGAL HUB -->
+<div class="screen" id="screen-legal">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Legal</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="card" onclick="goto('privacy-policy')" style="cursor:pointer;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Privacy Policy</span><span style="color:var(--gold)">→</span></div>
+    <div class="card" onclick="goto('terms')" style="cursor:pointer;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Terms &amp; Conditions</span><span style="color:var(--gold)">→</span></div>
+    <div class="card" onclick="goto('community-guidelines')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Community Guidelines</span><span style="color:var(--gold)">→</span></div>
+  </div></div>
+</div>
+
+<!-- PRIVACY POLICY -->
+<div class="screen" id="screen-privacy-policy">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Privacy Policy</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE] · Applies to MahaYukti's website and app</p>
+
+    <div class="section-title">1. Who we are</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti ("MahaYukti," "we," "us") operates a private, verification-gated professional network. The entity operating MahaYukti is [LEGAL ENTITY NAME], registered at [REGISTERED ADDRESS], India. Our Grievance Officer, designated under the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, is [GRIEVANCE OFFICER NAME], reachable at [GRIEVANCE EMAIL] / [GRIEVANCE PHONE]. We acknowledge complaints within 24 hours and aim to resolve them within 15 days, except where the Rules require faster action (e.g. certain content takedowns within 24–72 hours).</p>
+
+    <div class="section-title">2. What we collect</div>
+    <p class="muted-text" style="line-height:1.8"><b>At signup:</b> name, email, phone number, city, professional domain/role, organisation, LinkedIn profile (if you choose LinkedIn sign-in), a short "about" statement, and — where applicable — company identifiers (CIN/GST) or institutional affiliation used to verify your account.<br><br>
+    <b>As you use MahaYukti:</b> posts, comments, likes, connections, follows, direct messages, group chat messages, Exchange briefs, Marketplace listings, event RSVPs, and any content or files you upload.<br><br>
+    <b>Verification signals:</b> government ID verification status, employer domain-match results, and admin notes tied to your application — never the underlying document images or ID numbers themselves beyond what verification requires.<br><br>
+    <b>Technical data:</b> login timestamps, device/browser information, and — if you generate a developer API key — hashed key material (never the raw key, which is shown to you once and never stored).<br><br>
+    <b>We do not display your phone number or email to any other member, ever</b> — this is a platform-level rule, not a setting.</p>
+
+    <div class="section-title">3. Why we process it (legal basis under the DPDP Act, 2023)</div>
+    <p class="muted-text" style="line-height:1.8">We process your personal data on the basis of your consent at signup (for your profile and verification data), for the performance of our relationship with you as a member (feed, messaging, Marketplace, Exchange, events), and in limited cases for our legitimate interest in keeping the platform trustworthy (fraud/abuse prevention, moderation). Where we rely on consent, you may withdraw it at any time by deactivating your account (Settings → Deactivate), though this does not affect processing already carried out.</p>
+
+    <div class="section-title">4. Who we share it with</div>
+    <p class="muted-text" style="line-height:1.8">We do not sell your personal data. We share it only: (a) with other members, to the extent your own visibility and audience settings allow (e.g. a post marked "Connections only" is not shared outside that audience); (b) with service providers who host or process data on our behalf (currently Supabase for database/auth, and standard cloud infrastructure) under contracts that bind them to protect it; (c) with an approved Platform Partner, and only the specific data you've consented to share with that partner, never a bulk export (see Settings → Platform Partners if you are an admin, or Developer Access if you connect a third-party tool yourself); (d) where required by Indian law, a court order, or a government authority with lawful power to demand it.</p>
+
+    <div class="section-title">5. Your rights</div>
+    <p class="muted-text" style="line-height:1.8">Under the DPDP Act, you have the right to: access the personal data we hold about you, correct or update it, request erasure, and withdraw consent. In the app: <b>Settings → Download my data</b> gives you a real export of your own profile, posts, comments, and likes. <b>Settings → Deactivate account</b> reversibly suspends your account. <b>Settings → Request permanent deletion</b> submits a deletion request that an admin reviews and actions — we do this as a reviewed step, not instant self-service, to prevent account takeover from being used to destroy a member's history irreversibly. You may also contact our Grievance Officer directly for any of the above.</p>
+
+    <div class="section-title">6. Data retention</div>
+    <p class="muted-text" style="line-height:1.8">We retain your account data for as long as your account is active, and for a limited period after deactivation or deletion to meet legal, accounting, or dispute-resolution obligations, after which it is deleted or anonymised. Moderation records (reports, admin actions) are retained longer where needed to protect the integrity of the register.</p>
+
+    <div class="section-title">7. Security</div>
+    <p class="muted-text" style="line-height:1.8">We use row-level access controls so a member can only read or write what their role and relationships actually permit, encrypted connections for all data in transit, and hashed storage for API credentials. No system is perfectly secure; if we become aware of a breach affecting your personal data, we will notify you and the relevant authority as required by law.</p>
+
+    <div class="section-title">8. Children</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti is a professional network and is not directed at, or intended for use by, anyone under 18.</p>
+
+    <div class="section-title">9. Changes to this policy</div>
+    <p class="muted-text" style="line-height:1.8">We may update this policy as the platform evolves. Material changes will be notified to members in-app before they take effect.</p>
+
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.35);margin-top:16px">Questions about this policy or your data: [PRIVACY CONTACT EMAIL]</p>
+  </div></div>
+</div>
+
+<!-- TERMS & CONDITIONS -->
+<div class="screen" id="screen-terms">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Terms &amp; Conditions</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE]</p>
+
+    <div class="section-title">1. Eligibility</div>
+    <p class="muted-text" style="line-height:1.8">You must be at least 18 years old, able to form a binding contract under Indian law, and provide accurate professional information at signup. Membership is granted at MahaYukti's discretion following our verification process (Section 2); we may decline or revoke membership for applications that fail verification or misrepresent the applicant's identity, organisation, or credentials.</p>
+
+    <div class="section-title">2. Your account</div>
+    <p class="muted-text" style="line-height:1.8">You are responsible for your login credentials and everything done through your account. Impersonating another person or organisation, maintaining more than one account, or misrepresenting your real-name/verification status is a violation of these Terms and our Community Guidelines, and may result in suspension.</p>
+
+    <div class="section-title">3. Content you post</div>
+    <p class="muted-text" style="line-height:1.8">You retain ownership of everything you post. By posting, you grant MahaYukti a limited, non-exclusive license to host, display, and distribute that content to the audience you select, solely to operate the platform. You are solely responsible for your content's legality and accuracy. We may remove content, or suspend the account behind it, where it violates these Terms, our Community Guidelines, or applicable law — our moderation process (Report → admin review → remove/dismiss/warn) is described in the Community Guidelines.</p>
+
+    <div class="section-title">4. The Exchange and Marketplace</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti is a venue connecting members — we are not a party to, and do not guarantee, warrant, or arbitrate, any deal, sale, service engagement, or introduction made through The Exchange or the Marketplace. Buyers and sellers deal directly with each other and at their own risk; inspect goods and verify counterparties before transacting. Marketplace listings require an active seller package (Settings → Marketplace → Seller Packages); package fees, once a package is activated, are non-refundable except where required by law, as the quota it grants begins consuming from activation.</p>
+
+    <div class="section-title">5. Advertising</div>
+    <p class="muted-text" style="line-height:1.8">Sponsored posts are reviewed by MahaYukti before going live and are labelled "Sponsored" in the feed. Approval is not an endorsement of the advertiser or their offering. We do not currently guarantee a specific number of impressions or clicks for any campaign.</p>
+
+    <div class="section-title">6. Developer &amp; API access</div>
+    <p class="muted-text" style="line-height:1.8">If you generate a developer API key, you are responsible for keeping it secret and for everything done with it, including by a third-party tool you connect. We may revoke a key or a Platform Partner's access at any time if we reasonably believe it is being used to abuse the platform, scrape data at scale, or act outside the scope it was granted for.</p>
+
+    <div class="section-title">7. Prohibited conduct</div>
+    <p class="muted-text" style="line-height:1.8">Without limiting the Community Guidelines, you agree not to: misrepresent your identity or credentials; harass, defame, or threaten another member; post unlawful, infringing, or fraudulent content; attempt to bypass verification, rate limits, or access controls; or use the platform to send unsolicited bulk messages.</p>
+
+    <div class="section-title">8. Suspension and termination</div>
+    <p class="muted-text" style="line-height:1.8">We may suspend or terminate your access for violating these Terms, on reasonable notice except where immediate action is needed to protect the platform or other members. You may deactivate or request deletion of your own account at any time (Settings).</p>
+
+    <div class="section-title">9. Disclaimers and limitation of liability</div>
+    <p class="muted-text" style="line-height:1.8">MahaYukti is provided "as is." To the maximum extent permitted by Indian law, we disclaim warranties of any kind and are not liable for indirect, incidental, or consequential damages arising from your use of the platform, including losses from a Marketplace or Exchange transaction between members.</p>
+
+    <div class="section-title">10. Governing law</div>
+    <p class="muted-text" style="line-height:1.8">These Terms are governed by the laws of India. Courts at [CITY], India have exclusive jurisdiction over any dispute arising from these Terms, subject to the grievance process in our Privacy Policy being followed first.</p>
+
+    <div class="section-title">11. Changes</div>
+    <p class="muted-text" style="line-height:1.8">We may update these Terms as the platform evolves; continued use after a material change constitutes acceptance of the updated Terms, which will be notified in-app.</p>
+  </div></div>
+</div>
+
+<!-- COMMUNITY GUIDELINES -->
+<div class="screen" id="screen-community-guidelines">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Community Guidelines</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p class="muted-text" style="line-height:1.8;margin-bottom:16px">MahaYukti works because the register is real — real people, real credentials, real organisations. These guidelines protect that.</p>
+
+    <div class="section-title">Be who you say you are</div>
+    <p class="muted-text" style="line-height:1.8">One account per person. Your professional details must be accurate. Claiming an employer, qualification, or institutional affiliation you don't have — including falsely claiming to work at a verified organisation, or requesting institution-community membership you're not entitled to — is treated as a trust violation, not a minor error.</p>
+
+    <div class="section-title">Disagree without attacking</div>
+    <p class="muted-text" style="line-height:1.8">Sharp professional disagreement is fine. Harassment, personal attacks, hate speech, or threats aren't — regardless of seniority, tier, or how the other person started it.</p>
+
+    <div class="section-title">Confidentiality where it's promised</div>
+    <p class="muted-text" style="line-height:1.8">Some spaces on MahaYukti (Exchange briefs, client inquiries) are explicitly marked confidential. Screenshotting or forwarding that content outside the platform defeats the reason members use it, and is a guideline violation even if nothing "illegal" is shared.</p>
+
+    <div class="section-title">Sell honestly</div>
+    <p class="muted-text" style="line-height:1.8">Marketplace listings must accurately describe the item, its condition, and its price. Exchange briefs must be genuine requests, not a backdoor to spam the register. Misleading listings get removed and may cost you your seller package without a refund.</p>
+
+    <div class="section-title">No spam, no scraping</div>
+    <p class="muted-text" style="line-height:1.8">Don't mass-message members who haven't connected with you, cross-post unrelated promotional content into every sector, or use a developer API key to scrape the directory. Posting as an advertiser is only legitimate through the reviewed Advertise flow.</p>
+
+    <div class="section-title">How moderation actually works</div>
+    <p class="muted-text" style="line-height:1.8">Any post can be reported. Reports go to a real admin queue (not an automated filter) where an admin can remove the post, dismiss the report, or warn the author. Repeated or serious violations escalate to account suspension. We tell you why when we act on your content, except where doing so would compromise an active investigation.</p>
+
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.35);margin-top:16px">These guidelines work alongside our <a href="javascript:void(0)" onclick="goto('terms')" style="color:var(--gold)">Terms &amp; Conditions</a> and <a href="javascript:void(0)" onclick="goto('privacy-policy')" style="color:var(--gold)">Privacy Policy</a>.</p>
+  </div></div>
+</div>
+
 <!-- APPLY: CHOOSE MANUAL OR LINKEDIN -->
 <!-- APPLY -->
 <div class="screen" id="screen-apply">
@@ -265,7 +399,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     </div>
     <div class="step-content" id="apply-s2">
       <div class="field"><label>About you (optional)</label><textarea id="a-about" placeholder="A line or two — what you do, and what you're hoping to find here." rows="4"></textarea></div>
-      <div style="background:rgba(16,30,51,0.02);border:1px solid var(--border2);border-radius:0;padding:12px;margin-bottom:16px"><p style="font-size:11px;color:rgba(16,30,51,0.35);font-family:var(--sans);line-height:1.7">By submitting, I confirm the information provided is accurate and agree to uphold MahaYukti's network standards.</p></div>
+      <div style="background:rgba(16,30,51,0.02);border:1px solid var(--border2);border-radius:0;padding:12px;margin-bottom:16px"><p style="font-size:11px;color:rgba(16,30,51,0.35);font-family:var(--sans);line-height:1.7">By submitting, I confirm the information provided is accurate and agree to MahaYukti's <a href="javascript:void(0)" onclick="goto('terms')" style="color:var(--gold)">Terms &amp; Conditions</a>, <a href="javascript:void(0)" onclick="goto('privacy-policy')" style="color:var(--gold)">Privacy Policy</a>, and <a href="javascript:void(0)" onclick="goto('community-guidelines')" style="color:var(--gold)">Community Guidelines</a>.</p></div>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-outline" id="apply-prev" onclick="applyPrev()" style="display:none;flex:1">← Back</button>
@@ -300,7 +434,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="field"><label>Your Name *</label><input type="text" id="c-name" autocapitalize="words"></div>
     <div class="field"><label>Email *</label><input type="email" id="c-email" autocapitalize="none"></div>
     <div class="field"><label>Organisation (Optional)</label><input type="text" id="c-org" autocapitalize="words"></div>
-    <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:var(--r);padding:12px;margin-bottom:16px"><p style="font-size:12px;color:rgba(16,30,51,0.5);font-family:var(--sans);line-height:1.7">🔒 All information is kept strictly confidential.</p></div>
+    <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:var(--r);padding:12px;margin-bottom:16px"><p style="font-size:12px;color:rgba(16,30,51,0.5);font-family:var(--sans);line-height:1.7">All information is kept strictly confidential.</p></div>
     <button class="btn btn-gold btn-full" onclick="submitConcierge()">Submit Brief to Admin</button>
   </div></div>
 </div>
@@ -353,11 +487,31 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div class="quick-card" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></div>
       <div class="quick-card" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></div>
       <div class="quick-card" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>MY Help</span></div>
-      <div class="quick-card" onclick="goto('forums')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg><span>Forums</span></div>
+      <div class="quick-card" onclick="goto('forums')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg><span>Communities</span></div>
+      <div class="quick-card" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span>Marketplace</span></div>
+      <div class="quick-card" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>The Exchange</span></div>
+      <div class="quick-card" onclick="goto('events')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Events</span></div>
     </div>
     <div class="stats-row" id="home-stats"></div>
-    <div class="section-title">From the Blog</div>
+    <div class="section-title">Official Updates</div>
     <div id="home-blog"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="section-title" style="margin-top:20px">Your Feed</div>
+    <div class="card" style="margin-bottom:14px">
+      <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div id="feed-image-preview" style="display:none;margin-top:8px"><img style="max-width:100%;border-radius:4px;max-height:160px;object-fit:cover" id="feed-image-preview-img"><button onclick="clearFeedImage()" style="display:block;margin-top:4px;background:none;border:none;color:rgba(224,85,85,0.7);font-size:11px;cursor:pointer;padding:0">Remove photo</button></div>
+      <input type="file" id="feed-image-input" accept="image/*" style="display:none" onchange="onFeedImageSelected(this)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px">
+        <button onclick="document.getElementById('feed-image-input').click()" style="background:none;border:1px solid rgba(16,30,51,0.1);border-radius:4px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:4px"><svg style="width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></button>
+        <select id="feed-audience" style="background:rgba(16,30,51,0.04);border:1px solid rgba(16,30,51,0.08);border-radius:4px;padding:6px 8px;font-size:11.5px;color:var(--white);font-family:var(--sans);flex:1">
+          <option value="sector">My sector only</option>
+          <option value="connections">Connections only</option>
+          <option value="everyone">Everyone</option>
+        </select>
+        <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" id="feed-post-btn" onclick="submitPost()">Post</button>
+      </div>
+    </div>
+    <div id="trending-hashtags" style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px"></div>
+    <div id="social-feed"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active" onclick="gotoTab('home')" id="nt-home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
@@ -366,6 +520,22 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="nav-item" onclick="gotoTab('help')" id="nt-help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>Help</span></button>
     <button class="nav-item" onclick="gotoTab('profile')" id="nt-profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
   </div>
+</div>
+
+<!-- POST THREAD -->
+<div class="screen" id="screen-post-thread">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div id="thread-post"></div>
+    <div class="section-title" style="margin-top:16px">Comments</div>
+    <div id="thread-comments"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="card" style="margin-top:14px">
+      <textarea id="comment-compose" rows="2" placeholder="Add a comment…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitComment()">Reply</button></div>
+    </div>
+  </div></div>
 </div>
 
 <!-- DIRECTORY -->
@@ -403,7 +573,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div id="mp-badge"></div>
     </div>
     <div id="mp-info"></div>
-    <button class="btn btn-gold btn-full" id="mp-msg-btn" onclick="chatWithCurrent()" style="margin-top:20px"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Send Message</button>
+    <div style="font-size:11px;color:rgba(16,30,51,0.4);text-align:center;margin-top:16px;line-height:1.6">Connect if you know each other — needs their acceptance. Follow just to see their posts — no acceptance needed.</div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="btn btn-gold" id="mp-connect-btn" style="flex:1" onclick="connectWithCurrent()">+ Connect</button>
+      <button class="btn btn-outline" id="mp-follow-btn" style="flex:1" onclick="followWithCurrent()">+ Follow</button>
+    </div>
+    <button class="btn btn-gold btn-full" id="mp-msg-btn" onclick="chatWithCurrent()" style="margin-top:10px"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Send Message</button>
+    <div style="display:flex;justify-content:center;gap:16px;margin-top:10px" id="mp-safety-actions">
+      <button onclick="muteCurrentMember()" style="background:none;border:none;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);cursor:pointer">Mute</button>
+      <button onclick="blockCurrentMember()" style="background:none;border:none;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);cursor:pointer">Block</button>
+    </div>
   </div></div>
 </div>
 
@@ -493,14 +672,191 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   </div>
 </div>
 
-<!-- FORUMS -->
+<!-- HELP POST DETAIL -->
+<div class="screen" id="screen-help-post">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('help')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">MY Help</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div id="help-post-body"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="section-title" style="margin-top:16px">Replies</div>
+    <div id="help-post-replies"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="card" style="margin-top:14px">
+      <textarea id="help-reply-compose" rows="2" placeholder="Add a reply…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitHelpReply()">Reply</button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- COMMUNITIES -->
 <div class="screen" id="screen-forums">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Forums</div>
+    <div class="page-title">Communities</div>
   </div>
-  <div style="padding:0 20px 8px;flex-shrink:0"><div class="chips" id="forum-chips"></div></div>
-  <div class="scroll"><div class="scroll-content" id="forum-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="scroll"><div class="scroll-content" id="forum-list"><div class="loader"><div class="spinner"></div></div>
+    <a href="javascript:void(0)" onclick="promptNewCommunity()" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create a community</a>
+    <a href="javascript:void(0)" id="create-institution-link" onclick="promptNewInstitutionCommunity()" style="display:none;align-items:center;justify-content:center;padding:14px;border:1.5px dashed rgba(16,30,51,0.2);border-radius:4px;color:rgba(16,30,51,0.5);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create an institution-verified community (admin)</a>
+  </div></div>
+</div>
+
+<!-- COMMUNITY DETAIL -->
+<div class="screen" id="screen-community">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('forums')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title" id="community-title">Community</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="card" style="margin-bottom:14px">
+      <textarea id="community-compose" rows="2" placeholder="Post in this community…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitCommunityPost()">Post</button></div>
+    </div>
+    <div id="community-pending-members"></div>
+    <div id="community-posts"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
+</div>
+
+<!-- MARKETPLACE -->
+<div class="screen" id="screen-marketplace">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Marketplace</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div id="marketplace-cta" style="margin-bottom:10px"></div>
+    <a href="javascript:void(0)" onclick="goto('my-listings')" style="display:block;font-size:12px;color:var(--gold);font-family:var(--sans);margin-bottom:12px;text-decoration:none">My listings &amp; inquiries received →</a>
+    <div id="marketplace-list"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
+</div>
+
+<!-- MY LISTINGS -->
+<div class="screen" id="screen-my-listings">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">My Listings</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="my-listings-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- NEW LISTING -->
+<div class="screen" id="screen-new-listing">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">List an item</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div id="nl-quota-note" style="font-size:12px;color:var(--gold);font-family:var(--sans);margin-bottom:12px"></div>
+    <div class="field"><label>What are you selling</label><input type="text" id="nl-title"></div>
+    <div class="field"><label>Category</label><input type="text" id="nl-category" placeholder="e.g. Office equipment"></div>
+    <div class="field"><label>Price</label><input type="text" id="nl-price" placeholder="e.g. ₹1,20,000"></div>
+    <div class="field"><label>Description</label><textarea id="nl-desc" rows="3" placeholder="Condition, age, reason for selling"></textarea></div>
+    <div class="field"><label>Location</label><input type="text" id="nl-location"></div>
+    <div class="field">
+      <label>Photos</label>
+      <div id="nl-photo-previews" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <input type="file" id="nl-photo-input" accept="image/*" multiple style="display:none" onchange="onListingPhotosSelected(this)">
+      <button type="button" onclick="document.getElementById('nl-photo-input').click()" class="btn btn-outline" style="width:auto;padding:8px 14px;font-size:12px">+ Add photos</button>
+    </div>
+    <button class="btn btn-gold btn-full" style="margin-top:4px" onclick="submitListing()">Publish listing</button>
+  </div></div>
+</div>
+
+<!-- MARKETPLACE PACKAGES -->
+<div class="screen" id="screen-marketplace-packages">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Seller Packages</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:16px">Listing on the Marketplace needs an active package — keeps it a real marketplace, not a free-for-all. Request one below; an admin activates it once payment is confirmed.</p>
+    <div id="packages-list"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="divider"></div>
+    <div class="section-title">Your requests</div>
+    <div id="my-package-requests"></div>
+  </div></div>
+</div>
+
+<!-- ADMIN: MARKETPLACE PACKAGE REQUESTS -->
+<div class="screen" id="screen-admin-packages">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Package Requests</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="admin-packages-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- ADMIN: ACCOUNT DELETION REQUESTS -->
+<div class="screen" id="screen-admin-deletions">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Deletion Requests</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="admin-deletions-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- THE EXCHANGE -->
+<div class="screen" id="screen-exchange">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">The Exchange</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <a href="javascript:void(0)" onclick="goto('my-briefs')" style="display:block;font-size:12px;color:var(--gold);font-family:var(--sans);margin-bottom:12px;text-decoration:none">My briefs &amp; responses received →</a>
+    <div id="exchange-list"><div class="loader"><div class="spinner"></div></div></div>
+    <a href="javascript:void(0)" onclick="goto('new-brief')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Post a brief</a>
+  </div></div>
+</div>
+
+<!-- MY BRIEFS -->
+<div class="screen" id="screen-my-briefs">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">My Briefs</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="my-briefs-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- NEW BRIEF -->
+<div class="screen" id="screen-new-brief">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Post a brief</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="chips" id="brief-type-chips"></div>
+    <div class="field" style="margin-top:14px"><label>Describe what you need</label><textarea id="nb-desc" rows="4"></textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:13px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="nb-anon">Post anonymously</label>
+    <button class="btn btn-gold btn-full" style="margin-top:16px" onclick="submitBrief()">Post brief</button>
+  </div></div>
+</div>
+
+<!-- EVENTS -->
+<div class="screen" id="screen-events">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Events</div>
+  </div>
+  <div class="scroll"><div class="scroll-content" id="events-list"><div class="loader"><div class="spinner"></div></div>
+    <a href="javascript:void(0)" onclick="goto('new-event')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Host an event</a>
+  </div></div>
+</div>
+
+<!-- NEW EVENT -->
+<div class="screen" id="screen-new-event">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('events')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Host an event</div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="field"><label>Title</label><input type="text" id="ne-title"></div>
+    <div class="field"><label>Description</label><textarea id="ne-desc" rows="3"></textarea></div>
+    <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="ne-starts"></div>
+    <label style="display:flex;align-items:center;gap:8px;margin:4px 0 14px;font-size:13px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="ne-virtual" onchange="$('f-ne-location').style.display=this.checked?'none':''">Virtual event</label>
+    <div class="field" id="f-ne-location"><label>Location</label><input type="text" id="ne-location"></div>
+    <div class="field"><label>Hosting as (optional)</label><input type="text" id="ne-host-label" placeholder="e.g. Mehta &amp; Co Advocates — leave blank to host as yourself"></div>
+    <button class="btn btn-gold btn-full" onclick="submitEvent()">Publish event</button>
+  </div></div>
 </div>
 
 <!-- NOTIFICATIONS -->
@@ -543,8 +899,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div id="li-status" style="font-size:13px;color:var(--muted);font-family:var(--sans);margin-bottom:10px">Checking connection…</div>
     <div style="display:flex;gap:10px" id="li-actions"></div>
     <div class="divider"></div>
-    <div style="background:rgba(16,30,51,0.02);border-radius:0;padding:10px;margin-top:12px"><p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans)">📵 Phone numbers are never displayed to anyone on MahaYukti.</p></div>
+    <div style="background:rgba(16,30,51,0.02);border-radius:0;padding:10px;margin-top:12px"><p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans)">Phone numbers are never displayed to anyone on MahaYukti.</p></div>
     <div class="divider"></div>
+    <div class="divider"></div>
+    <div class="card" onclick="goto('advertise')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:12px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Advertise on MahaYukti</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('developer-settings')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Developer &amp; API access</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('settings')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Settings &amp; privacy</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('feed-preferences')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Feed preferences</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <button onclick="handleSignOut()" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:rgba(16,30,51,0.35);font-size:13px;font-family:var(--sans);cursor:pointer;padding:16px 0"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
   </div></div>
   <div class="nav-bar">
@@ -570,7 +931,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div id="admin-apps"><div class="loader"><div class="spinner"></div></div></div>
     <div class="section-title" style="margin-top:16px">Quick Actions</div>
     <div class="card" onclick="goto('admin-applications')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Review All Applications</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-    <div class="card" onclick="goto('admin-briefs')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Client Briefs</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-briefs')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Client Briefs</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-moderation')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Moderation Queue</span><span id="mod-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-publish-update')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Publish an Official Update</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-ads')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Ad Campaigns</span><span id="ads-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-partners')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Platform Partners</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-packages')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Marketplace Package Requests</span><span id="pkg-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('admin-deletions')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Account Deletion Requests</span><span id="del-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
@@ -626,6 +993,139 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span>Briefs</span></button>
     <button class="nav-item" onclick="handleSignOut()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign Out</span></button>
   </div>
+</div>
+
+<!-- ADMIN MODERATION -->
+<div class="screen" id="screen-admin-moderation">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Moderation Queue</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="moderation-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- ADMIN PUBLISH UPDATE -->
+<div class="screen" id="screen-admin-publish-update">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Publish an Update</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="field"><label>Category</label><select id="pu-category"><option>Government</option><option>Market</option><option>Scheme</option></select></div>
+    <div class="field"><label>Headline</label><input type="text" id="pu-title"></div>
+    <div class="field"><label>Summary</label><textarea id="pu-excerpt" rows="3"></textarea></div>
+    <div class="field"><label>Full body (optional, shown when opened)</label><textarea id="pu-body" rows="5"></textarea></div>
+    <button class="btn btn-gold btn-full" onclick="publishUpdate()">Publish to Official Updates</button>
+  </div></div>
+</div>
+
+<!-- ADMIN: ADS -->
+<div class="screen" id="screen-admin-ads">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Ad Campaigns</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="admin-ads-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- ADMIN: PLATFORM PARTNERS -->
+<div class="screen" id="screen-admin-partners">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('admin-home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Platform Partners</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav" id="admin-partners-list"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- ADVERTISE -->
+<div class="screen" id="screen-advertise">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('profile')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Advertise on MahaYukti</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:16px">Reach specific, verified sectors directly. Every ad is reviewed before it goes live.</p>
+    <div class="field"><label>Headline</label><input type="text" id="ad-headline"></div>
+    <div class="field"><label>Body</label><textarea id="ad-body" rows="3"></textarea></div>
+    <div class="field"><label>Call to action</label><input type="text" id="ad-cta" placeholder="e.g. Book a demo"></div>
+    <div class="field"><label>Daily budget (₹)</label><input type="text" id="ad-budget" placeholder="2500"></div>
+    <div class="field"><label>Duration (days)</label><input type="text" id="ad-duration" placeholder="14"></div>
+    <button class="btn btn-gold btn-full" onclick="submitAdCampaign()">Submit for review</button>
+    <div class="divider"></div>
+    <div class="section-title">Your campaigns</div>
+    <div id="my-ad-campaigns"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
+</div>
+
+<!-- DEVELOPER SETTINGS -->
+<div class="screen" id="screen-developer-settings">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('profile')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Developer &amp; API Access</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:16px">Post and read MahaYukti from your own tools — the same way you'd connect Buffer or Zapier to any other network.</p>
+    <div id="api-key-area"></div>
+    <div class="divider"></div>
+    <div class="section-title">This month</div>
+    <div id="api-key-stats" style="font-size:13px;color:var(--muted);font-family:var(--sans)"></div>
+  </div></div>
+</div>
+
+<!-- HASHTAG FEED -->
+<div class="screen" id="screen-hashtag">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="page-title" id="hashtag-title">#</div>
+      <button id="hashtag-mute-btn" onclick="toggleMuteHashtag()" style="background:none;border:1px solid rgba(255,255,255,0.3);border-radius:999px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,0.8);cursor:pointer">Mute</button>
+    </div>
+  </div>
+  <div class="scroll"><div class="scroll-content" id="hashtag-posts"><div class="loader"><div class="spinner"></div></div></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen" id="screen-settings">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('profile')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Settings &amp; Privacy</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="section-title">Who can message you</div>
+    <div class="chips" id="msg-perm-chips" style="margin-bottom:20px"></div>
+
+    <div class="section-title">Blocked</div>
+    <div id="blocked-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <div class="section-title">Your data</div>
+    <button class="btn btn-outline btn-full" onclick="downloadMyData()" style="margin-bottom:10px">Download my data</button>
+    <div class="divider"></div>
+    <button class="btn btn-outline btn-full" onclick="deactivateAccount()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:12px">Deactivate account</button>
+    <button class="btn btn-outline btn-full" onclick="requestAccountDeletion()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:10px">Request permanent deletion</button>
+    <p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);margin-top:8px;line-height:1.6">Permanent deletion is reviewed by an admin, same as every account-level action here — it isn't instant self-service, by design.</p>
+    <div class="divider"></div>
+    <div class="card" onclick="goto('legal')" style="cursor:pointer;margin-top:12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Privacy Policy, Terms &amp; Community Guidelines</span><span style="color:var(--gold)">→</span></div>
+  </div></div>
+</div>
+
+<!-- FEED PREFERENCES -->
+<div class="screen" id="screen-feed-preferences">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Feed Preferences</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="section-title">Sector weighting</div>
+    <div id="bucket-weights-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <div class="section-title">Muted</div>
+    <div id="muted-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <div class="section-title">Saved for later</div>
+    <div id="saved-posts-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
+
+    <p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);line-height:1.6">Weighting changes how much of each sector you see — it never hides Official Updates, which reach every member regardless of preference.</p>
+  </div></div>
 </div>
 
 <!-- MODAL: MY HELP COMPOSE -->
@@ -726,7 +1226,7 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{}};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs,'admin-deletions':loadAdminDeletions};
   if(loads[n])loads[n]();
 }
 function gotoTab(n){
@@ -745,6 +1245,18 @@ function routeInitialHash(){
   goto(n);
 }
 function dname(u){return(u?.show_real_name&&u?.real_name_approved&&u?.real_name)?u.real_name:u?.username||'?'}
+// Every piece of member-authored text (post body, comments, messages, listing
+// descriptions, help replies, event titles...) gets rendered via innerHTML
+// template literals throughout this file. None of it was escaped anywhere --
+// a member could post <img src=x onerror=...> as a "post" and it would
+// execute in every other member's browser who viewed their feed. esc() is
+// the fix, applied at every point user-authored text reaches innerHTML.
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+// link_url is only ever auto-captured from body text via a http(s)-only
+// regex at post time, but nothing stops a direct API call from writing
+// anything into that column -- javascript:/data: hrefs are a real XSS/
+// phishing vector in an <a href>, so render only genuine http(s) links.
+function safeHref(url){return url&&/^https?:\/\//i.test(url)?esc(url):null;}
 function subId(){return'MY-'+new Date().getFullYear()+String(new Date().getMonth()+1).padStart(2,'0')+String(new Date().getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substr(2,6).toUpperCase()}
 function lbadge(r){return'badge-'+(r||'member')}
 function lbadgeLabel(r){return r==='member'?'○ Network Member':r==='participant'?'◇ Network Participant':r==='acg'?'◆ Advisory & Consulting Group':r==='council'?'◈ Network Council':'◈ Admin'}
@@ -755,7 +1267,8 @@ async function api(t,p='',m='GET',b=null){
   const r=await fetch(`${SB_URL}/rest/v1/${t}${p}`,o);
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'API error');}
   if(m==='DELETE'||r.status===204)return null;
-  return r.json();
+  const t2=await r.text();
+  return t2?JSON.parse(t2):null;
 }
 
 async function init(){
@@ -808,9 +1321,11 @@ async function loadMemberHome(){
   const p=ST.profile;
   $('home-name').textContent=dname(p);
   $('home-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>${p.founding_member&&p.founding_approved?'<div class="badge-founding" style="margin-left:8px">◈ Founding Member</div>':''}`;
-  $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${p.domain_group||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${p.city||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${p.role.charAt(0).toUpperCase()+p.role.slice(1)}</div><div class="stat-lbl">Level</div></div>`;
+  $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${esc(p.domain_group)||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${esc(p.city)||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${esc(p.role.charAt(0).toUpperCase()+p.role.slice(1))}</div><div class="stat-lbl">Level</div></div>`;
   goto('home');gotoTab('home');
   loadBlogFeed('home-blog','home');
+  loadSocialFeed();
+  loadTrendingHashtags();
   setupRT();
 }
 
@@ -825,10 +1340,10 @@ async function loadBlogPublic(){
   if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet</div></div>';return;}
   el.innerHTML=posts.map((p,i)=>`
     <div class="${i===0?'card gold-border':'card'}" onclick="openPost('${p.id}','public')" style="cursor:pointer;margin-bottom:${i===0?'16px':'10px'}">
-      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:8px">${p.category||''}</div>
-      <div style="font-size:${i===0?'20px':'17px'};color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${p.title}</div>
-      ${i===0?`<div style="font-size:13px;color:rgba(16,30,51,0.42);font-family:var(--sans);font-weight:400;line-height:1.7;margin-bottom:12px">${p.excerpt||''}</div>`:''}
-      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${p.date||''}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${p.read_time||''} →</span></div>
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:8px">${esc(p.category)}</div>
+      <div style="font-size:${i===0?'20px':'17px'};color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${esc(p.title)}</div>
+      ${i===0?`<div style="font-size:13px;color:rgba(16,30,51,0.42);font-family:var(--sans);font-weight:400;line-height:1.7;margin-bottom:12px">${esc(p.excerpt)}</div>`:''}
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${esc(p.date)}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${esc(p.read_time)} →</span></div>
     </div>`).join('');
 }
 
@@ -836,9 +1351,9 @@ async function loadBlogFeed(cid,ctx){
   const posts=await loadBlog();const el=$(cid);if(!el)return;
   el.innerHTML=posts.slice(0,5).map(p=>`
     <div class="card" onclick="openPost('${p.id}','${ctx}')" style="cursor:pointer;margin-bottom:10px">
-      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${p.category||''}</div>
-      <div style="font-size:17px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${p.title}</div>
-      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${p.date||''}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${p.read_time||''} →</span></div>
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(p.category)}</div>
+      <div style="font-size:17px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3;margin-bottom:8px">${esc(p.title)}</div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans)">${esc(p.date)}</span><span style="font-size:11px;color:var(--gold);font-family:var(--sans)">${esc(p.read_time)} →</span></div>
     </div>`).join('');
 }
 
@@ -847,9 +1362,358 @@ function openPost(id,ctx){
   $('bp-cat').textContent=p.category||'';
   $('bp-title').textContent=p.title;
   $('bp-meta').textContent=`Admin · MahaYukti · ${p.date||''} · ${p.read_time||''}`;
-  $('bp-body').innerHTML=p.body||'';
+  // blog_posts.body is only ever admin-written (RLS restricts insert to
+  // is_platform_admin()), and the Publish Update composer is a plain
+  // textarea with no rich-text editor -- there's no legitimate reason for
+  // this to contain real HTML, so it's escaped like everything else, with
+  // line breaks preserved since that's the one thing plain text needs here.
+  $('bp-body').innerHTML=esc(p.body).replace(/\n/g,'<br>');
   $('bp-back').onclick=()=>goto(ctx==='public'?'blog-public':'home');
   goto('blog-post');
+}
+
+// Relevance ranking: all inputs are real, already-stored data -- bucket
+// match, your own explicit More/Normal/Less weight, accepted connections,
+// follows, recency, and engagement on the post itself. No fabricated score,
+// no black box -- just a weighted sum, computed over the most recent 100
+// eligible posts (same audience/mute/block filtering as before), then the
+// top 30 are shown. Sponsored posts and your own posts skip scoring and are
+// positioned exactly as the UI already promised elsewhere (sponsored cards
+// are inherently few and already labelled; your own posts you'd see anyway).
+function scorePostRelevance(p,ctx){
+  const ageHours=(Date.now()-new Date(p.created_at).getTime())/36e5;
+  const recency=Math.exp(-ageHours/48); // halves roughly every ~33h
+  let affinity=0.3; // baseline for an 'everyone' post with no bucket tie to you
+  if(p.bucket_id&&p.bucket_id===ctx.myBucketId){
+    affinity=ctx.weights[p.bucket_id]==='more'?1.5:ctx.weights[p.bucket_id]==='less'?0.4:1.0;
+  }else if(p.audience==='buckets'&&(p.audience_bucket_ids||[]).includes(ctx.myBucketId)){
+    affinity=0.8;
+  }
+  const proximity=ctx.connIds.has(p.author_id)?1.0:ctx.followIds.has(p.author_id)?0.8:0.3;
+  const engagement=Math.log2(1+(ctx.likeCounts[p.id]||0)+(ctx.commentCounts[p.id]||0))/5; // soft, log-scaled
+  return recency*0.35+affinity*0.30+proximity*0.25+Math.min(engagement,1)*0.10;
+}
+
+async function loadSocialFeed(){
+  let exclude=[],weights={},audienceClause='or=(audience.eq.everyone)',connIds=new Set(),followIds=new Set();
+  if(ST.profile){
+    try{
+      const[mu,bu1,bu2,w,myConns,myFollows]=await Promise.all([
+        api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),
+        api('blocked_users',`?blocker_id=eq.${ST.profile.id}&select=blocked_id`),
+        api('blocked_users',`?blocked_id=eq.${ST.profile.id}&select=blocker_id`),
+        api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&weight=neq.normal&select=bucket_id,weight`),
+        api('member_connections',`?status=eq.accepted&or=(requester_id.eq.${ST.profile.id},addressee_id.eq.${ST.profile.id})&select=requester_id,addressee_id`),
+        api('follows',`?follower_id=eq.${ST.profile.id}&select=followee_id`)
+      ]);
+      exclude=[...(mu||[]).map(x=>x.muted_id),...(bu1||[]).map(x=>x.blocked_id),...(bu2||[]).map(x=>x.blocker_id)];
+      (w||[]).forEach(x=>weights[x.bucket_id]=x.weight);
+      connIds=new Set((myConns||[]).map(c=>c.requester_id===ST.profile.id?c.addressee_id:c.requester_id));
+      followIds=new Set((myFollows||[]).map(f=>f.followee_id));
+      const parts=['audience.eq.everyone'];
+      if(ST.profile.bucket_id){
+        parts.push(`and(audience.eq.sector,bucket_id.eq.${ST.profile.bucket_id})`);
+        parts.push(`audience_bucket_ids.cs.{${ST.profile.bucket_id}}`);
+      }
+      if(connIds.size)parts.push(`and(audience.eq.connections,author_id.in.(${[...connIds].join(',')}))`);
+      parts.push(`author_id.eq.${ST.profile.id}`); // always see your own posts regardless of their audience
+      audienceClause=`or=(${parts.join(',')})`;
+    }catch(e){}
+  }
+  const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
+  const el=$('social-feed');if(!el)return;
+  try{
+    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url`)||[];
+    if(ST.profile&&candidates.length){
+      try{
+        const muted=await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`);
+        if(muted&&muted.length){
+          const mutedIds=muted.map(x=>x.hashtag_id);
+          const tagged=await api('post_hashtags',`?post_id=in.(${candidates.map(p=>p.id).join(',')})&hashtag_id=in.(${mutedIds.join(',')})&select=post_id`);
+          const mutedPostIds=new Set((tagged||[]).map(t=>t.post_id));
+          if(mutedPostIds.size)candidates=candidates.filter(p=>!mutedPostIds.has(p.id));
+        }
+      }catch(e){}
+    }
+    if(!candidates.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
+    const sponsored=candidates.filter(p=>p.is_sponsored);
+    const organic=candidates.filter(p=>!p.is_sponsored);
+    if(ST.profile&&organic.length){
+      const ids=organic.map(p=>p.id);
+      let likeCounts={},commentCounts={};
+      try{const lc=await api('post_likes',`?post_id=in.(${ids.join(',')})&select=post_id`);(lc||[]).forEach(r=>likeCounts[r.post_id]=(likeCounts[r.post_id]||0)+1);}catch(e){}
+      try{const cc=await api('post_comments',`?post_id=in.(${ids.join(',')})&select=post_id`);(cc||[]).forEach(r=>commentCounts[r.post_id]=(commentCounts[r.post_id]||0)+1);}catch(e){}
+      const ctx={myBucketId:ST.profile.bucket_id,weights,connIds,followIds,likeCounts,commentCounts};
+      organic.sort((a,b)=>scorePostRelevance(b,ctx)-scorePostRelevance(a,ctx));
+    }
+    // One sponsored card near the top, the rest ranked organically underneath.
+    const ordered=sponsored.length?[sponsored[0],...organic.slice(0,29),...sponsored.slice(1)]:organic;
+    await renderPostCards('social-feed',ordered.slice(0,30));
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+async function renderPostList(containerId,query,weights){
+  const el=$(containerId);if(!el)return;
+  try{
+    let posts=await api('posts',query)||[];
+    if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
+    // Weighting only reorders within the already-fetched recent window (lighter
+    // sectors sink, heavier ones rise) -- it never hides anything and never
+    // touches Official Updates, which aren't posts at all.
+    if(weights&&Object.keys(weights).length){
+      const rank=b=>weights[b]==='more'?-1:weights[b]==='less'?1:0;
+      posts=posts.map((p,i)=>({p,i})).sort((a,b)=>rank(a.p.bucket_id)-rank(b.p.bucket_id)||a.i-b.i).map(x=>x.p);
+    }
+    await renderPostCards(containerId,posts);
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+async function renderPostCards(containerId,posts){
+  const el=$(containerId);if(!el)return;
+  try{
+    if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
+    const ids=[...new Set(posts.map(p=>p.author_id).filter(Boolean))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    const myId=ST.profile?.id;
+    let likeSet=new Set();
+    try{const mine=await api('post_likes',`?user_id=eq.${myId}&select=post_id`);(mine||[]).forEach(r=>likeSet.add(r.post_id));}catch(e){}
+    let likeCounts={},commentCounts={};
+    try{const lc=await api('post_likes',`?post_id=in.(${posts.map(p=>p.id).join(',')})&select=post_id`);(lc||[]).forEach(r=>likeCounts[r.post_id]=(likeCounts[r.post_id]||0)+1);}catch(e){}
+    try{const cc=await api('post_comments',`?post_id=in.(${posts.map(p=>p.id).join(',')})&select=post_id`);(cc||[]).forEach(r=>commentCounts[r.post_id]=(commentCounts[r.post_id]||0)+1);}catch(e){}
+    el.innerHTML=posts.map(p=>{
+      const n=esc(dname(am[p.author_id]||{}));
+      const liked=likeSet.has(p.id);
+      const href=safeHref(p.link_url);
+      return`<div class="card" style="margin-bottom:10px">
+        <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${p.is_sponsored?'Sponsored':n}</div>
+        <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+        ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
+        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(esc(p.body))}</div>
+        ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:280px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
+        ${href?`<a href="${href}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${esc(p.link_title)||href} →</a>`:''}
+        <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
+          <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
+          <button onclick="openPostThread('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} comments</button>
+          <button onclick="toggleSavePost('${p.id}',this)" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans);margin-left:auto">Save</button>
+          <button onclick="reportPost('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans)">Report</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+async function reportPost(postId){
+  if(!ST.profile)return;
+  const reason=prompt('Why are you reporting this post? (e.g. Misleading information, Harassment, Spam, Fake identity)');
+  if(!reason||!reason.trim())return;
+  try{await api('post_reports','','POST',{post_id:postId,reporter_id:ST.profile.id,reason:reason.trim()});alert('Reported — our moderation team will review it.');}
+  catch(e){alert('Could not submit the report — please try again.');}
+}
+
+function extractHashtags(text){
+  const m=text.match(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g)||[];
+  return [...new Set(m.map(t=>t.slice(1).toLowerCase()))];
+}
+function linkifyHashtags(text){
+  if(!text)return'';
+  return text.replace(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g,(full,tag)=>`<a href="javascript:void(0)" onclick="openHashtag('${tag.toLowerCase()}')" style="color:var(--gold)">#${tag}</a>`);
+}
+function extractLinkUrl(text){
+  const m=text.match(/https?:\/\/[^\s]+/);
+  return m?m[0]:null;
+}
+
+// Shared by the feed composer and (eventually) the Marketplace listing
+// form -- uploads into the member's own folder in the public "uploads"
+// bucket (storage RLS enforces that path prefix) and returns the public
+// URL to store on the row, or null if nothing was ever selected or the
+// upload failed.
+async function uploadImage(file){
+  if(!file||!ST.user)return null;
+  const path=`${ST.user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_')}`;
+  const{error}=await sb.storage.from('uploads').upload(path,file);
+  if(error)return null;
+  const{data}=sb.storage.from('uploads').getPublicUrl(path);
+  return data?.publicUrl||null;
+}
+
+let feedImageFile=null;
+function onFeedImageSelected(input){
+  const file=input.files?.[0];if(!file)return;
+  feedImageFile=file;
+  const reader=new FileReader();
+  reader.onload=()=>{$('feed-image-preview-img').src=reader.result;$('feed-image-preview').style.display='';};
+  reader.readAsDataURL(file);
+}
+function clearFeedImage(){feedImageFile=null;$('feed-image-preview').style.display='none';$('feed-image-input').value='';}
+
+async function createPostWithExtras(fields){
+  // Needs the new post's real id back to attach hashtags -- same reasoning
+  // as approveAd: the shared api() helper deliberately doesn't request a
+  // representation, so this one call does it directly instead.
+  const r=await fetch(`${SB_URL}/rest/v1/posts`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(fields)});
+  if(!r.ok)throw new Error('post creation failed');
+  const created=await r.json();
+  const post=(created||[])[0];
+  const tags=extractHashtags(fields.body);
+  if(post&&tags.length){
+    for(const tag of tags){
+      try{
+        let existing=await api('hashtags',`?tag=eq.${encodeURIComponent(tag)}&select=id`);
+        let hashtagId=(existing||[])[0]?.id;
+        if(!hashtagId){
+          const hr=await fetch(`${SB_URL}/rest/v1/hashtags`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json',Prefer:'return=representation,resolution=merge-duplicates'},body:JSON.stringify({tag})});
+          const hcreated=await hr.json();hashtagId=(hcreated||[])[0]?.id;
+        }
+        if(hashtagId)await api('post_hashtags','','POST',{post_id:post.id,hashtag_id:hashtagId});
+      }catch(e){}
+    }
+  }
+  return post;
+}
+
+async function submitPost(){
+  const body=$('feed-compose').value.trim();if(!body||!ST.profile)return;
+  const btn=$('feed-post-btn');
+  try{
+    let image_url=null;
+    if(feedImageFile){
+      btn.disabled=true;btn.textContent='Uploading…';
+      image_url=await uploadImage(feedImageFile);
+      btn.disabled=false;btn.textContent='Post';
+    }
+    await createPostWithExtras({
+      author_id:ST.profile.id,body,
+      bucket_id:ST.profile.bucket_id||null,
+      audience:$('feed-audience').value,
+      link_url:extractLinkUrl(body),
+      image_url
+    });
+    $('feed-compose').value='';
+    clearFeedImage();
+    await loadSocialFeed();
+  }catch(e){btn.disabled=false;btn.textContent='Post';alert('Could not post — please try again.');}
+}
+
+async function loadTrendingHashtags(){
+  const el=$('trending-hashtags');if(!el)return;
+  try{
+    const since=new Date(Date.now()-7*864e5).toISOString();
+    const recent=await api('posts',`?created_at=gte.${since}&community_id=is.null&select=id`)||[];
+    if(!recent.length){el.innerHTML='';return;}
+    const ids=recent.map(p=>p.id);
+    const links=await api('post_hashtags',`?post_id=in.(${ids.join(',')})&select=hashtag_id`)||[];
+    if(!links.length){el.innerHTML='';return;}
+    const counts={};links.forEach(l=>counts[l.hashtag_id]=(counts[l.hashtag_id]||0)+1);
+    const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x=>x[0]);
+    const tags=await api('hashtags',`?id=in.(${top.join(',')})&select=id,tag`)||[];
+    const tagMap={};tags.forEach(t=>tagMap[t.id]=t.tag);
+    el.innerHTML=top.filter(id=>tagMap[id]).map(id=>`<div class="chip" style="white-space:nowrap;cursor:pointer" onclick="openHashtag('${tagMap[id]}')">#${tagMap[id]} · ${counts[id]}</div>`).join('');
+  }catch(e){el.innerHTML='';}
+}
+
+async function openHashtag(tag){
+  $('hashtag-title').textContent='#'+tag;
+  goto('hashtag');
+  const el=$('hashtag-posts');
+  ST.currentHashtagId=null;ST.currentHashtagTag=tag;
+  $('hashtag-mute-btn').textContent='Mute';
+  try{
+    const h=await api('hashtags',`?tag=eq.${encodeURIComponent(tag)}&select=id`);
+    const hashtagId=(h||[])[0]?.id;
+    if(!hashtagId){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
+    ST.currentHashtagId=hashtagId;
+    if(ST.profile){
+      try{const m=await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&hashtag_id=eq.${hashtagId}&select=hashtag_id`);if(m&&m.length)$('hashtag-mute-btn').textContent='Unmute';}catch(e){}
+    }
+    const links=await api('post_hashtags',`?hashtag_id=eq.${hashtagId}&select=post_id`)||[];
+    if(!links.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
+    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored,image_url`);
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function toggleMuteHashtag(){
+  if(!ST.profile||!ST.currentHashtagId)return;
+  const btn=$('hashtag-mute-btn');
+  try{
+    if(btn.textContent==='Unmute'){
+      await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&hashtag_id=eq.${ST.currentHashtagId}`,'DELETE');
+      btn.textContent='Mute';
+    }else{
+      await api('muted_hashtags','','POST',{user_id:ST.profile.id,hashtag_id:ST.currentHashtagId});
+      btn.textContent='Unmute';
+    }
+  }catch(e){alert('Could not update — please try again.');}
+}
+
+async function submitCommunityPost(){
+  const cid=ST.currentCommunity?.id,body=$('community-compose').value.trim();
+  if(!cid||!body||!ST.profile)return;
+  try{
+    await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.currentCommunity.bucket_id||null,audience:'everyone',community_id:cid});
+    $('community-compose').value='';
+    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url`);
+  }catch(e){alert('Could not post — please try again.');}
+}
+
+async function toggleLike(postId){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('post_likes',`?post_id=eq.${postId}&user_id=eq.${ST.profile.id}&select=post_id`);
+    if(existing&&existing.length){
+      await api('post_likes',`?post_id=eq.${postId}&user_id=eq.${ST.profile.id}`,'DELETE');
+    }else{
+      await api('post_likes','','POST',{post_id:postId,user_id:ST.profile.id});
+    }
+    await loadSocialFeed();
+  }catch(e){}
+}
+
+async function openPostThread(postId){
+  ST.currentThreadPostId=postId;
+  $('thread-post').innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  $('thread-comments').innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  goto('post-thread');
+  try{
+    const posts=await api('posts',`?id=eq.${postId}&select=id,body,title,created_at,author_id,image_url`);
+    const p=(posts||[])[0];
+    if(!p){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Post not found</div></div>';return;}
+    let author={};
+    try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved`);author=(a||[])[0]||{};}catch(e){}
+    $('thread-post').innerHTML=`<div class="card">
+      <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${esc(dname(author))}</div>
+      <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+      ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
+      <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:${p.image_url?'10px':'0'}">${linkifyHashtags(esc(p.body))}</div>
+      ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:320px;object-fit:cover" loading="lazy">`:''}
+    </div>`;
+  }catch(e){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load post</div></div>';}
+  loadThreadComments(postId);
+}
+
+async function loadThreadComments(postId){
+  const el=$('thread-comments');if(!el)return;
+  try{
+    const comments=await api('post_comments',`?post_id=eq.${postId}&order=created_at.asc&select=id,body,created_at,author_id`)||[];
+    if(!comments.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No comments yet</div></div>';return;}
+    const ids=[...new Set(comments.map(c=>c.author_id))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    el.innerHTML=comments.map(c=>`<div class="card" style="margin-bottom:8px">
+      <div style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600">${esc(dname(am[c.author_id]||{}))}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${esc(c.body)}</div>
+      <div style="font-size:10.5px;color:rgba(16,30,51,0.3);margin-top:4px">${new Date(c.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load comments</div></div>';}
+}
+
+async function submitComment(){
+  const postId=ST.currentThreadPostId,body=$('comment-compose').value.trim();
+  if(!postId||!body||!ST.profile)return;
+  try{
+    await api('post_comments','','POST',{post_id:postId,author_id:ST.profile.id,body});
+    $('comment-compose').value='';
+    await loadThreadComments(postId);
+  }catch(e){alert('Could not post comment — please try again.');}
 }
 
 async function loadDir(){
@@ -872,7 +1736,7 @@ function filterDir(){
   const el=$('dir-list');
   if(!f.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No members found</div></div>';return;}
   const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(156,135,106,0.3)',council:'rgba(194,176,148,0.3)'};
-  el.innerHTML=f.map(m=>{const n=dname(m);const bc=colors[m.role]||colors.member;return`<div class="member-card" onclick="viewMember('${m.id}')"><div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${n.charAt(0).toUpperCase()}</div><div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${m.domain||''}</div><div class="member-city">${m.city||''}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
+  el.innerHTML=f.map(m=>{const n=esc(dname(m));const bc=colors[m.role]||colors.member;return`<div class="member-card" onclick="viewMember('${m.id}')"><div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${esc(dname(m).charAt(0).toUpperCase())}</div><div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${esc(m.domain)}</div><div class="member-city">${esc(m.city)}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
 }
 
 function viewMember(id){
@@ -883,12 +1747,105 @@ function viewMember(id){
   $('mp-rname').textContent=(m.show_real_name&&m.real_name_approved&&m.real_name)?m.real_name:'';
   $('mp-founding').style.display=m.founding_member&&m.founding_approved?'':'none';
   $('mp-badge').innerHTML=`<div class="layer-badge ${lbadge(m.role)}">${lbadgeLabel(m.role)}</div>`;
-  $('mp-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${m.domain||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${m.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${m.experience||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${m.organisation}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${m.about}</p></div>`:''}`;
-  $('mp-msg-btn').style.display=m.id===ST.profile?.id?'none':'';
+  $('mp-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(m.domain)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(m.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(m.experience)||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${esc(m.organisation)}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${esc(m.about)}</p></div>`:''}`;
+  const isSelf=m.id===ST.profile?.id;
+  $('mp-msg-btn').style.display=isSelf?'none':'';
+  $('mp-connect-btn').style.display=isSelf?'none':'';
+  $('mp-follow-btn').style.display=isSelf?'none':'';
+  $('mp-safety-actions').style.display=isSelf?'none':'';
+  if(!isSelf){
+    refreshConnectState(m.id);
+    checkBlockedEitherWay(m.id);
+  }
   goto('member-profile');
 }
 
+async function checkBlockedEitherWay(memberId){
+  if(!ST.profile)return;
+  try{
+    const bu=await api('blocked_users',`?or=(and(blocker_id.eq.${ST.profile.id},blocked_id.eq.${memberId}),and(blocker_id.eq.${memberId},blocked_id.eq.${ST.profile.id}))&select=blocker_id`);
+    if(bu&&bu.length){
+      ['mp-msg-btn','mp-connect-btn','mp-follow-btn'].forEach(id=>$(id).style.display='none');
+      $('mp-safety-actions').insertAdjacentHTML('beforebegin','<p style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center;margin-top:8px" id="mp-blocked-note">Messaging, connecting, and following aren\'t available between you two.</p>');
+    }else{
+      $('mp-blocked-note')?.remove();
+    }
+  }catch(e){}
+}
+
 function chatWithCurrent(){if(ST.currentMember)openChat(ST.currentMember);}
+
+async function refreshConnectState(memberId){
+  const myId=ST.profile?.id;if(!myId)return;
+  try{
+    const conns=await api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${memberId}),and(requester_id.eq.${memberId},addressee_id.eq.${myId}))&select=requester_id,status`);
+    const c=(conns||[])[0];
+    const cb=$('mp-connect-btn');
+    if(!c){cb.textContent='+ Connect';cb.disabled=false;cb.className='btn btn-gold';}
+    else if(c.status==='pending'&&c.requester_id===myId){cb.textContent='Request sent';cb.disabled=true;cb.className='btn btn-outline';}
+    else if(c.status==='pending'){cb.textContent='Accept connection';cb.disabled=false;cb.className='btn btn-gold';}
+    else{cb.textContent='Connected — tap to disconnect';cb.disabled=false;cb.className='btn btn-outline';}
+    cb.style.flex='1';
+  }catch(e){}
+  try{
+    const f=await api('follows',`?follower_id=eq.${myId}&followee_id=eq.${memberId}&select=follower_id`);
+    const fb=$('mp-follow-btn');
+    const following=f&&f.length;
+    fb.textContent=following?'Following':'+ Follow';
+    fb.className=following?'btn btn-gold':'btn btn-outline';
+    fb.style.flex='1';
+  }catch(e){}
+}
+
+async function connectWithCurrent(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  try{
+    const existing=await api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${m.id}),and(requester_id.eq.${m.id},addressee_id.eq.${myId}))&select=requester_id,status`);
+    const c=(existing||[])[0];
+    if(!c){await api('member_connections','','POST',{requester_id:myId,addressee_id:m.id});}
+    else if(c.status==='pending'&&c.requester_id===m.id){
+      await api('member_connections',`?requester_id=eq.${m.id}&addressee_id=eq.${myId}`,'PATCH',{status:'accepted',responded_at:new Date().toISOString()});
+    }else if(c.status==='accepted'){
+      if(!confirm('Disconnect from '+dname(m)+'?'))return;
+      await api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${m.id}),and(requester_id.eq.${m.id},addressee_id.eq.${myId}))`,'DELETE');
+    }
+    await refreshConnectState(m.id);
+  }catch(e){}
+}
+
+async function followWithCurrent(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  try{
+    const f=await api('follows',`?follower_id=eq.${myId}&followee_id=eq.${m.id}&select=follower_id`);
+    if(f&&f.length){await api('follows',`?follower_id=eq.${myId}&followee_id=eq.${m.id}`,'DELETE');}
+    else{await api('follows','','POST',{follower_id:myId,followee_id:m.id});}
+    await refreshConnectState(m.id);
+  }catch(e){}
+}
+
+async function muteCurrentMember(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  try{await api('muted_users','','POST',{muter_id:myId,muted_id:m.id});alert(dname(m)+' muted — their posts won\'t show in your feed.');}
+  catch(e){alert('Could not mute — please try again.');}
+}
+
+async function blockCurrentMember(){
+  const myId=ST.profile?.id,m=ST.currentMember;if(!myId||!m)return;
+  if(!confirm('Block '+dname(m)+'? They won\'t be able to message or connect with you, and any existing connection or follow between you is removed.'))return;
+  try{
+    await api('blocked_users','','POST',{blocker_id:myId,blocked_id:m.id});
+    // A block should actually sever the relationship, not just stop new
+    // messages -- otherwise both sides keep showing as "connected"/
+    // "following" while messaging between them is silently refused, which
+    // reads as broken, not blocked.
+    await Promise.all([
+      api('member_connections',`?or=(and(requester_id.eq.${myId},addressee_id.eq.${m.id}),and(requester_id.eq.${m.id},addressee_id.eq.${myId}))`,'DELETE'),
+      api('follows',`?follower_id=eq.${myId}&followee_id=eq.${m.id}`,'DELETE'),
+      api('follows',`?follower_id=eq.${m.id}&followee_id=eq.${myId}`,'DELETE')
+    ]);
+    goto('directory');
+  }catch(e){alert('Could not block — please try again.');}
+}
 
 async function loadConvos(){
   if(!ST.profile)return;
@@ -902,9 +1859,9 @@ async function loadConvos(){
     const um={};(users||[]).forEach(u=>um[u.id]=u);
     $('convos-list').innerHTML=convos.map(m=>{
       const oid=m.from_id===ST.profile.id?m.to_id:m.from_id;
-      const o=um[oid]||{username:'Unknown'};const n=dname(o);const unread=!m.read&&m.to_id===ST.profile.id;
+      const o=um[oid]||{username:'Unknown'};const n=esc(dname(o));const unread=!m.read&&m.to_id===ST.profile.id;
       const enc=JSON.stringify(o).replace(/"/g,'&quot;');
-      return`<div onclick="openChat(${enc})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border2);cursor:pointer"><div class="avatar avatar-md" style="border-color:rgba(201,148,58,0.3);color:var(--gold)">${n.charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:2px">${n}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px">${o.domain||''}</div><div style="font-size:12px;color:rgba(16,30,51,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.content}</div></div>${unread?'<div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>':''}</div>`;
+      return`<div onclick="openChat(${enc})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border2);cursor:pointer"><div class="avatar avatar-md" style="border-color:rgba(201,148,58,0.3);color:var(--gold)">${esc(dname(o).charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:2px">${n}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px">${esc(o.domain)}</div><div style="font-size:12px;color:rgba(16,30,51,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.content)}</div></div>${unread?'<div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>':''}</div>`;
     }).join('');
   }catch(e){$('convos-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
@@ -922,7 +1879,7 @@ async function loadDMs(){
     const d=await api('messages',`?or=(and(from_id.eq.${ST.profile.id},to_id.eq.${ST.currentChat.id}),and(from_id.eq.${ST.currentChat.id},to_id.eq.${ST.profile.id}))&order=created_at.asc&select=*`);
     const el=$('chat-msgs');
     if(!d||!d.length){el.innerHTML='<div class="empty-state" style="padding:40px 20px"><div class="empty-text">No messages yet. Say hello.</div></div>';return;}
-    el.innerHTML=d.map(m=>{const me=m.from_id===ST.profile.id;const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div class="bubble ${me?'me':'them'}">${m.content}<div class="bubble-time">${t}</div></div>`;}).join('');
+    el.innerHTML=d.map(m=>{const me=m.from_id===ST.profile.id;const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div>`;}).join('');
     const sc=$('chat-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
   }catch(e){}
 }
@@ -946,7 +1903,7 @@ async function loadGCs(){
   try{
     const d=await api('group_chats','?select=*&order=name');const el=$('gc-list');
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-text">No group chats</div></div>';return;}
-    el.innerHTML=d.map(c=>{const enc=JSON.stringify(c).replace(/"/g,'&quot;');return`<div class="card" onclick="openGC(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer"><div style="width:40px;height:40px;border-radius:50%;background:rgba(201,148,58,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:var(--serif);font-size:18px;flex-shrink:0">${c.type==='help'?'?':'◆'}</div><div style="flex:1"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:3px">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.description||''}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`;}).join('');
+    el.innerHTML=d.map(c=>{const enc=JSON.stringify(c).replace(/"/g,'&quot;');return`<div class="card" onclick="openGC(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer"><div style="width:40px;height:40px;border-radius:50%;background:rgba(201,148,58,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:var(--serif);font-size:18px;flex-shrink:0">${c.type==='help'?'?':'◆'}</div><div style="flex:1"><div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:3px">${esc(c.name)}</div><div style="font-size:12px;color:var(--muted)">${esc(c.description)}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`;}).join('');
   }catch(e){}
 }
 
@@ -964,7 +1921,7 @@ async function loadGCMsgs(){
     const aids=[...new Set(d.map(m=>m.from_id))];
     const authors=await api('users',`?id=in.(${aids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
     const am={};(authors||[]).forEach(a=>am[a.id]=a);
-    $('gc-msgs').innerHTML=d.map(m=>{const me=m.from_id===ST.profile?.id;const n=dname(am[m.from_id]||{username:'Member'});const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${m.content}<div class="bubble-time">${t}</div></div></div>`;}).join('');
+    $('gc-msgs').innerHTML=d.map(m=>{const me=m.from_id===ST.profile?.id;const n=esc(dname(am[m.from_id]||{username:'Member'}));const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div></div>`;}).join('');
     const sc=$('gc-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
   }catch(e){}
 }
@@ -983,8 +1940,52 @@ async function loadHelp(){
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet. Ask the first question.</div></div>';return;}
     const ids=[...new Set(d.map(p=>p.author_id))];
     let am={};try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
-    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card" style="margin-bottom:10px"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${p.type||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${am[p.author_id]?.domain||''}</span><span style="font-size:11px;color:var(--gold)">${p.reply_count||0} replies</span></div></div>`;}).join('');
+    // reply_count on help_posts is never incremented by anything -- showing
+    // a real live count from help_replies instead of that stale stored value.
+    let replyCounts={};
+    try{const r=await api('help_replies',`?help_post_id=in.(${d.map(p=>p.id).join(',')})&select=help_post_id`);(r||[]).forEach(x=>replyCounts[x.help_post_id]=(replyCounts[x.help_post_id]||0)+1);}catch(e){}
+    ST.helpPosts=d;
+    el.innerHTML=d.map(p=>{const n=esc(dname(am[p.author_id]||{username:'Member'}));return`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openHelpPost('${p.id}')"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${esc(p.title)}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.content)}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${esc(am[p.author_id]?.domain)}</span><span style="font-size:11px;color:var(--gold)">${replyCounts[p.id]||0} replies</span></div></div>`;}).join('');
   }catch(e){$('help-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function openHelpPost(id){
+  const p=(ST.helpPosts||[]).find(x=>x.id===id);if(!p)return;
+  ST.currentHelpPostId=id;
+  goto('help-post');
+  let author={};
+  try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved,domain`);author=(a||[])[0]||{};}catch(e){}
+  $('help-post-body').innerHTML=`<div class="card">
+    <div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div>
+    <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:8px;line-height:1.3">${esc(p.title)}</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px">${esc(p.content)}</div>
+    <div style="font-size:11px;color:rgba(16,30,51,0.3)">${esc(dname(author))} · ${esc(author.domain)}</div>
+  </div>`;
+  await loadHelpReplies(id);
+}
+
+async function loadHelpReplies(helpPostId){
+  const el=$('help-post-replies');
+  try{
+    const replies=await api('help_replies',`?help_post_id=eq.${helpPostId}&order=created_at.asc&select=id,content,created_at,author_id`)||[];
+    if(!replies.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No replies yet.</div></div>';return;}
+    const ids=[...new Set(replies.map(r=>r.author_id))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    el.innerHTML=replies.map(r=>`<div class="card" style="margin-bottom:8px">
+      <div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(am[r.author_id]||{}))}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${esc(r.content)}</div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load replies</div></div>';}
+}
+
+async function submitHelpReply(){
+  const id=ST.currentHelpPostId,content=$('help-reply-compose').value.trim();
+  if(!id||!content||!ST.profile)return;
+  try{
+    await api('help_replies','','POST',{help_post_id:id,author_id:ST.profile.id,content});
+    $('help-reply-compose').value='';
+    await loadHelpReplies(id);
+  }catch(e){alert('Could not post your reply — please try again.');}
 }
 
 async function submitHelp(){
@@ -999,21 +2000,377 @@ async function submitHelp(){
 }
 
 async function loadForums(){
-  const DGS=['All','Law & Compliance','Finance & Accounting','Technology','Medicine & Healthcare','Public Sector & Defence','Other'];
-  $('forum-chips').innerHTML=DGS.map(g=>`<div class="chip${g===ST.dirFilter?' active':''}" onclick="setForumFilter('${g}')">${g}</div>`).join('');
+  const el=$('forum-list');
+  const il=$('create-institution-link');if(il)il.style.display=ST.profile?.role==='admin'?'flex':'none';
   try{
-    let p=`?order=pinned.desc,created_at.desc&select=id,title,content,domain_group,pinned,reply_count,created_at,author_id&limit=50`;
-    const d=await api('forum_posts',p);const el=$('forum-list');
-    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No forum posts yet.</div></div>';return;}
-    const ids=[...new Set(d.map(p=>p.author_id))];let am={};
-    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
-    el.innerHTML=d.map(p=>{const n=dname(am[p.author_id]||{username:'Member'});return`<div class="card${p.pinned?' gold-border':''}" style="margin-bottom:10px">${p.pinned?'<div style="font-size:10px;color:var(--gold);margin-bottom:6px">📌 Pinned</div>':''}<div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${p.domain_group||''}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${p.title}</div><div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n}</span><span style="font-size:11px;color:var(--gold)">${p.reply_count||0} replies →</span></div></div>`;}).join('');
-  }catch(e){$('forum-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+    const communities=await api('communities','?order=created_at.asc&select=id,name,kind,bucket_id,institution_name,requires_verification')||[];
+    if(!communities.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No communities yet — start one.</div></div>';return;}
+    const counts={};
+    try{const cm=await api('community_members',`?community_id=in.(${communities.map(c=>c.id).join(',')})&status=eq.active&select=community_id`);(cm||[]).forEach(r=>counts[r.community_id]=(counts[r.community_id]||0)+1);}catch(e){}
+    ST.communities=communities;
+    el.innerHTML=communities.map(c=>`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openCommunity('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3">${esc(c.name)}</div>
+        ${c.kind==='institution'?'<div class="layer-badge" style="flex-shrink:0;margin-left:8px">Institution-verified</div>':''}
+      </div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-top:6px">${counts[c.id]||0} members</div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load communities</div></div>';}
 }
 
-function setForumFilter(g){
-  document.querySelectorAll('#forum-chips .chip').forEach(c=>c.classList.toggle('active',c.textContent===g));
-  loadForums();
+async function promptNewCommunity(){
+  const name=prompt('Name this community (e.g. "Early-Stage Capital"):');if(!name||!name.trim()||!ST.profile)return;
+  try{
+    await api('communities','','POST',{name:name.trim(),kind:'topic',bucket_id:ST.profile.bucket_id||null,created_by:ST.profile.id});
+    await loadForums();
+  }catch(e){alert('Could not create the community — please try again.');}
+}
+
+async function promptNewInstitutionCommunity(){
+  if(ST.profile?.role!=='admin')return;
+  const institutionName=prompt('Institution name (e.g. "IIT Delhi"):');if(!institutionName||!institutionName.trim())return;
+  const displayName=prompt('Community display name:',institutionName.trim()+' Alumni');if(!displayName||!displayName.trim())return;
+  try{
+    await api('communities','','POST',{name:displayName.trim(),kind:'institution',institution_name:institutionName.trim(),requires_verification:true,created_by:ST.profile.id});
+    await loadForums();
+  }catch(e){alert('Could not create the community — please try again.');}
+}
+
+async function openCommunity(id){
+  const c=(ST.communities||[]).find(x=>x.id===id);if(!c)return;
+  ST.currentCommunity=c;
+  $('community-title').textContent=c.name;
+  goto('community');
+  await joinCommunityIfNeeded(c);
+  if(c.requires_verification&&ST.profile?.role==='admin')await loadPendingCommunityMembers(c.id);
+  else $('community-pending-members').innerHTML='';
+  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url`);
+}
+
+async function loadPendingCommunityMembers(communityId){
+  const el=$('community-pending-members');
+  try{
+    const pending=await api('community_members',`?community_id=eq.${communityId}&status=eq.pending&select=user_id`)||[];
+    if(!pending.length){el.innerHTML='';return;}
+    const ids=pending.map(x=>x.user_id);
+    const u=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const um={};(u||[]).forEach(x=>um[x.id]=x);
+    el.innerHTML=`<div class="section-title">Pending verification (admin)</div>`+pending.map(p=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${esc(dname(um[p.user_id]||{}))}</span>
+      <div style="display:flex;gap:6px"><button class="btn btn-gold" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="decideCommunityMember('${communityId}','${p.user_id}','active')">Approve</button><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="decideCommunityMember('${communityId}','${p.user_id}','denied')">Deny</button></div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='';}
+}
+
+async function decideCommunityMember(communityId,userId,decision){
+  try{
+    if(decision==='denied')await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${userId}`,'DELETE');
+    else await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${userId}`,'PATCH',{status:'active'});
+    await loadPendingCommunityMembers(communityId);
+  }catch(e){alert('Could not update — please try again.');}
+}
+
+async function joinCommunityIfNeeded(c){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('community_members',`?community_id=eq.${c.id}&user_id=eq.${ST.profile.id}&select=user_id`);
+    if(!existing||!existing.length){
+      await api('community_members','','POST',{community_id:c.id,user_id:ST.profile.id,status:c.requires_verification?'pending':'active'});
+    }
+  }catch(e){}
+}
+
+// ---- Marketplace ----
+
+async function loadMarketplace(){
+  const el=$('marketplace-list'),cta=$('marketplace-cta');
+  try{
+    const hasPackage=await memberHasActivePackage();
+    cta.innerHTML=hasPackage
+      ?'<a href="javascript:void(0)" onclick="goto(\'new-listing\')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ List something for sale</a>'
+      :'<a href="javascript:void(0)" onclick="goto(\'marketplace-packages\')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">Get a seller package to list an item</a>';
+  }catch(e){}
+  try{
+    const d=await api('marketplace_listings','?status=eq.active&order=created_at.desc&limit=50&select=id,title,category,price_text,description,location,seller_id,photo_urls')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No listings yet.</div></div>';return;}
+    const ids=[...new Set(d.map(x=>x.seller_id))];let am={};
+    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      ${x.photo_urls?.length?`<img src="${esc(x.photo_urls[0])}" style="width:100%;max-height:200px;object-fit:cover;border-radius:4px;margin-bottom:10px" loading="lazy">`:''}
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.title)}</div>
+      <div style="font-size:14px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:4px">${esc(x.price_text)}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${esc(dname(am[x.seller_id]||{}))} · ${esc(x.location)}</div>
+      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${esc(x.description)}</div>`:''}
+      <button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:12px" onclick="inquireListing('${x.id}')">Message seller</button>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the marketplace</div></div>';}
+}
+
+async function getActivePackageSubscription(){
+  if(!ST.profile)return null;
+  try{
+    const subs=await api('seller_package_subscriptions',`?user_id=eq.${ST.profile.id}&status=eq.active&order=activated_at.desc&select=id,listings_used,expires_at,package_id`)||[];
+    const now=Date.now();
+    const pkgs=await api('marketplace_packages','?select=id,listing_quota');
+    const pkgMap={};(pkgs||[]).forEach(p=>pkgMap[p.id]=p);
+    return subs.find(s=>{
+      if(s.expires_at&&new Date(s.expires_at).getTime()<now)return false;
+      const quota=pkgMap[s.package_id]?.listing_quota;
+      return quota==null||s.listings_used<quota;
+    })||null;
+  }catch(e){return null;}
+}
+async function memberHasActivePackage(){return !!(await getActivePackageSubscription());}
+
+async function loadNewListingNote(){
+  const sub=await getActivePackageSubscription();
+  $('nl-quota-note').textContent=sub?'You have an active seller package — this listing will count against it.':'You need an active seller package before publishing — you\'ll be redirected if you don\'t have one.';
+}
+
+let listingPhotoFiles=[];
+function onListingPhotosSelected(input){
+  listingPhotoFiles=listingPhotoFiles.concat(Array.from(input.files||[]).slice(0,6-listingPhotoFiles.length));
+  const el=$('nl-photo-previews');
+  el.innerHTML=listingPhotoFiles.map((f,i)=>`<div style="position:relative"><img src="${URL.createObjectURL(f)}" style="width:56px;height:56px;object-fit:cover;border-radius:4px"><button onclick="removeListingPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1">×</button></div>`).join('');
+  input.value='';
+}
+function removeListingPhoto(i){
+  listingPhotoFiles.splice(i,1);
+  $('nl-photo-previews').innerHTML=listingPhotoFiles.map((f,j)=>`<div style="position:relative"><img src="${URL.createObjectURL(f)}" style="width:56px;height:56px;object-fit:cover;border-radius:4px"><button onclick="removeListingPhoto(${j})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1">×</button></div>`).join('');
+}
+
+async function submitListing(){
+  if(!ST.profile)return;
+  const title=$('nl-title').value.trim();if(!title)return;
+  const sub=await getActivePackageSubscription();
+  if(!sub){alert('You need an active seller package to list an item.');goto('marketplace-packages');return;}
+  try{
+    const photo_urls=(await Promise.all(listingPhotoFiles.map(f=>uploadImage(f)))).filter(Boolean);
+    await api('marketplace_listings','','POST',{
+      seller_id:ST.profile.id,title,
+      category:$('nl-category').value.trim()||null,
+      price_text:$('nl-price').value.trim()||null,
+      description:$('nl-desc').value.trim()||null,
+      location:$('nl-location').value.trim()||null,
+      photo_urls:photo_urls.length?photo_urls:null
+    });
+    await api('seller_package_subscriptions',`?id=eq.${sub.id}`,'PATCH',{listings_used:sub.listings_used+1});
+    ['nl-title','nl-category','nl-price','nl-desc','nl-location'].forEach(id=>$(id).value='');
+    listingPhotoFiles=[];$('nl-photo-previews').innerHTML='';
+    goto('marketplace');
+  }catch(e){alert('Could not publish the listing — please try again.');}
+}
+
+// ---- Marketplace packages ----
+
+async function loadMarketplacePackages(){
+  try{
+    const pkgs=await api('marketplace_packages','?active=eq.true&order=sort_order.asc&select=*')||[];
+    $('packages-list').innerHTML=pkgs.map(p=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(p.name)}</div>
+      <div style="font-size:13px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:6px">₹${p.price} / ${p.duration_days} days</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${p.listing_quota==null?'Unlimited listings':p.listing_quota+' listing'+(p.listing_quota===1?'':'s')}</div>
+      <button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:12px" onclick="requestPackage('${p.id}')">Request this package</button>
+    </div>`).join('');
+  }catch(e){$('packages-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+  if(!ST.profile)return;
+  try{
+    const mine=await api('seller_package_subscriptions',`?user_id=eq.${ST.profile.id}&order=requested_at.desc&select=id,status,requested_at,expires_at,package_id`)||[];
+    if(!mine.length){$('my-package-requests').innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No requests yet.</p>';return;}
+    const pkgs=await api('marketplace_packages',`?id=in.(${mine.map(m=>m.package_id).join(',')})&select=id,name`);
+    const pm={};(pkgs||[]).forEach(p=>pm[p.id]=p.name);
+    const statusLabel={pending_payment:'Awaiting payment confirmation',active:'Active',expired:'Expired',rejected:'Rejected'};
+    $('my-package-requests').innerHTML=mine.map(m=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${pm[m.package_id]||'Package'}</span><span style="font-size:11px;color:var(--gold)">${statusLabel[m.status]||m.status}</span></div>`).join('');
+  }catch(e){}
+}
+
+async function requestPackage(packageId){
+  if(!ST.profile)return;
+  try{
+    await api('seller_package_subscriptions','','POST',{user_id:ST.profile.id,package_id:packageId});
+    alert('Requested — an admin will activate it once payment is confirmed.');
+    await loadMarketplacePackages();
+  }catch(e){alert('Could not submit the request — please try again.');}
+}
+
+async function loadAdminPackages(){
+  const el=$('admin-packages-list');
+  try{
+    const d=await api('seller_package_subscriptions','?status=eq.pending_payment&order=requested_at.desc&select=id,user_id,package_id,requested_at')||[];
+    const b=$('pkg-badge');if(b)b.textContent=d.length>0?d.length+' pending':'';
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No pending requests.</div></div>';return;}
+    const uids=[...new Set(d.map(x=>x.user_id))],pids=[...new Set(d.map(x=>x.package_id))];
+    const[users,pkgs]=await Promise.all([api('users',`?id=in.(${uids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`),api('marketplace_packages',`?id=in.(${pids.join(',')})&select=id,name,duration_days`)]);
+    const um={};(users||[]).forEach(u=>um[u.id]=u);
+    const pm={};(pkgs||[]).forEach(p=>pm[p.id]=p);
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${esc(dname(um[x.user_id]||{}))}</div>
+      <div style="font-size:12px;color:var(--gold);margin-bottom:10px">${esc(pm[x.package_id]?.name)||'Package'}</div>
+      <div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePackageRequest('${x.id}','${pm[x.package_id]?.duration_days||90}')">Activate</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="rejectPackageRequest('${x.id}')">Reject</button></div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function decidePackageRequest(id,durationDays){
+  try{
+    const expires=new Date(Date.now()+parseInt(durationDays)*864e5).toISOString();
+    await api('seller_package_subscriptions',`?id=eq.${id}`,'PATCH',{status:'active',activated_at:new Date().toISOString(),expires_at:expires});
+    await loadAdminPackages();
+  }catch(e){alert('Could not activate — please try again.');}
+}
+
+async function rejectPackageRequest(id){
+  try{await api('seller_package_subscriptions',`?id=eq.${id}`,'PATCH',{status:'rejected'});await loadAdminPackages();}
+  catch(e){alert('Could not reject — please try again.');}
+}
+
+async function inquireListing(listingId){
+  const msg=prompt('Message to the seller:');if(!msg||!msg.trim()||!ST.profile)return;
+  try{await api('marketplace_inquiries','','POST',{listing_id:listingId,buyer_id:ST.profile.id,message:msg.trim()});alert('Sent.');}
+  catch(e){alert('Could not send — please try again.');}
+}
+
+async function loadMyListings(){
+  if(!ST.profile)return;
+  const el=$('my-listings-list');
+  try{
+    const listings=await api('marketplace_listings',`?seller_id=eq.${ST.profile.id}&order=created_at.desc&select=id,title,status`)||[];
+    if(!listings.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No listings yet.</div></div>';return;}
+    const ids=listings.map(l=>l.id);
+    const inquiries=await api('marketplace_inquiries',`?listing_id=in.(${ids.join(',')})&order=created_at.desc&select=id,listing_id,buyer_id,message,created_at`)||[];
+    const buyerIds=[...new Set(inquiries.map(i=>i.buyer_id))];let bm={};
+    if(buyerIds.length){try{const u=await api('users',`?id=in.(${buyerIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>bm[x.id]=x);}catch(e){}}
+    el.innerHTML=listings.map(l=>{
+      const myInquiries=inquiries.filter(i=>i.listing_id===l.id);
+      return`<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px;color:var(--white);font-family:var(--serif);font-weight:700">${esc(l.title)}</span><span style="font-size:10px;color:var(--gold)">${esc(l.status)}</span></div>
+        ${myInquiries.length?myInquiries.map(i=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(bm[i.buyer_id]||{}))}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${esc(i.message)}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No inquiries yet.</div>'}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function loadMyBriefs(){
+  if(!ST.profile)return;
+  const el=$('my-briefs-list');
+  try{
+    const briefs=await api('exchange_briefs',`?author_id=eq.${ST.profile.id}&order=created_at.desc&select=id,description,brief_type,status`)||[];
+    if(!briefs.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No briefs yet.</div></div>';return;}
+    const ids=briefs.map(b=>b.id);
+    const responses=await api('exchange_brief_responses',`?brief_id=in.(${ids.join(',')})&order=created_at.desc&select=id,brief_id,responder_id,message,created_at`)||[];
+    const responderIds=[...new Set(responses.map(r=>r.responder_id))];let rm={};
+    if(responderIds.length){try{const u=await api('users',`?id=in.(${responderIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>rm[x.id]=x);}catch(e){}}
+    el.innerHTML=briefs.map(b=>{
+      const myResponses=responses.filter(r=>r.brief_id===b.id);
+      return`<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;flex:1">${esc(b.description)}</span><span style="font-size:10px;color:var(--gold);flex-shrink:0;margin-left:8px">${esc(b.status)}</span></div>
+        ${myResponses.length?myResponses.map(r=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(rm[r.responder_id]||{}))}</div><div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px">${esc(r.message)}</div></div>`).join(''):'<div style="font-size:12px;color:rgba(16,30,51,0.4)">No responses yet.</div>'}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+// ---- The Exchange ----
+
+const BRIEF_TYPES=[['service_request','Service request'],['strategy_team','Strategy team'],['business_for_sale','Business for sale'],['vc_interest','VC / funding interest']];
+
+function initBriefTypeChips(){
+  ST.briefType=ST.briefType||'service_request';
+  $('brief-type-chips').innerHTML=BRIEF_TYPES.map(([v,l])=>`<div class="chip${v===ST.briefType?' active':''}" onclick="setBriefType('${v}')">${l}</div>`).join('');
+}
+function setBriefType(v){ST.briefType=v;initBriefTypeChips();}
+
+async function loadExchange(){
+  const el=$('exchange-list');
+  try{
+    const d=await api('exchange_briefs','?status=eq.open&order=created_at.desc&limit=50&select=id,brief_type,description,anonymous,author_id')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No open briefs yet.</div></div>';return;}
+    const ids=[...new Set(d.filter(x=>!x.anonymous).map(x=>x.author_id))];let am={};
+    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    const labels=Object.fromEntries(BRIEF_TYPES);
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${labels[x.brief_type]||x.brief_type}</div>
+      <div style="font-size:14px;color:var(--white);font-family:var(--sans);line-height:1.5;margin-bottom:8px">${esc(x.description)}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">${x.anonymous?'Posted anonymously':esc(dname(am[x.author_id]||{}))}</div>
+      <button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:12px" onclick="respondToBrief('${x.id}')">Respond</button>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load The Exchange</div></div>';}
+}
+
+async function submitBrief(){
+  if(!ST.profile)return;
+  const description=$('nb-desc').value.trim();if(!description)return;
+  try{
+    await api('exchange_briefs','','POST',{
+      author_id:ST.profile.id,
+      brief_type:ST.briefType||'service_request',
+      description,
+      bucket_id:ST.profile.bucket_id||null,
+      anonymous:$('nb-anon').checked
+    });
+    $('nb-desc').value='';$('nb-anon').checked=false;
+    goto('exchange');
+  }catch(e){alert('Could not post the brief — please try again.');}
+}
+
+async function respondToBrief(briefId){
+  const msg=prompt('Your message to the author:');if(!msg||!msg.trim()||!ST.profile)return;
+  try{await api('exchange_brief_responses','','POST',{brief_id:briefId,responder_id:ST.profile.id,message:msg.trim()});alert('Sent.');}
+  catch(e){alert('Could not send — please try again.');}
+}
+
+// ---- Events ----
+
+async function loadEventsList(){
+  const el=$('events-list');
+  try{
+    const d=await api('events',`?order=starts_at.asc&starts_at=gte.${new Date().toISOString()}&select=id,title,description,starts_at,location,is_virtual,host_label`)||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No upcoming events.</div></div>';return;}
+    let myRsvps=new Set();
+    if(ST.profile){try{const r=await api('event_rsvps',`?user_id=eq.${ST.profile.id}&select=event_id`);(r||[]).forEach(x=>myRsvps.add(x.event_id));}catch(e){}}
+    let counts={};
+    try{const c=await api('event_rsvps',`?event_id=in.(${d.map(x=>x.id).join(',')})&select=event_id`);(c||[]).forEach(x=>counts[x.event_id]=(counts[x.event_id]||0)+1);}catch(e){}
+    el.innerHTML=d.map(x=>{const going=myRsvps.has(x.id);return`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--gold);font-family:var(--sans);font-weight:600;margin-bottom:4px">${new Date(x.starts_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+      <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(x.title)}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${x.is_virtual?'Virtual':esc(x.location)}${x.host_label?' · Hosted by '+esc(x.host_label):''}</div>
+      ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${esc(x.description)}</div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:rgba(16,30,51,0.4)">${counts[x.id]||0} going</span>
+        <button class="btn ${going?'btn-outline':'btn-gold'}" style="width:auto;padding:8px 16px;font-size:12px" onclick="toggleRsvp('${x.id}')">${going?"You're going":'RSVP'}</button>
+      </div>
+    </div>`;}).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load events</div></div>';}
+}
+
+async function toggleRsvp(eventId){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('event_rsvps',`?event_id=eq.${eventId}&user_id=eq.${ST.profile.id}&select=event_id`);
+    if(existing&&existing.length){await api('event_rsvps',`?event_id=eq.${eventId}&user_id=eq.${ST.profile.id}`,'DELETE');}
+    else{await api('event_rsvps','','POST',{event_id:eventId,user_id:ST.profile.id});}
+    await loadEventsList();
+  }catch(e){}
+}
+
+async function submitEvent(){
+  if(!ST.profile)return;
+  const title=$('ne-title').value.trim(),startsRaw=$('ne-starts').value;
+  if(!title||!startsRaw)return;
+  try{
+    await api('events','','POST',{
+      host_user_id:ST.profile.id,
+      host_label:$('ne-host-label').value.trim()||null,
+      title,
+      description:$('ne-desc').value.trim()||null,
+      starts_at:new Date(startsRaw).toISOString(),
+      is_virtual:$('ne-virtual').checked,
+      location:$('ne-virtual').checked?null:($('ne-location').value.trim()||null)
+    });
+    ['ne-title','ne-desc','ne-starts','ne-location','ne-host-label'].forEach(id=>$(id).value='');
+    $('ne-virtual').checked=false;
+    goto('events');
+  }catch(e){alert('Could not publish the event — please try again.');}
 }
 
 async function loadNotifs(){
@@ -1024,7 +2381,7 @@ async function loadNotifs(){
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No notifications</div></div>';return;}
     const unread=d.filter(n=>!n.read).length;
     const badge=$('notif-badge');if(unread>0){badge.textContent=unread;badge.style.display='';}else badge.style.display='none';
-    el.innerHTML=d.map(n=>`<div class="card${!n.read?' gold-border':''}" onclick="markNotifRead('${n.id}')" style="cursor:pointer;margin-bottom:10px;position:relative">${!n.read?'<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>':''}<div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:4px;padding-right:20px">${n.title}</div>${n.body?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">${n.body}</div>`:''}<div style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(n.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');
+    el.innerHTML=d.map(n=>`<div class="card${!n.read?' gold-border':''}" onclick="markNotifRead('${n.id}')" style="cursor:pointer;margin-bottom:10px;position:relative">${!n.read?'<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>':''}<div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:4px;padding-right:20px">${esc(n.title)}</div>${n.body?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">${esc(n.body)}</div>`:''}<div style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(n.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');
   }catch(e){}
 }
 
@@ -1043,8 +2400,8 @@ function renderProfile(){
   $('my-rname').textContent=(p.show_real_name&&p.real_name_approved&&p.real_name)?p.real_name:'';
   $('my-founding').style.display=p.founding_member&&p.founding_approved?'':'none';
   $('my-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>`;
-  $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${p.domain||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${p.domain_group||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${p.city||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${p.experience||'—'}</div></div>`;
-  $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${p.about}</p>`:'<p style="font-size:13px;color:rgba(16,30,51,0.25);font-family:var(--sans)">No about text yet.</p>';
+  $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(p.domain)||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${esc(p.domain_group)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(p.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(p.experience)||'—'}</div></div>`;
+  $('my-about-view').innerHTML=p.about?`<p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${esc(p.about)}</p>`:'<p style="font-size:13px;color:rgba(16,30,51,0.25);font-family:var(--sans)">No about text yet.</p>';
   $('about-inp').value=p.about||'';
   renderUpgradeCard(p);
   loadLiStatus();
@@ -1374,9 +2731,357 @@ async function loadAdminHome(){
     const[apps,briefs]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100')]);
     const pc=(apps||[]).length,bc=(briefs||[]).length;
     $('admin-stats').innerHTML=[{l:'Pending Applications',v:pc,u:pc>0,s:'admin-applications'},{l:'Client Briefs',v:bc,u:bc>0,s:'admin-briefs'},{l:'Network Members',v:'—',u:false,s:'admin-applications'},{l:'Blog Posts Live',v:ST.blogPosts.length||'—',u:false,s:'admin-applications'}].map(s=>`<div class="alert-card${s.u?' urgent':''}" onclick="goto('${s.s}')"><div class="alert-val${s.u?' gold':''}">${s.v}</div><div class="alert-lbl">${s.l}</div></div>`).join('');
-    if(!apps||!apps.length){$('admin-apps').innerHTML='<p style="font-size:13px;color:var(--muted)">No pending applications</p>';return;}
-    $('admin-apps').innerHTML=(apps||[]).slice(0,5).map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${(a.real_name||a.username||'?').charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${a.real_name||a.username}</div><div style="font-size:12px;color:var(--muted)">${a.domain||''} · ${a.city||''}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold);white-space:nowrap">Review →</div></div>`;}).join('');
+    // Was `return`-ing here on an empty application list, which -- since
+    // this is a bare return, not a continue past just this block --
+    // skipped every try block written after it, including both badge
+    // fetches below. Restructured so the empty-state render doesn't exit
+    // the function.
+    if(!apps||!apps.length){$('admin-apps').innerHTML='<p style="font-size:13px;color:var(--muted)">No pending applications</p>';}
+    else{
+      $('admin-apps').innerHTML=apps.slice(0,5).map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${esc((a.real_name||a.username||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${esc(a.real_name||a.username)}</div><div style="font-size:12px;color:var(--muted)">${esc(a.domain)} · ${esc(a.city)}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold);white-space:nowrap">Review →</div></div>`;}).join('');
+    }
   }catch(e){}
+  try{
+    const reports=await api('post_reports','?status=eq.open&select=id');
+    const n=(reports||[]).length;
+    const b=$('mod-badge');if(b)b.textContent=n>0?n+' open':'';
+  }catch(e){}
+  try{
+    const dels=await api('users','?deletion_requested_at=not.is.null&select=id');
+    const n=(dels||[]).length;
+    const b=$('del-badge');if(b)b.textContent=n>0?n+' pending':'';
+  }catch(e){}
+}
+
+async function loadAdminDeletions(){
+  const el=$('admin-deletions-list');
+  try{
+    const d=await api('users','?deletion_requested_at=not.is.null&order=deletion_requested_at.desc&select=id,real_name,username,email,deletion_requested_at')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No pending deletion requests.</div></div>';return;}
+    el.innerHTML='<p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:14px">Permanently removing an account (including its auth login) has to be done from the Supabase dashboard\'s Admin API, not from here -- "Mark as processed" just clears the request once you\'ve actually done that.</p>'
+      +d.map(u=>`<div class="card" style="margin-bottom:10px">
+        <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${esc(u.real_name||u.username)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${esc(u.email)} · requested ${new Date(u.deletion_requested_at).toLocaleDateString('en-IN')}</div>
+        <button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="markDeletionProcessed('${u.id}')">Mark as processed</button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function markDeletionProcessed(userId){
+  try{await api('users',`?id=eq.${userId}`,'PATCH',{deletion_requested_at:null});await loadAdminDeletions();}
+  catch(e){alert('Could not update — please try again.');}
+}
+
+async function loadModerationQueue(){
+  const el=$('moderation-list');
+  try{
+    const reports=await api('post_reports','?status=eq.open&order=created_at.desc&select=id,post_id,reporter_id,reason,detail,created_at')||[];
+    if(!reports.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No open reports.</div></div>';return;}
+    const postIds=[...new Set(reports.map(r=>r.post_id))];let pm={};
+    try{const p=await api('posts',`?id=in.(${postIds.join(',')})&select=id,body,author_id`);(p||[]).forEach(x=>pm[x.id]=x);}catch(e){}
+    el.innerHTML=reports.map(r=>{const p=pm[r.post_id]||{};return`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(r.reason)}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.body?esc(p.body):'(post no longer exists)'}</div>
+      ${r.detail?`<div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">"${esc(r.detail)}"</div>`:''}
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="resolveReport('${r.id}','resolved_removed','${r.post_id}')">Remove post</button>
+        <button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="resolveReport('${r.id}','resolved_dismissed')">Dismiss</button>
+      </div>
+    </div>`;}).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the moderation queue</div></div>';}
+}
+
+async function resolveReport(reportId,resolution,postId){
+  try{
+    if(resolution==='resolved_removed'&&postId)await api('posts',`?id=eq.${postId}`,'DELETE');
+    await api('post_reports',`?id=eq.${reportId}`,'PATCH',{status:resolution,resolved_at:new Date().toISOString(),resolved_by:ST.profile?.id||null});
+    await loadModerationQueue();
+  }catch(e){alert('Could not resolve the report — please try again.');}
+}
+
+async function publishUpdate(){
+  const title=$('pu-title').value.trim();if(!title)return;
+  try{
+    await api('blog_posts','','POST',{
+      category:$('pu-category').value,
+      title,
+      excerpt:$('pu-excerpt').value.trim()||null,
+      body:$('pu-body').value.trim()||$('pu-excerpt').value.trim()||'',
+      date:new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),
+      read_time:'2 min read',
+      status:'published'
+    });
+    ['pu-title','pu-excerpt','pu-body'].forEach(id=>$(id).value='');
+    ST.blogPosts=[];
+    goto('admin-home');
+  }catch(e){alert('Could not publish — please try again.');}
+}
+
+// ---- Ads ----
+
+async function submitAdCampaign(){
+  if(!ST.profile)return;
+  const headline=$('ad-headline').value.trim();if(!headline)return;
+  try{
+    await api('ad_campaigns','','POST',{
+      advertiser_id:ST.profile.id,headline,
+      body:$('ad-body').value.trim()||null,
+      cta_label:$('ad-cta').value.trim()||null,
+      daily_budget:parseFloat($('ad-budget').value)||null,
+      duration_days:parseInt($('ad-duration').value)||null
+    });
+    ['ad-headline','ad-body','ad-cta','ad-budget','ad-duration'].forEach(id=>$(id).value='');
+    alert('Submitted for review — you will be notified once approved.');
+    await loadMyAdCampaigns();
+  }catch(e){alert('Could not submit — please try again.');}
+}
+
+async function loadMyAdCampaigns(){
+  if(!ST.profile)return;
+  const el=$('my-ad-campaigns');
+  try{
+    const d=await api('ad_campaigns',`?advertiser_id=eq.${ST.profile.id}&order=created_at.desc&select=id,headline,status,post_id,daily_budget,duration_days,target_bucket_ids`)||[];
+    if(!d.length){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No campaigns yet.</p>';return;}
+    const postIds=d.filter(c=>c.post_id).map(c=>c.post_id);
+    let likeCounts={},commentCounts={};
+    if(postIds.length){
+      try{const lc=await api('post_likes',`?post_id=in.(${postIds.join(',')})&select=post_id`);(lc||[]).forEach(r=>likeCounts[r.post_id]=(likeCounts[r.post_id]||0)+1);}catch(e){}
+      try{const cc=await api('post_comments',`?post_id=in.(${postIds.join(',')})&select=post_id`);(cc||[]).forEach(r=>commentCounts[r.post_id]=(commentCounts[r.post_id]||0)+1);}catch(e){}
+    }
+    let bucketCounts={};
+    if(d.some(c=>c.target_bucket_ids?.length)){
+      try{const u=await api('users',`?status=eq.active&select=bucket_id`);(u||[]).forEach(x=>{if(x.bucket_id)bucketCounts[x.bucket_id]=(bucketCounts[x.bucket_id]||0)+1;});}catch(e){}
+    }
+    const statusLabel={pending_review:'Pending review',active:'Live',paused:'Paused',ended:'Ended',rejected:'Rejected'};
+    el.innerHTML=d.map(c=>{
+      const reach=(c.target_bucket_ids||[]).reduce((s,b)=>s+(bucketCounts[b]||0),0);
+      return`<div class="card" style="margin-bottom:10px">
+        <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${esc(c.headline)}</div>
+        <div style="font-size:11px;color:var(--gold);margin-bottom:8px">${statusLabel[c.status]||c.status}</div>
+        ${c.status==='active'&&c.post_id?`<div style="font-size:12px;color:var(--muted);font-family:var(--sans)">${likeCounts[c.post_id]||0} likes · ${commentCounts[c.post_id]||0} comments</div>`:''}
+        ${c.target_bucket_ids?.length?`<div style="font-size:11px;color:rgba(16,30,51,0.4);margin-top:4px">Targeting ~${reach} active members across ${c.target_bucket_ids.length} sector${c.target_bucket_ids.length===1?'':'s'}</div>`:''}
+      </div>`;
+    }).join('');
+    el.insertAdjacentHTML('beforeend','<p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);line-height:1.6;margin-top:6px">Likes and comments on the live post are real counts. Per-view impressions aren\'t tracked yet — reach shown is the actual size of your targeted sectors, not a measured view count.</p>');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+}
+
+async function loadAdminAds(){
+  const el=$('admin-ads-list');
+  try{
+    const d=await api('ad_campaigns','?status=in.(pending_review,active)&order=created_at.desc&select=id,headline,body,cta_label,daily_budget,duration_days,status,advertiser_id')||[];
+    const n=d.filter(x=>x.status==='pending_review').length;
+    const b=$('ads-badge');if(b)b.textContent=n>0?n+' pending':'';
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No campaigns.</div></div>';return;}
+    const ids=[...new Set(d.map(x=>x.advertiser_id))];let am={};
+    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${x.status==='active'?'LIVE':'PENDING REVIEW'} · ${esc(dname(am[x.advertiser_id]||{}))}</div>
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.headline)}</div>
+      ${x.body?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:8px">${esc(x.body)}</div>`:''}
+      <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:10px">₹${x.daily_budget||0}/day · ${x.duration_days||'—'} days</div>
+      ${x.status==='pending_review'?`<div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="approveAd('${x.id}')">Approve</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="rejectAd('${x.id}')">Reject</button></div>`:'<div style="font-size:11px;color:var(--green)">Live in feed</div>'}
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load campaigns</div></div>';}
+}
+
+async function approveAd(campaignId){
+  try{
+    const camps=await api('ad_campaigns',`?id=eq.${campaignId}&select=*`);const c=(camps||[])[0];if(!c)return;
+    // Needs the new post's real id back to link it on ad_campaigns -- the
+    // shared api() helper doesn't request a representation back (by design,
+    // see its own comment), so this one call asks for it directly instead of
+    // changing that behavior for every other caller.
+    const r=await fetch(`${SB_URL}/rest/v1/posts`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({author_id:c.advertiser_id,body:c.body||c.headline,title:c.headline,is_sponsored:true,sponsor_user_id:c.advertiser_id,audience:'everyone'})});
+    if(!r.ok)throw new Error('post creation failed');
+    const created=await r.json();const newPost=(created||[])[0];
+    await api('ad_campaigns',`?id=eq.${campaignId}`,'PATCH',{status:'active',post_id:newPost?.id||null,decided_at:new Date().toISOString()});
+    await loadAdminAds();
+  }catch(e){alert('Could not approve — please try again.');}
+}
+
+async function rejectAd(campaignId){
+  try{await api('ad_campaigns',`?id=eq.${campaignId}`,'PATCH',{status:'rejected',decided_at:new Date().toISOString()});await loadAdminAds();}
+  catch(e){alert('Could not reject — please try again.');}
+}
+
+// ---- Platform partners ----
+
+async function loadAdminPartners(){
+  const el=$('admin-partners-list');
+  try{
+    const d=await api('platform_partners','?order=created_at.desc&select=*')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No partner requests yet.</div></div>';return;}
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.name)}</div>
+      <div style="font-size:11px;color:var(--gold);margin-bottom:6px">${x.kind==='data_partner'?'Data partner':'Publishing partner'} · ${esc(x.status)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Requesting: ${(x.requested_scopes||[]).join(', ')||'—'}</div>
+      ${x.status==='pending'?`<div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePartner('${x.id}','approved')">Approve</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePartner('${x.id}','denied')">Deny</button></div>`:''}
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load partners</div></div>';}
+}
+
+async function decidePartner(id,status){
+  try{await api('platform_partners',`?id=eq.${id}`,'PATCH',{status,decided_at:new Date().toISOString()});await loadAdminPartners();}
+  catch(e){alert('Could not update — please try again.');}
+}
+
+// ---- Developer / API settings ----
+
+async function loadDeveloperSettings(){
+  if(!ST.profile)return;
+  try{
+    const keys=await api('api_keys',`?user_id=eq.${ST.profile.id}&revoked_at=is.null&order=created_at.desc&select=id,label,scopes,created_at,last_used_at`)||[];
+    $('api-key-area').innerHTML=(keys.length?keys.map(k=>`<div class="card" style="margin-bottom:10px">
+      <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600">${k.label||'API key'}</div>
+      <div style="font-size:11px;color:rgba(16,30,51,0.4);margin:4px 0 8px">Created ${new Date(k.created_at).toLocaleDateString('en-IN')} · scopes: ${(k.scopes||[]).join(', ')||'none'}</div>
+      <button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="revokeApiKey('${k.id}')">Revoke</button>
+    </div>`).join(''):'')+'<button class="btn btn-gold btn-full" onclick="generateApiKey()">+ Generate a new key</button>';
+    $('api-key-stats').textContent=keys.length+' active key'+(keys.length===1?'':'s')+' — per-call usage metering isn\'t built yet.';
+  }catch(e){$('api-key-area').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function generateApiKey(){
+  if(!ST.profile)return;
+  const raw='mhy_live_'+crypto.randomUUID().replace(/-/g,'');
+  const hashBuf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
+  const hashHex=[...new Uint8Array(hashBuf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  try{
+    await api('api_keys','','POST',{user_id:ST.profile.id,label:'My key',key_hash:hashHex,scopes:['post','read_profile']});
+    await loadDeveloperSettings();
+    $('api-key-area').insertAdjacentHTML('afterbegin',`<div class="card" style="margin-bottom:10px;border-color:var(--gold)"><div style="font-size:11px;color:var(--gold);margin-bottom:6px">Your new key — shown once, copy it now</div><div style="font-family:monospace;font-size:12px;color:var(--white);word-break:break-all;background:rgba(16,30,51,0.04);padding:10px;border-radius:4px">${raw}</div></div>`);
+  }catch(e){alert('Could not create a key — please try again.');}
+}
+
+async function revokeApiKey(id){
+  try{await api('api_keys',`?id=eq.${id}`,'PATCH',{revoked_at:new Date().toISOString()});await loadDeveloperSettings();}
+  catch(e){alert('Could not revoke — please try again.');}
+}
+
+// ---- Settings & privacy ----
+
+async function loadSettings(){
+  if(!ST.profile)return;
+  const perm=ST.profile.allow_messages_from||'everyone';
+  $('msg-perm-chips').innerHTML=[['everyone','Everyone'],['connections','Connections only']].map(([v,l])=>`<div class="chip${v===perm?' active':''}" onclick="setMsgPerm('${v}')">${l}</div>`).join('');
+  const el=$('blocked-list');
+  try{
+    const d=await api('blocked_users',`?blocker_id=eq.${ST.profile.id}&select=blocked_id`)||[];
+    if(!d.length){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No blocked members.</p>';return;}
+    const ids=d.map(x=>x.blocked_id);const u=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const um={};(u||[]).forEach(x=>um[x.id]=x);
+    el.innerHTML=d.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.blocked_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unblockUser('${x.blocked_id}')">Unblock</button></div>`).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Unable to load</p>';}
+}
+
+async function setMsgPerm(v){
+  if(!ST.profile)return;
+  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{allow_messages_from:v});ST.profile.allow_messages_from=v;await loadSettings();}
+  catch(e){alert('Could not update — please try again.');}
+}
+
+async function blockUser(userId){
+  if(!ST.profile)return;
+  try{await api('blocked_users','','POST',{blocker_id:ST.profile.id,blocked_id:userId});alert('Blocked.');}
+  catch(e){alert('Could not block — please try again.');}
+}
+
+async function unblockUser(userId){
+  if(!ST.profile)return;
+  try{await api('blocked_users',`?blocker_id=eq.${ST.profile.id}&blocked_id=eq.${userId}`,'DELETE');await loadSettings();}
+  catch(e){}
+}
+
+async function downloadMyData(){
+  if(!ST.profile)return;
+  try{
+    const [posts,comments,likes]=await Promise.all([
+      api('posts',`?author_id=eq.${ST.profile.id}&select=*`),
+      api('post_comments',`?author_id=eq.${ST.profile.id}&select=*`),
+      api('post_likes',`?user_id=eq.${ST.profile.id}&select=*`)
+    ]);
+    const bundle={profile:ST.profile,posts:posts||[],comments:comments||[],likes:likes||[]};
+    const blob=new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='mahayukti-my-data.json';document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){alert('Could not prepare your data — please try again.');}
+}
+
+async function deactivateAccount(){
+  if(!ST.profile||!confirm('Deactivate your account? You can ask an admin to reactivate it later.'))return;
+  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{status:'deactivated'});await handleSignOut();}
+  catch(e){alert('Could not deactivate — please try again.');}
+}
+
+async function requestAccountDeletion(){
+  if(!ST.profile||!confirm('Request permanent deletion? An admin reviews every request before anything is removed.'))return;
+  try{await api('users',`?id=eq.${ST.profile.id}`,'PATCH',{deletion_requested_at:new Date().toISOString()});alert('Request sent — an admin will process it.');}
+  catch(e){alert('Could not submit the request — please try again.');}
+}
+
+// ---- Feed preferences ----
+
+async function loadFeedPreferences(){
+  if(!ST.profile)return;
+  try{
+    const[buckets,weights]=await Promise.all([api('buckets','?order=sort_order.asc&select=id,name'),api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&select=bucket_id,weight`)]);
+    const wm={};(weights||[]).forEach(w=>wm[w.bucket_id]=w.weight);
+    $('bucket-weights-list').innerHTML=(buckets||[]).map(b=>{const w=wm[b.id]||'normal';return`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${esc(b.name)}</span>
+      <div class="chips" style="gap:6px">
+        <div class="chip${w==='more'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','more')">More</div>
+        <div class="chip${w==='normal'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','normal')">Normal</div>
+        <div class="chip${w==='less'?' active':''}" style="font-size:10px;padding:5px 9px" onclick="setBucketWeight('${b.id}','less')">Less</div>
+      </div>
+    </div>`;}).join('');
+  }catch(e){$('bucket-weights-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+
+  try{
+    const[mu,mh]=await Promise.all([api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`)]);
+    let rows=[];
+    if(mu&&mu.length){const u=await api('users',`?id=in.(${mu.map(x=>x.muted_id).join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);const um={};(u||[]).forEach(x=>um[x.id]=x);rows=rows.concat(mu.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.muted_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteUser('${x.muted_id}')">Unmute</button></div>`));}
+    if(mh&&mh.length){const h=await api('hashtags',`?id=in.(${mh.map(x=>x.hashtag_id).join(',')})&select=id,tag`);const hm={};(h||[]).forEach(x=>hm[x.id]=x);rows=rows.concat(mh.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">#${hm[x.hashtag_id]?.tag||''}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteHashtag('${x.hashtag_id}')">Unmute</button></div>`));}
+    $('muted-list').innerHTML=rows.length?rows.join(''):'<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing muted.</p>';
+  }catch(e){$('muted-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+
+  try{
+    const sp=await api('saved_posts',`?user_id=eq.${ST.profile.id}&order=created_at.desc&select=post_id`)||[];
+    if(!sp.length){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing saved yet.</p>';return;}
+    const posts=await api('posts',`?id=in.(${sp.map(x=>x.post_id).join(',')})&select=id,body,title`);
+    $('saved-posts-list').innerHTML=(posts||[]).map(p=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div onclick="openPostThread('${p.id}')" style="cursor:pointer;flex:1;font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.title||p.body)}</div>
+      <button onclick="unsavePostFromPrefs('${p.id}')" style="background:none;border:none;color:rgba(224,85,85,0.7);font-size:11px;cursor:pointer;flex-shrink:0">Remove</button>
+    </div>`).join('');
+  }catch(e){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
+}
+
+async function setBucketWeight(bucketId,weight){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&bucket_id=eq.${bucketId}&select=bucket_id`);
+    if(existing&&existing.length)await api('user_bucket_weights',`?user_id=eq.${ST.profile.id}&bucket_id=eq.${bucketId}`,'PATCH',{weight});
+    else await api('user_bucket_weights','','POST',{user_id:ST.profile.id,bucket_id:bucketId,weight});
+    await loadFeedPreferences();
+  }catch(e){}
+}
+
+async function unmuteUser(userId){try{await api('muted_users',`?muter_id=eq.${ST.profile.id}&muted_id=eq.${userId}`,'DELETE');await loadFeedPreferences();}catch(e){}}
+async function unmuteHashtag(hashtagId){try{await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&hashtag_id=eq.${hashtagId}`,'DELETE');await loadFeedPreferences();}catch(e){}}
+
+async function toggleSavePost(postId,btn){
+  if(!ST.profile)return;
+  try{
+    const existing=await api('saved_posts',`?user_id=eq.${ST.profile.id}&post_id=eq.${postId}&select=post_id`);
+    if(existing&&existing.length){await api('saved_posts',`?user_id=eq.${ST.profile.id}&post_id=eq.${postId}`,'DELETE');if(btn)btn.textContent='Save';}
+    else{await api('saved_posts','','POST',{user_id:ST.profile.id,post_id:postId});if(btn)btn.textContent='Saved';}
+  }catch(e){}
+}
+
+async function unsavePostFromPrefs(postId){
+  if(!ST.profile)return;
+  try{await api('saved_posts',`?user_id=eq.${ST.profile.id}&post_id=eq.${postId}`,'DELETE');await loadFeedPreferences();}
+  catch(e){}
 }
 
 let allAdmApps=[];
@@ -1390,7 +3095,7 @@ async function loadAdmApps(){
 function filterAdmApps(){
   const q=($('adm-app-search')?.value||'').toLowerCase();
   const f=allAdmApps.filter(a=>!q||(a.real_name||'').toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q)||(a.domain||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q));
-  $('adm-apps-list').innerHTML=f.length?f.map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${(a.real_name||a.username||'?').charAt(0).toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${a.real_name||a.username||'Unknown'}</div><div style="font-size:11px;color:rgba(16,30,51,0.35);margin-bottom:2px">${a.email||''}</div><div style="font-size:12px;color:var(--muted)">${a.domain||''} · ${a.city||''}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold)">Review →</div></div>`;}).join(''):'<div class="empty-state"><div class="empty-text">No pending applications</div></div>';
+  $('adm-apps-list').innerHTML=f.length?f.map(a=>{const enc=JSON.stringify(a).replace(/"/g,'&quot;');return`<div class="card" onclick="reviewApp(${enc})" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px"><div class="avatar avatar-sm" style="border-color:rgba(201,148,58,0.3);color:var(--gold);flex-shrink:0">${esc((a.real_name||a.username||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0"><div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:500">${esc(a.real_name||a.username)||'Unknown'}</div><div style="font-size:11px;color:rgba(16,30,51,0.35);margin-bottom:2px">${esc(a.email)}</div><div style="font-size:12px;color:var(--muted)">${esc(a.domain)} · ${esc(a.city)}</div></div><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:5px 10px;font-size:10px;color:var(--gold)">Review →</div></div>`;}).join(''):'<div class="empty-state"><div class="empty-text">No pending applications</div></div>';
 }
 
 function reviewApp(a){
@@ -1400,10 +3105,10 @@ function reviewApp(a){
       <span style="font-size:10px;color:rgba(16,30,51,0.28)">${new Date(a.created_at).toLocaleDateString('en-IN')}</span>
     </div>
     <div class="section-title">Personal Details</div>
-    <div class="card">${[['Full Name',a.real_name],['Email',a.email],['Phone',a.phone],['City',a.city+(a.state?', '+a.state:'')],['LinkedIn',a.linkedin]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${l}</div><div class="info-value">${v}</div></div>`:'').join('')}</div>
+    <div class="card">${[['Full Name',a.real_name],['Email',a.email],['Phone',a.phone],['City',a.city+(a.state?', '+a.state:'')],['LinkedIn',a.linkedin]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${esc(l)}</div><div class="info-value">${esc(v)}</div></div>`:'').join('')}</div>
     <div class="section-title" style="margin-top:16px">Professional Details</div>
-    <div class="card">${[['Domain',a.domain],['Domain Group',a.domain_group],['Role',a.role],['Experience',a.experience],['Qualification',a.qualification],['Organisation',a.organisation]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${l}</div><div class="info-value">${v}</div></div>`:'').join('')}</div>
-    ${a.about?`<div class="section-title" style="margin-top:16px">About</div><div class="card"><p style="font-size:14px;color:var(--muted);font-weight:400;line-height:1.75">${a.about}</p></div>`:''}
+    <div class="card">${[['Domain',a.domain],['Domain Group',a.domain_group],['Role',a.role],['Experience',a.experience],['Qualification',a.qualification],['Organisation',a.organisation]].map(([l,v])=>v?`<div class="info-row"><div class="info-label">${esc(l)}</div><div class="info-value">${esc(v)}</div></div>`:'').join('')}</div>
+    ${a.about?`<div class="section-title" style="margin-top:16px">About</div><div class="card"><p style="font-size:14px;color:var(--muted);font-weight:400;line-height:1.75">${esc(a.about)}</p></div>`:''}
     <div class="section-title" style="margin-top:16px">Admin Notes</div>
     <textarea id="rev-notes" style="width:100%;background:rgba(16,30,51,0.04);border:1.5px solid rgba(16,30,51,0.08);border-radius:0;padding:12px;font-size:14px;color:var(--white);font-family:var(--sans);min-height:80px;resize:none;outline:none;margin-bottom:14px" placeholder="Add notes (required for rejection)..."></textarea>
     <div style="display:flex;gap:10px">
@@ -1433,7 +3138,7 @@ async function loadAdmBriefs(tab){
     const d=await api('client_briefs',`?status=eq.${curBriefTab}&select=*&order=created_at.desc`);
     const el=$('adm-briefs-list');
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-text">No '+curBriefTab+' briefs</div></div>';return;}
-    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${b.urgency}</div><div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">🔒 ${b.confidentiality}</div></div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${b.domain_needed}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${b.description}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px"><button onclick="updBrief('${b.id}','reviewing')" style="background:none;border:1px solid var(--border2);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Review</button><button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button></div></div></div>`).join('');
+    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${esc(b.urgency)}</div><div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">${esc(b.confidentiality)}</div></div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(b.domain_needed)}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(b.description)}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px"><button onclick="updBrief('${b.id}','reviewing')" style="background:none;border:1px solid var(--border2);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Review</button><button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button></div></div></div>`).join('');
   }catch(e){}
 }
 
