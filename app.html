@@ -2896,7 +2896,11 @@ async function checkLiAuthReturn(){
   try{bridge=JSON.parse(sessionStorage.getItem('li_login_bridge')||'null');}catch(e){}
   sessionStorage.removeItem('li_login_bridge');
   if(!bridge){toast('Could not complete LinkedIn sign-in. Please try again.','error');return;}
-  const{error}=await sb.auth.verifyOtp({email:bridge.email,token_hash:bridge.token_hash,type:'magiclink'});
+  // Supabase's client-side verifyOtp() rejects email+token_hash together -- "Only the
+  // token_hash and type should be provided" -- caught only by actually completing the real
+  // redirect and watching the toast, not by reading the Supabase typings. token_hash alone
+  // already uniquely identifies which email this was minted for server-side.
+  const{error}=await sb.auth.verifyOtp({token_hash:bridge.token_hash,type:'magiclink'});
   if(error)toast(error.message||'Could not complete LinkedIn sign-in','error');
 }
 
