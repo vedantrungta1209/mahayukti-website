@@ -2693,7 +2693,10 @@ async function loadEventsList(){
     let myRsvps=new Set();
     if(ST.profile){try{const r=await api('event_rsvps',`?user_id=eq.${ST.profile.id}&select=event_id`);(r||[]).forEach(x=>myRsvps.add(x.event_id));}catch(e){}}
     let counts={};
-    try{const c=await api('event_rsvps',`?event_id=in.(${d.map(x=>x.id).join(',')})&select=event_id`);(c||[]).forEach(x=>counts[x.event_id]=(counts[x.event_id]||0)+1);}catch(e){}
+    // event_rsvps itself is now scoped to your own rows (a direct query used to be able
+    // to list exactly who RSVP'd to what, which this app never surfaces anywhere) --
+    // aggregate "X going" counts read through event_rsvp_counts instead.
+    try{const c=await api('event_rsvp_counts',`?event_id=in.(${d.map(x=>x.id).join(',')})&select=event_id,rsvp_count`);(c||[]).forEach(x=>counts[x.event_id]=x.rsvp_count);}catch(e){}
     el.innerHTML=d.map(x=>{const going=myRsvps.has(x.id);return`<div class="card" style="margin-bottom:10px">
       <div style="font-size:11px;color:var(--gold);font-family:var(--sans);font-weight:600;margin-bottom:4px">${new Date(x.starts_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
       <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(x.title)}</div>
