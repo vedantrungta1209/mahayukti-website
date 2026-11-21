@@ -2635,7 +2635,11 @@ function setBriefType(v){ST.briefType=v;initBriefTypeChips();}
 async function loadExchange(){
   const el=$('exchange-list');
   try{
-    const d=await api('exchange_briefs','?status=eq.open&order=created_at.desc&limit=50&select=id,brief_type,description,anonymous,author_id')||[];
+    // exchange_briefs_public (not the raw table) -- it correctly nulls out author_id for
+    // anonymous briefs unless you're the author or an admin; the raw table's author_id is
+    // real for every row regardless of the anonymous flag, which silently defeated "Post
+    // anonymously" entirely since this is the listing every member can see.
+    const d=await api('exchange_briefs_public','?status=eq.open&order=created_at.desc&limit=50&select=id,brief_type,description,anonymous,author_id')||[];
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No open briefs yet.</div></div>';return;}
     const ids=[...new Set(d.filter(x=>!x.anonymous).map(x=>x.author_id))];let am={};
     if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
