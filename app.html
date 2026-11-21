@@ -1474,6 +1474,13 @@ async function handleSess(s){
   try{
     const p=await api('users','?auth_id=eq.'+s.user.id+'&select=*');
     if(!p||!p.length){
+      // doApply() (the manual, password-based apply form) is mid-submission: its own
+      // signUp() call just fired this exact SIGNED_IN event, racing its own
+      // not-yet-run profile INSERT below. Stand down and let it finish -- it owns
+      // ST.profile and the screen transition once its insert actually lands. Opening the
+      // completion modal here was confirmed live: submitting a real manual application
+      // popped this modal up right on top of the just-submitted form.
+      if(ST.manualApplyInFlight)return;
       // A real, authenticated session (Google or LinkedIn, from either the
       // Login screen's buttons -- there's only one set now) with no
       // matching MahaYukti profile yet means this is a brand-new member.
@@ -2957,6 +2964,15 @@ async function doApply(){
   // 1) Create the Supabase Auth account. (Google/LinkedIn signups no longer come through
   // this screen at all -- see googleAuth()/linkedInAuth() and the OAuth completion modal --
   // so this is always a plain password signup now.)
+  //
+  // signUp() fires a real SIGNED_IN event the instant it succeeds, which races
+  // onAuthStateChange -> handleSess() against the INSERT just below: handleSess() finds no
+  // public.users row yet (this function hasn't written it) and opens the OAuth-completion
+  // modal RIGHT ON TOP of this very form, mid-submission -- confirmed live, by actually
+  // submitting a real application and watching it happen. ST.manualApplyInFlight tells
+  // handleSess() to stand down for this one window; doApply() clears it once its own
+  // insert has actually landed (success or failure).
+  ST.manualApplyInFlight=true;
   let signData;
   try{
     const r=await sb.auth.signUp({email,password:pw});
@@ -2966,6 +2982,7 @@ async function doApply(){
       throw new Error('An account with this email already exists. Please use Login instead.');
     }
   }catch(e){
+    ST.manualApplyInFlight=false;
     const msg=/already|exists|registered/i.test(e.message||'')?'An account with this email already exists. Please use Login instead.':(e.message||'Could not create your account.');
     toast(msg,'error');btn.disabled=false;btn.textContent='Submit Application';return;
   }
@@ -2985,7 +3002,9 @@ async function doApply(){
     const inserted=(await ires.json())[0];
     ST.user=signData.user;ST.user.access_token=token;
     ST.profile=inserted||userRow;
+    ST.manualApplyInFlight=false;
   }catch(e){
+    ST.manualApplyInFlight=false;
     toast('Account created, but the profile could not be saved: '+(e.message||'unknown error'),'error');
     btn.disabled=false;btn.textContent='Submit Application';return;
   }
