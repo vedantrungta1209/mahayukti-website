@@ -3033,7 +3033,10 @@ async function loadFeedPreferences(){
     const sp=await api('saved_posts',`?user_id=eq.${ST.profile.id}&order=created_at.desc&select=post_id`)||[];
     if(!sp.length){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing saved yet.</p>';return;}
     const posts=await api('posts',`?id=in.(${sp.map(x=>x.post_id).join(',')})&select=id,body,title`);
-    $('saved-posts-list').innerHTML=(posts||[]).map(p=>`<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openPostThread('${p.id}')"><div style="font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.title||p.body)}</div></div>`).join('');
+    $('saved-posts-list').innerHTML=(posts||[]).map(p=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div onclick="openPostThread('${p.id}')" style="cursor:pointer;flex:1;font-size:13px;color:var(--white);font-family:var(--sans);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.title||p.body)}</div>
+      <button onclick="unsavePostFromPrefs('${p.id}')" style="background:none;border:none;color:rgba(224,85,85,0.7);font-size:11px;cursor:pointer;flex-shrink:0">Remove</button>
+    </div>`).join('');
   }catch(e){$('saved-posts-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
 }
 
@@ -3057,6 +3060,12 @@ async function toggleSavePost(postId,btn){
     if(existing&&existing.length){await api('saved_posts',`?user_id=eq.${ST.profile.id}&post_id=eq.${postId}`,'DELETE');if(btn)btn.textContent='Save';}
     else{await api('saved_posts','','POST',{user_id:ST.profile.id,post_id:postId});if(btn)btn.textContent='Saved';}
   }catch(e){}
+}
+
+async function unsavePostFromPrefs(postId){
+  if(!ST.profile)return;
+  try{await api('saved_posts',`?user_id=eq.${ST.profile.id}&post_id=eq.${postId}`,'DELETE');await loadFeedPreferences();}
+  catch(e){}
 }
 
 let allAdmApps=[];
