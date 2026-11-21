@@ -1753,8 +1753,24 @@ function viewMember(id){
   $('mp-connect-btn').style.display=isSelf?'none':'';
   $('mp-follow-btn').style.display=isSelf?'none':'';
   $('mp-safety-actions').style.display=isSelf?'none':'';
-  if(!isSelf)refreshConnectState(m.id);
+  if(!isSelf){
+    refreshConnectState(m.id);
+    checkBlockedEitherWay(m.id);
+  }
   goto('member-profile');
+}
+
+async function checkBlockedEitherWay(memberId){
+  if(!ST.profile)return;
+  try{
+    const bu=await api('blocked_users',`?or=(and(blocker_id.eq.${ST.profile.id},blocked_id.eq.${memberId}),and(blocker_id.eq.${memberId},blocked_id.eq.${ST.profile.id}))&select=blocker_id`);
+    if(bu&&bu.length){
+      ['mp-msg-btn','mp-connect-btn','mp-follow-btn'].forEach(id=>$(id).style.display='none');
+      $('mp-safety-actions').insertAdjacentHTML('beforebegin','<p style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center;margin-top:8px" id="mp-blocked-note">Messaging, connecting, and following aren\'t available between you two.</p>');
+    }else{
+      $('mp-blocked-note')?.remove();
+    }
+  }catch(e){}
 }
 
 function chatWithCurrent(){if(ST.currentMember)openChat(ST.currentMember);}
