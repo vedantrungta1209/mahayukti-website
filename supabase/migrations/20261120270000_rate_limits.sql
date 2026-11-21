@@ -59,4 +59,20 @@ create trigger trg_rate_limit_messages
   for each row
   execute function public.enforce_rate_limit(60, 600, 'from_id');
 
+-- Same spam-risk shape as post_comments -- a real Q&A reply, not a bulk
+-- channel.
+drop trigger if exists trg_rate_limit_help_replies on public.help_replies;
+create trigger trg_rate_limit_help_replies
+  before insert on public.help_replies
+  for each row
+  execute function public.enforce_rate_limit(30, 600, 'author_id');
+
+-- Same shape as DMs -- a real group conversation moves fast, same ceiling
+-- as messages for consistency.
+drop trigger if exists trg_rate_limit_group_messages on public.group_messages;
+create trigger trg_rate_limit_group_messages
+  before insert on public.group_messages
+  for each row
+  execute function public.enforce_rate_limit(60, 600, 'from_id');
+
 commit;
