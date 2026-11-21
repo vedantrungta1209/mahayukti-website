@@ -1319,6 +1319,16 @@ async function init(){
     goto(routeInitialHash()||'splash');
   }
   sb.auth.onAuthStateChange(async(evt,s)=>{
+    // INITIAL_SESSION fires once, synchronously-ish, the moment this
+    // listener is subscribed -- with whatever session getSession() above
+    // already saw. init()'s own routing (handleSess, or the hash-based
+    // goto a few lines up) already handled that exact state correctly;
+    // reacting to it again here with an unconditional goto('splash') on a
+    // null session silently discarded that routing every single time,
+    // which is exactly the "always lands on splash" bug this was meant to
+    // fix in the first place -- caught only by actually loading the page
+    // in a browser, never by reading the code.
+    if(evt==='INITIAL_SESSION')return;
     if(evt==='PASSWORD_RECOVERY'){goto('reset-password');return;}
     if(s)await handleSess(s);else{ST.user=null;ST.profile=null;goto('splash');}
   });
