@@ -1381,7 +1381,16 @@ async function handleForgotPassword(){
   const e=($('login-email').value||'').trim().toLowerCase();
   if(!e){toast('Enter your email above first, then tap Forgot password','error');return;}
   try{
-    const{error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:window.location.origin+window.location.pathname+'#reset-password'});
+    // No hash suffix on redirectTo -- Supabase's own implicit-grant redirect
+    // appends "#access_token=...&..." to whatever URL is given here, and a
+    // literal "#reset-password" in front of that produces a malformed
+    // double hash ("#reset-password#access_token=...") that the Supabase
+    // client's own detectSessionInUrl parser silently fails to read,
+    // leaving no session at all -- caught only by completing the real
+    // redirect in a browser and checking for a session afterward, not by
+    // reading the code. Routing to the right screen is handled entirely by
+    // the PASSWORD_RECOVERY event in onAuthStateChange instead.
+    const{error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:window.location.origin+window.location.pathname});
     if(error)throw error;
     toast('Password reset link sent to '+e,'success');
   }catch(e){toast(e.message||'Could not send reset email','error');}
@@ -1402,13 +1411,16 @@ async function handleSetNewPassword(){
 }
 
 async function handleGoogleLogin(){
-  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname+'#login'}});
+  // No hash suffix here -- see the comment on resetPasswordForEmail above;
+  // same Supabase redirect, same double-hash bug, confirmed live by
+  // actually completing this OAuth round-trip in a browser.
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});
   if(error)toast(error.message||'Could not start Google sign-in','error');
 }
 
 async function handleGoogleApply(){
   sessionStorage.setItem('google_apply_pending','1');
-  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname+'#apply'}});
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});
   if(error){sessionStorage.removeItem('google_apply_pending');toast(error.message||'Could not start Google sign-in','error');}
 }
 
