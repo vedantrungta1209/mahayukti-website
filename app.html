@@ -211,7 +211,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.46c-.28 1.5-1.13 2.77-2.4 3.62v3.01h3.49c2.04-1.88 3.22-4.64 3.22-8.66z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.49-3.01c-.97.65-2.21 1.03-4.44 1.03-3.42 0-6.32-2.31-7.35-5.41H.9v3.39C2.86 21.3 7.07 24 12 24z"/><path fill="#FBBC05" d="M4.65 13.7c-.26-.76-.4-1.57-.4-2.4s.14-1.64.4-2.4V5.51H.9A11.98 11.98 0 0 0 0 11.3c0 1.93.46 3.76 1.28 5.4l3.37-2.99z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.1-3.1C17.95 1.19 15.24 0 12 0 7.07 0 2.86 2.7.9 6.61l3.75 3.09C5.68 7.06 8.58 4.75 12 4.75z"/></svg>
       Continue with Google
     </button>
-    <button class="btn btn-outline btn-full" onclick="toast('LinkedIn sign-in is coming soon — use email/password or Google for now.','error')" style="display:flex;align-items:center;justify-content:center;gap:10px">
+    <button class="btn btn-outline btn-full" onclick="liLoginStart()" style="display:flex;align-items:center;justify-content:center;gap:10px">
       <div style="width:18px;height:18px;border-radius:3px;background:#0A66C2;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--sans)">in</div>
       Continue with LinkedIn
     </button>
@@ -1334,6 +1334,7 @@ async function init(){
   });
   checkLinkedInReturn();
   checkLiSignInReturn();
+  checkLiLoginReturn();
 }
 
 function renderPendingScreen(status,note){
@@ -2826,6 +2827,37 @@ function liSignInStart(){
     response_type:'code',client_id:LI_CLIENT_ID,redirect_uri:LI_SIGNIN_REDIRECT_URI,scope:LI_SIGNIN_SCOPE,state
   }).toString();
   window.location.href=u;
+}
+
+// Real "Login with LinkedIn" -- same LinkedIn app/redirect_uri as liSignInStart() above, but
+// li_signin_return='login' tells the callback page (and the linkedin-signin Edge Function) this
+// is an authentication attempt against an EXISTING account, not an apply-form prefill.
+function liLoginStart(){
+  const state=liRandomState();
+  sessionStorage.setItem('li_signin_state',state);
+  sessionStorage.setItem('li_signin_return','login');
+  const u='https://www.linkedin.com/oauth/v2/authorization?'+new URLSearchParams({
+    response_type:'code',client_id:LI_CLIENT_ID,redirect_uri:LI_SIGNIN_REDIRECT_URI,scope:LI_SIGNIN_SCOPE,state
+  }).toString();
+  window.location.href=u;
+}
+
+// Called on every app.html load. If the LinkedIn LOGIN callback just ran, it will have stashed
+// {email, token_hash} in sessionStorage under 'li_login_bridge' and redirected back here with
+// ?li_login=1. token_hash is a single-use Supabase magic-link token for the member's EXISTING
+// account (minted server-side, see linkedin-signin's handleLogin) -- redeeming it via verifyOtp
+// establishes a real session; onAuthStateChange's own SIGNED_IN handling then takes over exactly
+// like any other login method.
+async function checkLiLoginReturn(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('li_login')!=='1')return;
+  history.replaceState(null,'',window.location.pathname+window.location.hash);
+  let bridge=null;
+  try{bridge=JSON.parse(sessionStorage.getItem('li_login_bridge')||'null');}catch(e){}
+  sessionStorage.removeItem('li_login_bridge');
+  if(!bridge){toast('Could not complete LinkedIn sign-in. Please try again.','error');return;}
+  const{error}=await sb.auth.verifyOtp({email:bridge.email,token_hash:bridge.token_hash,type:'magiclink'});
+  if(error)toast(error.message||'Could not complete LinkedIn sign-in','error');
 }
 
 // Called on every app.html load. If the LinkedIn sign-in callback page just ran, it will have

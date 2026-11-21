@@ -30,6 +30,8 @@
 // compatibility (e.g. if r_liteprofile is ever added) but will be null until then; the apply
 // form falls back to asking the applicant for their domain/role directly, which it needs anyway.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const LINKEDIN_CLIENT_ID = Deno.env.get("LINKEDIN_CLIENT_ID") ?? "86dpuqc5ufkfhp";
 const LINKEDIN_CLIENT_SECRET = Deno.env.get("LINKEDIN_CLIENT_SECRET"); // same Supabase project secret as linkedin-oauth; must be set, never hardcoded here
 
@@ -46,15 +48,10 @@ function json(body: unknown, status = 200) {
   });
 }
 
-async function handleUserinfo(body: { code?: string; redirect_uri?: string }) {
-  if (!LINKEDIN_CLIENT_SECRET) {
-    return json({ error: "LINKEDIN_CLIENT_SECRET is not set on this Supabase project. Set it with: supabase secrets set LINKEDIN_CLIENT_SECRET=<rotated secret>" }, 500);
-  }
-  const { code, redirect_uri } = body;
-  if (!code || !redirect_uri) return json({ error: "code and redirect_uri are required" }, 400);
-
-  // 1) Exchange the authorization code for an access token. Deliberately short-lived use: this
-  // token is used once, below, and then discarded — it is never persisted anywhere.
+// Shared by both actions below: exchange a LinkedIn authorization code for the OIDC userinfo
+// claims. Factored out so the real-login path (which additionally needs email_verified) and the
+// apply-prefill path (which doesn't care) don't duplicate the token exchange.
+async function fetchLinkedinUserinfo(code: string, redirect_uri: string) {
   const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -63,21 +60,36 @@ async function handleUserinfo(body: { code?: string; redirect_uri?: string }) {
       code,
       redirect_uri,
       client_id: LINKEDIN_CLIENT_ID,
-      client_secret: LINKEDIN_CLIENT_SECRET,
+      client_secret: LINKEDIN_CLIENT_SECRET!,
     }),
   });
   const tokenData = await tokenRes.json();
   if (!tokenRes.ok || !tokenData.access_token) {
-    return json({ error: "LinkedIn sign-in failed", detail: tokenData }, 400);
+    throw { status: 400, body: { error: "LinkedIn sign-in failed", detail: tokenData } };
   }
-
-  // 2) Fetch the OIDC userinfo claims — this is the one and only thing this flow needs.
   const userinfoRes = await fetch("https://api.linkedin.com/v2/userinfo", {
     headers: { Authorization: `Bearer ${tokenData.access_token}` },
   });
   const userinfo = await userinfoRes.json();
   if (!userinfoRes.ok || !userinfo.sub) {
-    return json({ error: "Could not read your LinkedIn profile", detail: userinfo }, 400);
+    throw { status: 400, body: { error: "Could not read your LinkedIn profile", detail: userinfo } };
+  }
+  return userinfo;
+}
+
+async function handleUserinfo(body: { code?: string; redirect_uri?: string }) {
+  if (!LINKEDIN_CLIENT_SECRET) {
+    return json({ error: "LINKEDIN_CLIENT_SECRET is not set on this Supabase project. Set it with: supabase secrets set LINKEDIN_CLIENT_SECRET=<rotated secret>" }, 500);
+  }
+  const { code, redirect_uri } = body;
+  if (!code || !redirect_uri) return json({ error: "code and redirect_uri are required" }, 400);
+
+  let userinfo;
+  try {
+    userinfo = await fetchLinkedinUserinfo(code, redirect_uri);
+  } catch (e) {
+    if (e && typeof e === "object" && "status" in e) return json((e as any).body, (e as any).status);
+    throw e;
   }
 
   return json({
@@ -90,6 +102,62 @@ async function handleUserinfo(body: { code?: string; redirect_uri?: string }) {
       picture: userinfo.picture ?? null,
     },
   });
+}
+
+// "Login with LinkedIn" -- a real authentication bridge, not just prefill. LinkedIn (via OIDC)
+// is only ever used here to PROVE the person owns a given, already-verified email address.
+// It never creates an account: if no public.users row matches that email, this returns an
+// error telling them to apply first, exactly like a normal login attempt with an unknown email
+// would. If one does match, this uses the Supabase Admin API (service-role, Edge-Function-only)
+// to mint a one-time magic-link token for that EXISTING auth.users identity and hands the token
+// back to the browser, which redeems it via supabase.auth.verifyOtp({type:'magiclink'}) to get a
+// real session for the member's existing account -- no separate "LinkedIn identity" is ever
+// created, so this can't fork a member into two accounts.
+async function handleLogin(body: { code?: string; redirect_uri?: string }) {
+  if (!LINKEDIN_CLIENT_SECRET) {
+    return json({ error: "LINKEDIN_CLIENT_SECRET is not set on this Supabase project." }, 500);
+  }
+  const { code, redirect_uri } = body;
+  if (!code || !redirect_uri) return json({ error: "code and redirect_uri are required" }, 400);
+
+  let userinfo;
+  try {
+    userinfo = await fetchLinkedinUserinfo(code, redirect_uri);
+  } catch (e) {
+    if (e && typeof e === "object" && "status" in e) return json((e as any).body, (e as any).status);
+    throw e;
+  }
+
+  // Trust the email only if LinkedIn itself has verified it -- a claimed-but-unverified email on
+  // an OIDC identity is not proof of ownership, and this path exists specifically to authenticate
+  // someone into an existing account by email.
+  if (!userinfo.email || userinfo.email_verified !== true) {
+    return json({ error: "Your LinkedIn account's email isn't verified, so it can't be used to sign in. Please verify your email with LinkedIn, or use password/Google login instead." }, 400);
+  }
+
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  const { data: rows, error: lookupErr } = await admin
+    .from("users")
+    .select("id")
+    .ilike("email", userinfo.email)
+    .limit(1);
+  if (lookupErr) return json({ error: "Could not look up your account", detail: lookupErr.message }, 500);
+  if (!rows || !rows.length) {
+    return json({ error: "No MahaYukti account found for " + userinfo.email + ". Apply for membership first." }, 404);
+  }
+
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email: userinfo.email,
+  });
+  if (linkErr || !linkData?.properties?.hashed_token) {
+    return json({ error: "Could not sign you in", detail: linkErr?.message }, 500);
+  }
+
+  return json({ email: userinfo.email, token_hash: linkData.properties.hashed_token });
 }
 
 Deno.serve(async (req: Request) => {
@@ -105,7 +173,8 @@ Deno.serve(async (req: Request) => {
 
   try {
     if (body.action === "userinfo") return await handleUserinfo(body as { code?: string; redirect_uri?: string });
-    return json({ error: "Unknown action. Use 'userinfo'." }, 400);
+    if (body.action === "login") return await handleLogin(body as { code?: string; redirect_uri?: string });
+    return json({ error: "Unknown action. Use 'userinfo' or 'login'." }, 400);
   } catch (e) {
     return json({ error: "Unhandled error", detail: String(e) }, 500);
   }

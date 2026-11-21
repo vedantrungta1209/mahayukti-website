@@ -35,8 +35,14 @@ a{color:#9C8568}
 // function knows whose account to attach the LinkedIn connection to). The Edge Function is the
 // only place that holds the Client Secret and does the actual token exchange.
 
-const SB_URL='https://zlkowzqfowwpkvauuzzw.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpsa293enFmb3d3cGt2YXV1enp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzkxMTksImV4cCI6MjA5NDUxNTExOX0.wOZlyBhIwp05Wg6hrbcfw03kaMibFe9VTKSIphyRIwg';
+// This was pointed at a stale/different Supabase project (zlkowzqfowwpkvauuzzw) than the one
+// app.html actually uses (npyoyylrqprawyavnfvv) -- which meant sb.auth.getSession() below could
+// NEVER find the real member session (it's stored under the correct project's own localStorage
+// key), so every single "Connect LinkedIn" attempt failed with "Your MahaYukti session expired,"
+// regardless of whether the member was actually logged in. Found by comparing this file's SB_URL
+// against app.html's and confirming the mismatch, not by anything schema/RLS-level.
+const SB_URL='https://npyoyylrqprawyavnfvv.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5weW95eWxycXByYXd5YXZuZnZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2NTQ4NTgsImV4cCI6MjExMDIzMDg1OH0.K56AWim0w16YuL0r7AZMmkE_gj9MGb3tlRucPoy3gx8';
 const FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-oauth';
 const REDIRECT_URI='https://mahayukti.com/auth/linkedin/callback/';
 const RETURN_TO='/app.html';

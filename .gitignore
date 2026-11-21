@@ -27,3 +27,7 @@ output/
 kaggle/*/secrets.json
 .supabase-db-password.local
 .admin-temp-password.local
+.keystore-password.local
+*.jks
+*.keystore
+node_modules/
