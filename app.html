@@ -1462,6 +1462,10 @@ function renderPendingScreen(status,note){
     $('pending-icon').textContent='—';
     $('pending-title').textContent='Application Status';
     $('pending-text').textContent=note?('Your application was not approved for membership. Note from admin: '+note):'Your application was not approved for membership at this time.';
+  }else if(status==='deactivated'){
+    $('pending-icon').textContent='—';
+    $('pending-title').textContent='Account deactivated';
+    $('pending-text').textContent='This account was deactivated. Contact an admin to reactivate it.';
   }else{
     $('pending-icon').textContent='◈';
     $('pending-title').textContent='Application under review';
@@ -1490,7 +1494,11 @@ async function handleSess(s){
       openOAuthCompleteModal();return;
     }
     ST.profile=p[0];
-    if(ST.profile.status==='pending'||ST.profile.status==='rejected'){renderPendingScreen(ST.profile.status,ST.profile.admin_notes);goto('pending');return;}
+    // Confirmed live: "Deactivate account" (Settings) only ever signed the person out once --
+    // logging back in afterward found no status check here at all and landed on the normal
+    // member home, fully restoring access. deactivated now routes to the same pending-style
+    // status screen as pending/rejected instead of silently proceeding.
+    if(ST.profile.status==='pending'||ST.profile.status==='rejected'||ST.profile.status==='deactivated'){renderPendingScreen(ST.profile.status,ST.profile.admin_notes);goto('pending');return;}
     // Always land on the member home, admin included -- an admin reaches the Admin Panel
     // on demand from the "Admin Panel" quick-action card loadMemberHome() reveals for them,
     // not by being forced straight into it on every login.
