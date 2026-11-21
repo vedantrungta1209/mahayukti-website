@@ -3460,6 +3460,7 @@ async function downloadMyData(){
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download='mahayukti-my-data.json';document.body.appendChild(a);a.click();a.remove();
     URL.revokeObjectURL(url);
+    toast('Download started','success');
   }catch(e){alert('Could not prepare your data — please try again.');}
 }
 
