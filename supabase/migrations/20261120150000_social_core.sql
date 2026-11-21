@@ -42,12 +42,25 @@ create table if not exists public.posts (
   is_article           boolean not null default false,   -- long-form Article vs a short post
   is_sponsored         boolean not null default false,
   sponsor_user_id       uuid references public.users(id), -- who paid, when is_sponsored
+  -- community_id/title/pinned were originally only added later via ALTER
+  -- TABLE in 20261120160000, but posts_insert_own below (in THIS file's own
+  -- RLS section) already needs community_id to exist -- caught only by an
+  -- actual `supabase db push` against the real database, which is exactly
+  -- the kind of ordering bug a text read-through or JS syntax check can
+  -- never catch. Defined here from the start instead. No inline FK to
+  -- communities(id) -- that table doesn't exist yet at this point in the
+  -- file (it's created in section 4, below) -- the constraint is added
+  -- right after communities itself is created instead.
+  community_id         uuid,
+  title                text,
+  pinned               boolean not null default false,
   created_at           timestamptz not null default now()
 );
 
 create index if not exists posts_author_idx on public.posts(author_id);
 create index if not exists posts_bucket_idx on public.posts(bucket_id);
 create index if not exists posts_created_idx on public.posts(created_at desc);
+create index if not exists posts_community_idx on public.posts(community_id);
 
 create table if not exists public.post_likes (
   post_id    uuid not null references public.posts(id) on delete cascade,
@@ -136,6 +149,20 @@ create table if not exists public.community_members (
 );
 
 create index if not exists community_members_user_idx on public.community_members(user_id);
+
+-- Now that communities exists, add the FK posts.community_id couldn't
+-- declare inline above.
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where constraint_name = 'posts_community_id_fkey' and table_name = 'posts'
+  ) then
+    alter table public.posts
+      add constraint posts_community_id_fkey
+      foreign key (community_id) references public.communities(id);
+  end if;
+end $$;
 
 -- =========================================================================
 -- RLS

@@ -39,14 +39,13 @@ where u.bucket_id is null and u.domain_group = b.name;
 -- way for any post authored with the audience selector left on its default.
 -- Nothing to backfill yet since posts is brand new in this same lineage.
 
--- ---- 2. columns community-scoped posts need, regardless of whether there's
---         anything to migrate from forum_posts ---------------------------
-
-alter table public.posts add column if not exists community_id uuid references public.communities(id);
-alter table public.posts add column if not exists title text;
-alter table public.posts add column if not exists pinned boolean not null default false;
-
-create index if not exists posts_community_idx on public.posts(community_id);
+-- ---- 2. community_id/title/pinned on posts ------------------------------
+-- These used to be added here via ALTER TABLE, but that put a real ordering
+-- bug into 20261120150000 itself: posts_insert_own in that same file
+-- already needed community_id to exist, before this migration ever ran --
+-- only caught by an actual `supabase db push` against the real database.
+-- The columns are now defined directly in that file's own CREATE TABLE;
+-- nothing left to do here.
 
 -- ---- 3. fold forum_posts into communities/posts, if it exists -----------
 
