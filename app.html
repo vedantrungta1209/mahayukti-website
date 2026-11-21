@@ -348,7 +348,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="page-title">Privacy Policy</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
-    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE] · Applies to MahaYukti's website and app</p>
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: 21 November 2026 · Applies to MahaYukti's website and app</p>
 
     <div class="section-title">1. Who we are</div>
     <p class="muted-text" style="line-height:1.8">MahaYukti ("MahaYukti," "we," "us") operates a private, verification-gated professional network. The entity operating MahaYukti is [LEGAL ENTITY NAME], registered at [REGISTERED ADDRESS], India. Our Grievance Officer, designated under the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, is [GRIEVANCE OFFICER NAME], reachable at [GRIEVANCE EMAIL] / [GRIEVANCE PHONE]. We acknowledge complaints within 24 hours and aim to resolve them within 15 days, except where the Rules require faster action (e.g. certain content takedowns within 24–72 hours).</p>
@@ -392,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="page-title">Terms &amp; Conditions</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
-    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE]</p>
+    <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: 21 November 2026</p>
 
     <div class="section-title">1. Eligibility</div>
     <p class="muted-text" style="line-height:1.8">You must be at least 18 years old, able to form a binding contract under Indian law, and provide accurate professional information at signup. Membership is granted at MahaYukti's discretion following our verification process (Section 2); we may decline or revoke membership for applications that fail verification or misrepresent the applicant's identity, organisation, or credentials.</p>
@@ -795,7 +795,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="page-title">Communities</div>
   </div>
-  <div class="scroll"><div class="scroll-content" id="forum-list"><div class="loader"><div class="spinner"></div></div>
+  <div class="scroll"><div class="scroll-content">
+    <!-- These two links used to be direct children of #forum-list itself, which
+    loadForums() always fully overwrites via innerHTML (both the empty-state case and the
+    normal list case) -- meaning "Create a community" was destroyed the very first time this
+    screen ever loaded, with no way back short of a page reload. Caught by actually opening
+    this screen and looking for the button the empty state's own text promised ("start one")
+    and finding none. Moved outside the dynamically-replaced container so they're permanent. -->
+    <div id="forum-list"><div class="loader"><div class="spinner"></div></div></div>
     <a href="javascript:void(0)" onclick="promptNewCommunity()" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create a community</a>
     <a href="javascript:void(0)" id="create-institution-link" onclick="promptNewInstitutionCommunity()" style="display:none;align-items:center;justify-content:center;padding:14px;border:1.5px dashed rgba(16,30,51,0.2);border-radius:4px;color:rgba(16,30,51,0.5);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create an institution-verified community (admin)</a>
   </div></div>
@@ -937,7 +944,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="page-title">Events</div>
   </div>
-  <div class="scroll"><div class="scroll-content" id="events-list"><div class="loader"><div class="spinner"></div></div>
+  <div class="scroll"><div class="scroll-content">
+    <!-- Same bug as Communities' old forum-list: loadEventsList() always fully overwrites
+    this container, which used to also hold "+ Host an event" as a direct child -- destroying
+    it the first time the screen loaded, every time, with no way back short of a reload. -->
+    <div id="events-list"><div class="loader"><div class="spinner"></div></div></div>
     <a href="javascript:void(0)" onclick="goto('new-event')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Host an event</a>
   </div></div>
 </div>
@@ -1314,7 +1325,17 @@ const LI_SIGNIN_REDIRECT_URI='https://mahayukti.com/auth/linkedin-signin/callbac
 const LI_SIGNIN_SCOPE='openid profile email';
 const LI_SIGNIN_FUNCTION_URL=SB_URL.replace('.supabase.co','.functions.supabase.co')+'/linkedin-signin';
 
-const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyStep:1,realtimeSubs:[],liConnection:null};
+const ST={user:null,profile:null,members:[],currentMember:null,currentChat:null,currentGC:null,blogPosts:[],dirFilter:'All',urgency:'standard',applyStep:1,realtimeChannels:{},liConnection:null};
+// Each live feature (notifications, chat) owns its OWN named realtime channel and only ever
+// tears down that one, not every channel at once -- setupRT() and setupChatRT() used to share
+// one flat ST.realtimeSubs array that either of them cleared entirely, which meant opening a
+// chat silently killed the notifications subscription, and re-running setupRT() itself (e.g.
+// on a token refresh, which re-fires handleSess()) tried to .on() an already-subscribed
+// channel and threw "cannot add postgres_changes callbacks... after subscribe()" -- confirmed
+// live, on a completely ordinary page load, not a contrived test.
+function teardownRTChannel(name){
+  if(ST.realtimeChannels[name]){sb.removeChannel(ST.realtimeChannels[name]);delete ST.realtimeChannels[name];}
+}
 // The 12 real buckets (matches index.html's homepage list and the strategic plan --
 // previously this file had its own, different 4-category list used nowhere near the
 // actual bucket taxonomy; replaced so classification, the directory filter, and the
@@ -1600,7 +1621,7 @@ async function submitOAuthComplete(){
 }
 
 async function handleSignOut(){
-  ST.realtimeSubs.forEach(s=>s.unsubscribe&&s.unsubscribe());ST.realtimeSubs=[];
+  Object.keys(ST.realtimeChannels).forEach(teardownRTChannel);
   await sb.auth.signOut();ST.user=null;ST.profile=null;document.body.classList.remove('in-app');goto('splash');
 }
 
@@ -2210,10 +2231,9 @@ async function sendDM(){
 }
 
 function setupChatRT(){
-  ST.realtimeSubs.forEach(s=>s.unsubscribe&&s.unsubscribe());ST.realtimeSubs=[];
+  teardownRTChannel('chat');
   if(!ST.profile)return;
-  const s=sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`to_id=eq.${ST.profile.id}`},()=>loadDMs()).subscribe();
-  ST.realtimeSubs.push(s);
+  ST.realtimeChannels.chat=sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`to_id=eq.${ST.profile.id}`},()=>loadDMs()).subscribe();
 }
 
 async function loadGCs(){
@@ -2706,9 +2726,9 @@ async function loadNotifs(){
 async function markNotifRead(id){try{await api('notifications','?id=eq.'+id,'PATCH',{read:true});await loadNotifs();}catch(e){}}
 
 function setupRT(){
+  teardownRTChannel('notifs');
   if(!ST.profile)return;
-  const s=sb.channel('notifs').on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${ST.profile.id}`},async()=>await loadNotifs()).subscribe();
-  ST.realtimeSubs.push(s);
+  ST.realtimeChannels.notifs=sb.channel('notifs').on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${ST.profile.id}`},async()=>await loadNotifs()).subscribe();
 }
 
 function renderProfile(){
