@@ -35,7 +35,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .nav-item svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
 .nav-item span{font-size:10px;font-family:var(--sans)}
 .status-bar{height:var(--safe-top);background:var(--bg-alt);flex-shrink:0}
-.page-header{padding:20px 20px 16px;flex-shrink:0}
+.page-header{padding:20px 20px 16px;flex-shrink:0;position:relative}
+.home-logo-link{position:absolute;top:18px;right:20px;font-family:var(--serif);font-size:15px;font-weight:700;color:var(--navy);text-decoration:none;z-index:2}
+.home-logo-link span{color:var(--gold)}
+.page-header.gradient .home-logo-link{color:var(--white)}
+.page-header.gradient .home-logo-link span{color:var(--gold)}
 .page-header.gradient{background:linear-gradient(180deg,var(--bg-alt) 0%,var(--bg) 100%)}
 .eyebrow{font-size:11px;font-weight:600;color:var(--gold2);letter-spacing:.3px;margin-bottom:8px;font-family:var(--mono)}
 .page-title{font-size:28px;font-family:var(--serif);font-weight:600;color:var(--white);line-height:1.2}
@@ -193,15 +197,39 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-login">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div style="font-size:32px;font-family:var(--serif);color:var(--navy)">Maha<span style="color:var(--gold)">Yukti</span></div>
+    <a href="index.html" style="font-size:32px;font-family:var(--serif);color:var(--navy);text-decoration:none">Maha<span style="color:var(--gold)">Yukti</span></a>
     <div class="page-title" style="margin-top:8px">Member Login</div>
     <div class="page-subtitle">Approved members only.</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocapitalize="none"></div>
     <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Your password"></div>
+    <div style="text-align:right;margin:-8px 0 16px"><button onclick="handleForgotPassword()" style="background:none;border:none;color:rgba(16,30,51,0.4);font-size:12px;cursor:pointer;font-family:var(--sans)">Forgot password?</button></div>
     <button class="btn btn-gold btn-full" id="login-btn" onclick="handleLogin()">Login to MahaYukti</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:20px 0"><div style="flex:1;height:1px;background:var(--border2)"></div><span style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans)">OR</span><div style="flex:1;height:1px;background:var(--border2)"></div></div>
+    <button class="btn btn-outline btn-full" onclick="handleGoogleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.46c-.28 1.5-1.13 2.77-2.4 3.62v3.01h3.49c2.04-1.88 3.22-4.64 3.22-8.66z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.49-3.01c-.97.65-2.21 1.03-4.44 1.03-3.42 0-6.32-2.31-7.35-5.41H.9v3.39C2.86 21.3 7.07 24 12 24z"/><path fill="#FBBC05" d="M4.65 13.7c-.26-.76-.4-1.57-.4-2.4s.14-1.64.4-2.4V5.51H.9A11.98 11.98 0 0 0 0 11.3c0 1.93.46 3.76 1.28 5.4l3.37-2.99z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.1-3.1C17.95 1.19 15.24 0 12 0 7.07 0 2.86 2.7.9 6.61l3.75 3.09C5.68 7.06 8.58 4.75 12 4.75z"/></svg>
+      Continue with Google
+    </button>
+    <button class="btn btn-outline btn-full" onclick="toast('LinkedIn sign-in is coming soon — use email/password or Google for now.','error')" style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <div style="width:18px;height:18px;border-radius:3px;background:#0A66C2;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--sans)">in</div>
+      Continue with LinkedIn
+    </button>
     <div style="text-align:center;margin-top:20px"><span class="muted-text">Not a member? </span><button onclick="startManualApply()" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer">Apply</button></div>
+  </div></div>
+</div>
+
+<!-- RESET PASSWORD -->
+<div class="screen" id="screen-reset-password">
+  <div class="page-header gradient">
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a>
+    <div class="page-title">Set a new password</div>
+    <div class="page-subtitle">You followed a password reset link.</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div class="field"><label>New password</label><input type="password" id="reset-password-new" placeholder="At least 8 characters"></div>
+    <div class="field"><label>Confirm new password</label><input type="password" id="reset-password-confirm" placeholder="Re-enter your new password"></div>
+    <button class="btn btn-gold btn-full" id="reset-password-btn" onclick="handleSetNewPassword()">Set new password</button>
   </div></div>
 </div>
 
@@ -220,7 +248,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-about">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="eyebrow">About MahaYukti</div>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="eyebrow">About MahaYukti</div>
     <div class="page-title">India's first private cross-domain network.</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
@@ -241,7 +269,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-legal">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Legal</div>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="page-title">Legal</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="card" onclick="goto('privacy-policy')" style="cursor:pointer;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Privacy Policy</span><span style="color:var(--gold)">→</span></div>
@@ -254,7 +282,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-privacy-policy">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Privacy Policy</div>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="page-title">Privacy Policy</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE] · Applies to MahaYukti's website and app</p>
@@ -298,7 +326,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-terms">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Terms &amp; Conditions</div>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="page-title">Terms &amp; Conditions</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <p class="muted-text" style="font-size:11px;color:rgba(16,30,51,0.4)">Last updated: [DATE]</p>
@@ -342,7 +370,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-community-guidelines">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('legal')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Community Guidelines</div>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="page-title">Community Guidelines</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <p class="muted-text" style="line-height:1.8;margin-bottom:16px">MahaYukti works because the register is real — real people, real credentials, real organisations. These guidelines protect that.</p>
@@ -374,7 +402,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-apply">
   <div class="page-header gradient">
     <button class="back-btn" onclick="applyBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="eyebrow">Apply for Membership</div>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="eyebrow">Apply for Membership</div>
     <div class="page-title" id="apply-title">Your details</div>
     <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:50%"></div></div>
     <div style="font-size:10px;color:rgba(16,30,51,0.28);font-family:var(--sans)" id="apply-step-lbl">Step 1 of 2</div>
@@ -382,6 +410,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="step-content active" id="apply-s1">
       <div id="apply-li-chip" class="prefill-chip" style="display:none">◆ Name and email filled in from LinkedIn</div>
+      <div class="choice-card" id="google-apply-btn" onclick="handleGoogleApply()" style="margin-bottom:14px"><div class="choice-icon" style="border-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.46c-.28 1.5-1.13 2.77-2.4 3.62v3.01h3.49c2.04-1.88 3.22-4.64 3.22-8.66z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.49-3.01c-.97.65-2.21 1.03-4.44 1.03-3.42 0-6.32-2.31-7.35-5.41H.9v3.39C2.86 21.3 7.07 24 12 24z"/><path fill="#FBBC05" d="M4.65 13.7c-.26-.76-.4-1.57-.4-2.4s.14-1.64.4-2.4V5.51H.9A11.98 11.98 0 0 0 0 11.3c0 1.93.46 3.76 1.28 5.4l3.37-2.99z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.1-3.1C17.95 1.19 15.24 0 12 0 7.07 0 2.86 2.7.9 6.61l3.75 3.09C5.68 7.06 8.58 4.75 12 4.75z"/></svg></div><div><div class="choice-name">Continue with Google</div><div class="choice-desc">Creates your account instantly — no password to set. You'll still pick your vertical and add a line about yourself.</div></div></div>
       <div class="choice-card" id="li-autofill-btn" onclick="liSignInStart()" style="margin-bottom:18px"><div class="choice-icon">in</div><div><div class="choice-name">Fill this in with LinkedIn</div><div class="choice-desc">Brings over your name, email, and headline — you'll still pick your vertical and add a line about yourself.<span id="li-signin-status"></span></div></div></div>
       <div class="field" id="f-fname"><label>First Name *</label><input type="text" id="a-fname" autocapitalize="words"></div>
       <div class="field" id="f-lname"><label>Last Name</label><input type="text" id="a-lname" autocapitalize="words"></div>
@@ -423,6 +452,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-concierge">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto(ST.profile?'home':'splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a>
     <div class="eyebrow">MY Concierge</div>
     <div class="page-title">Submit a Confidential Brief</div>
   </div>
@@ -443,6 +473,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-blog-public">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('splash')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a>
     <div class="eyebrow">MahaYukti Blog</div>
     <div class="page-title">Thinking about<br><span style="color:var(--gold)">professional India.</span></div>
   </div>
@@ -453,6 +484,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <div class="screen" id="screen-blog-post">
   <div class="page-header gradient">
     <button class="back-btn" id="bp-back"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a>
     <div class="eyebrow" id="bp-cat"></div>
     <div class="page-title" id="bp-title" style="font-size:22px;line-height:1.25"></div>
     <div style="font-size:11px;color:rgba(16,30,51,0.28);font-family:var(--sans);margin-top:8px" id="bp-meta"></div>
@@ -1240,9 +1272,7 @@ function gotoTab(n){
 // handleSess() has placed a signed-in member on 'home'/'pending', a stale hash is ignored.
 function routeInitialHash(){
   const n=(window.location.hash||'').replace('#','');
-  if(!n||!$('screen-'+n))return;
-  if(ST.user)return;
-  goto(n);
+  return n&&$('screen-'+n)?n:null;
 }
 function dname(u){return(u?.show_real_name&&u?.real_name_approved&&u?.real_name)?u.real_name:u?.username||'?'}
 // Every piece of member-authored text (post body, comments, messages, listing
@@ -1273,12 +1303,27 @@ async function api(t,p='',m='GET',b=null){
 
 async function init(){
   renderAbout();renderConciergeChips();loadBlogPublic();
+  ST.googleApplyPending=sessionStorage.getItem('google_apply_pending')==='1';
+  sessionStorage.removeItem('google_apply_pending');
   const{data:{session}}=await sb.auth.getSession();
-  if(session)await handleSess(session);else goto('splash');
-  sb.auth.onAuthStateChange(async(_,s)=>{if(s)await handleSess(s);else{ST.user=null;ST.profile=null;goto('splash');}});
+  if(session){
+    await handleSess(session);
+  }else{
+    // Previously this always went to 'splash' first, then a SEPARATE
+    // routeInitialHash() call right after jumped to whatever screen the
+    // homepage's #login/#apply link actually asked for -- so a visitor who
+    // had already chosen "Login" on the homepage landed on the splash
+    // screen's OWN "Member Login" / "Apply for Membership" choice for a
+    // beat before the real login form replaced it. Route the hash first;
+    // only fall back to splash when there's nothing to route to.
+    goto(routeInitialHash()||'splash');
+  }
+  sb.auth.onAuthStateChange(async(evt,s)=>{
+    if(evt==='PASSWORD_RECOVERY'){goto('reset-password');return;}
+    if(s)await handleSess(s);else{ST.user=null;ST.profile=null;goto('splash');}
+  });
   checkLinkedInReturn();
   checkLiSignInReturn();
-  routeInitialHash();
 }
 
 function renderPendingScreen(status,note){
@@ -1297,7 +1342,17 @@ async function handleSess(s){
   ST.user=s.user;ST.user.access_token=s.access_token;
   try{
     const p=await api('users','?auth_id=eq.'+s.user.id+'&select=*');
-    if(!p||!p.length){goto('splash');return;}
+    if(!p||!p.length){
+      // A session with no matching MahaYukti profile -- either a brand-new
+      // Google sign-in that was actually meant to apply, or someone who
+      // somehow got a session without ever applying. Route the first case
+      // to a prefilled apply form instead of a silent, unexplained return
+      // to the splash screen.
+      if(ST.googleApplyPending){await startGoogleApply();return;}
+      await sb.auth.signOut();ST.user=null;ST.profile=null;
+      toast('No MahaYukti account found for that sign-in. Apply for membership first.','error');
+      goto('splash');return;
+    }
     ST.profile=p[0];
     if(ST.profile.status==='pending'||ST.profile.status==='rejected'){renderPendingScreen(ST.profile.status,ST.profile.admin_notes);goto('pending');return;}
     if(ST.profile.role==='admin')loadAdminHome();else loadMemberHome();
@@ -1310,6 +1365,67 @@ async function handleLogin(){
   const btn=$('login-btn');btn.disabled=true;btn.textContent='Logging in...';
   try{const{error}=await sb.auth.signInWithPassword({email:e,password:p});if(error)throw error;}
   catch(e){toast(e.message||'Login failed','error');btn.disabled=false;btn.textContent='Login to MahaYukti';}
+}
+
+async function handleForgotPassword(){
+  const e=($('login-email').value||'').trim().toLowerCase();
+  if(!e){toast('Enter your email above first, then tap Forgot password','error');return;}
+  try{
+    const{error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:window.location.origin+window.location.pathname+'#reset-password'});
+    if(error)throw error;
+    toast('Password reset link sent to '+e,'success');
+  }catch(e){toast(e.message||'Could not send reset email','error');}
+}
+
+async function handleSetNewPassword(){
+  const p=$('reset-password-new').value,p2=$('reset-password-confirm').value;
+  if(p.length<8){toast('Password must be at least 8 characters','error');return;}
+  if(p!==p2){toast('Passwords do not match','error');return;}
+  const btn=$('reset-password-btn');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const{error}=await sb.auth.updateUser({password:p});
+    if(error)throw error;
+    toast('Password updated — you\'re logged in.','success');
+    const{data:{session}}=await sb.auth.getSession();
+    if(session)await handleSess(session);
+  }catch(e){toast(e.message||'Could not update password','error');btn.disabled=false;btn.textContent='Set new password';}
+}
+
+async function handleGoogleLogin(){
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname+'#login'}});
+  if(error)toast(error.message||'Could not start Google sign-in','error');
+}
+
+async function handleGoogleApply(){
+  sessionStorage.setItem('google_apply_pending','1');
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname+'#apply'}});
+  if(error){sessionStorage.removeItem('google_apply_pending');toast(error.message||'Could not start Google sign-in','error');}
+}
+
+// Called from handleSess() when a session exists with no matching MahaYukti
+// profile AND the member clicked "Continue with Google" from the Apply
+// screen specifically (not a plain login attempt) -- prefills the apply
+// form from the Google account instead of signing them straight back out.
+async function startGoogleApply(){
+  ST.googleApplyPending=false;
+  const meta=ST.user?.user_metadata||{};
+  const full=(meta.full_name||meta.name||'').trim();
+  const parts=full.split(' ');
+  $('a-fname').value=parts[0]||'';
+  $('a-lname').value=parts.slice(1).join(' ')||'';
+  $('a-email').value=ST.user?.email||meta.email||'';
+  applyVia='google';
+  ST.applyViaOAuth=true;
+  $('a-password').closest('.field').style.display='none';
+  $('a-password2').closest('.field').style.display='none';
+  $('apply-li-chip').textContent='◆ Signed in with Google — name and email filled in';
+  $('apply-li-chip').style.display='';
+  // Deliberately not calling startManualApply() here -- it resets
+  // applyVia back to 'manual' and re-hides apply-li-chip, which would
+  // immediately undo everything just set above.
+  ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f){f.removeAttribute('data-locked');f.querySelector('input').readOnly=false;}});
+  applyStep=1;bucketManuallySet=false;initBucketSelect();updApply();
+  goto('apply');
 }
 
 async function handleSignOut(){
@@ -2544,6 +2660,9 @@ function applyBack(){if(applyStep===1)goto('splash');else applyPrev();}
 // same 2-step flow "Apply via LinkedIn" also lands on (see liApplyPrefill below).
 function startManualApply(){
   applyVia='manual';
+  ST.applyViaOAuth=false;
+  $('a-password').closest('.field').style.display='';
+  $('a-password2').closest('.field').style.display='';
   $('apply-li-chip').style.display='none';
   ['f-fname','f-lname','f-email'].forEach(id=>{const f=$(id);if(f){f.removeAttribute('data-locked');f.querySelector('input').readOnly=false;}});
   applyStep=1;bucketManuallySet=false;initBucketSelect();updApply();
@@ -2581,8 +2700,10 @@ function applyNext(){
   if(applyStep===1){
     if(!$('a-fname').value.trim()||!$('a-email').value.trim()||!$('a-phone').value.trim()||!$('a-city').value.trim()||!$('a-domain').value.trim()){toast('Please fill required fields','error');return;}
     if(!$('a-bucket').value){toast('Please select your vertical','error');return;}
-    if($('a-password').value.length<8){toast('Password must be at least 8 characters','error');return;}
-    if($('a-password').value!==$('a-password2').value){toast('Passwords do not match','error');return;}
+    if(!ST.applyViaOAuth){
+      if($('a-password').value.length<8){toast('Password must be at least 8 characters','error');return;}
+      if($('a-password').value!==$('a-password2').value){toast('Passwords do not match','error');return;}
+    }
   }
   if(applyStep===2){doApply();return;}
   applyStep++;updApply();
@@ -2600,8 +2721,10 @@ function updApply(){
 async function doApply(){
   const about=$('a-about').value.trim(); // optional — simplified per the "too exhaustive" feedback
   const pw=$('a-password').value;
-  if(pw.length<8){toast('Password must be at least 8 characters','error');return;}
-  if(pw!==$('a-password2').value){toast('Passwords do not match','error');return;}
+  if(!ST.applyViaOAuth){
+    if(pw.length<8){toast('Password must be at least 8 characters','error');return;}
+    if(pw!==$('a-password2').value){toast('Passwords do not match','error');return;}
+  }
   const btn=$('apply-next');btn.disabled=true;btn.textContent='Submitting...';
   const sid=subId();const domain=$('a-domain').value.trim();
   const email=$('a-email').value.trim().toLowerCase();
@@ -2612,18 +2735,26 @@ async function doApply(){
   // requires this to be set before getting here.
   const dg=$('a-bucket').value;
 
-  // 1) Create the Supabase Auth account
+  // 1) Create the Supabase Auth account -- unless the applicant already has
+  // one via Google OAuth (ST.applyViaOAuth), in which case ST.user is
+  // already the real, authenticated account and signUp() would be both
+  // unnecessary and wrong (Google-created accounts don't have a password
+  // to pass it).
   let signData;
-  try{
-    const r=await sb.auth.signUp({email,password:pw});
-    if(r.error)throw r.error;
-    signData=r.data;
-    if(signData?.user&&Array.isArray(signData.user.identities)&&signData.user.identities.length===0){
-      throw new Error('An account with this email already exists. Please use Login instead.');
+  if(ST.applyViaOAuth){
+    signData={user:ST.user,session:{access_token:ST.user.access_token}};
+  }else{
+    try{
+      const r=await sb.auth.signUp({email,password:pw});
+      if(r.error)throw r.error;
+      signData=r.data;
+      if(signData?.user&&Array.isArray(signData.user.identities)&&signData.user.identities.length===0){
+        throw new Error('An account with this email already exists. Please use Login instead.');
+      }
+    }catch(e){
+      const msg=/already|exists|registered/i.test(e.message||'')?'An account with this email already exists. Please use Login instead.':(e.message||'Could not create your account.');
+      toast(msg,'error');btn.disabled=false;btn.textContent='Submit Application';return;
     }
-  }catch(e){
-    const msg=/already|exists|registered/i.test(e.message||'')?'An account with this email already exists. Please use Login instead.':(e.message||'Could not create your account.');
-    toast(msg,'error');btn.disabled=false;btn.textContent='Submit Application';return;
   }
 
   // 2) Create the pending profile row in the `users` table
