@@ -1611,6 +1611,14 @@ async function submitOAuthComplete(){
     if(!ires.ok){const eb=await ires.json().catch(()=>({}));throw new Error(eb.message||eb.hint||('HTTP '+ires.status));}
     ST.profile=(await ires.json())[0]||userRow;
   }catch(e){
+    // This account somehow already has a profile row (confirmed live: raw Postgres text like
+    // `duplicate key value violates unique constraint "users_auth_id_key"` was being shown
+    // directly to the person otherwise) -- recover instead of dead-ending on a DB error string.
+    if(/duplicate key|users_auth_id_key/i.test(e.message||'')){
+      toast('Looks like you already have a MahaYukti account — refreshing…','error');
+      setTimeout(()=>window.location.reload(),1500);
+      return;
+    }
     toast('Could not save your profile: '+(e.message||'unknown error'),'error');
     btn.disabled=false;btn.textContent='Join MahaYukti';return;
   }
