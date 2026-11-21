@@ -1826,7 +1826,7 @@ async function renderPostCards(containerId,posts){
   try{
     if(!posts.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet — be the first to share something.</div></div>';return;}
     const ids=[...new Set(posts.map(p=>p.author_id).filter(Boolean))];let am={};
-    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     const myId=ST.profile?.id;
     let likeSet=new Set();
     try{const mine=await api('post_likes',`?user_id=eq.${myId}&select=post_id`);(mine||[]).forEach(r=>likeSet.add(r.post_id));}catch(e){}
@@ -2032,7 +2032,7 @@ async function openPostThread(postId){
     const p=(posts||[])[0];
     if(!p){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Post not found</div></div>';return;}
     let author={};
-    try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved`);author=(a||[])[0]||{};}catch(e){}
+    try{const a=await api('member_directory',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved`);author=(a||[])[0]||{};}catch(e){}
     $('thread-post').innerHTML=`<div class="card">
       <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${esc(dname(author))}</div>
       <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
@@ -2050,7 +2050,7 @@ async function loadThreadComments(postId){
     const comments=await api('post_comments',`?post_id=eq.${postId}&order=created_at.asc&select=id,body,created_at,author_id`)||[];
     if(!comments.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No comments yet</div></div>';return;}
     const ids=[...new Set(comments.map(c=>c.author_id))];let am={};
-    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     el.innerHTML=comments.map(c=>`<div class="card" style="margin-bottom:8px">
       <div style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600">${esc(dname(am[c.author_id]||{}))}</div>
       <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${esc(c.body)}</div>
@@ -2071,7 +2071,7 @@ async function submitComment(){
 
 async function loadDir(){
   if(!ST.members.length){
-    try{ST.members=await api('users','?status=eq.active&role=neq.admin&select=id,username,real_name,show_real_name,real_name_approved,city,domain,domain_group,role,founding_member,founding_approved,experience,organisation,show_organisation,about&order=created_at.desc&limit=200')||[];}
+    try{ST.members=await api('member_directory','?status=eq.active&role=neq.admin&select=id,username,real_name,show_real_name,real_name_approved,city,domain,domain_group,role,founding_member,founding_approved,experience,organisation,show_organisation,about&order=created_at.desc&limit=200')||[];}
     catch(e){ST.members=[];}
   }
   $('dir-chips').innerHTML=DG.slice(0,8).map(g=>`<div class="chip${g===ST.dirFilter?' active':''}" onclick="setDirFilter('${g}')">${g}</div>`).join('');
@@ -2208,7 +2208,7 @@ async function loadConvos(){
     (data||[]).forEach(m=>{const o=m.from_id===ST.profile.id?m.to_id:m.from_id;if(!seen.has(o)){seen.add(o);convos.push(m);}});
     if(!convos.length){$('convos-list').innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No messages yet</div><div class="empty-sub">Find a member in Directory and start a conversation</div></div>';return;}
     const uids=[...seen];
-    const users=await api('users',`?id=in.(${uids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);
+    const users=await api('member_directory',`?id=in.(${uids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);
     const um={};(users||[]).forEach(u=>um[u.id]=u);
     $('convos-list').innerHTML=convos.map(m=>{
       const oid=m.from_id===ST.profile.id?m.to_id:m.from_id;
@@ -2271,7 +2271,7 @@ async function loadGCMsgs(){
     const d=await api('group_messages',`?chat_id=eq.${ST.currentGC.id}&order=created_at.asc&select=id,content,created_at,from_id&limit=100`);
     if(!d||!d.length){$('gc-msgs').innerHTML='<div class="empty-state" style="padding:32px 20px"><div class="empty-text">Be the first to say something.</div></div>';return;}
     const aids=[...new Set(d.map(m=>m.from_id))];
-    const authors=await api('users',`?id=in.(${aids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const authors=await api('member_directory',`?id=in.(${aids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
     const am={};(authors||[]).forEach(a=>am[a.id]=a);
     $('gc-msgs').innerHTML=d.map(m=>{const me=m.from_id===ST.profile?.id;const n=esc(dname(am[m.from_id]||{username:'Member'}));const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div></div>`;}).join('');
     const sc=$('gc-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
@@ -2291,7 +2291,7 @@ async function loadHelp(){
     const el=$('help-list');
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet. Ask the first question.</div></div>';return;}
     const ids=[...new Set(d.map(p=>p.author_id))];
-    let am={};try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    let am={};try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
     // reply_count on help_posts is never incremented by anything -- showing
     // a real live count from help_replies instead of that stale stored value.
     let replyCounts={};
@@ -2306,7 +2306,7 @@ async function openHelpPost(id){
   ST.currentHelpPostId=id;
   goto('help-post');
   let author={};
-  try{const a=await api('users',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved,domain`);author=(a||[])[0]||{};}catch(e){}
+  try{const a=await api('member_directory',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved,domain`);author=(a||[])[0]||{};}catch(e){}
   $('help-post-body').innerHTML=`<div class="card">
     <div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div>
     <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:8px;line-height:1.3">${esc(p.title)}</div>
@@ -2322,7 +2322,7 @@ async function loadHelpReplies(helpPostId){
     const replies=await api('help_replies',`?help_post_id=eq.${helpPostId}&order=created_at.asc&select=id,content,created_at,author_id`)||[];
     if(!replies.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No replies yet.</div></div>';return;}
     const ids=[...new Set(replies.map(r=>r.author_id))];let am={};
-    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     el.innerHTML=replies.map(r=>`<div class="card" style="margin-bottom:8px">
       <div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(am[r.author_id]||{}))}</div>
       <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${esc(r.content)}</div>
@@ -2405,7 +2405,7 @@ async function loadPendingCommunityMembers(communityId){
     const pending=await api('community_members',`?community_id=eq.${communityId}&status=eq.pending&select=user_id`)||[];
     if(!pending.length){el.innerHTML='';return;}
     const ids=pending.map(x=>x.user_id);
-    const u=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const u=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
     const um={};(u||[]).forEach(x=>um[x.id]=x);
     el.innerHTML=`<div class="section-title">Pending verification (admin)</div>`+pending.map(p=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${esc(dname(um[p.user_id]||{}))}</span>
@@ -2446,7 +2446,7 @@ async function loadMarketplace(){
     const d=await api('marketplace_listings','?status=eq.active&order=created_at.desc&limit=50&select=id,title,category,price_text,description,location,seller_id,photo_urls')||[];
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No listings yet.</div></div>';return;}
     const ids=[...new Set(d.map(x=>x.seller_id))];let am={};
-    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
       ${x.photo_urls?.length?`<img src="${esc(x.photo_urls[0])}" style="width:100%;max-height:200px;object-fit:cover;border-radius:4px;margin-bottom:10px" loading="lazy">`:''}
       <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.title)}</div>
@@ -2552,7 +2552,7 @@ async function loadAdminPackages(){
     const b=$('pkg-badge');if(b)b.textContent=d.length>0?d.length+' pending':'';
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No pending requests.</div></div>';return;}
     const uids=[...new Set(d.map(x=>x.user_id))],pids=[...new Set(d.map(x=>x.package_id))];
-    const[users,pkgs]=await Promise.all([api('users',`?id=in.(${uids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`),api('marketplace_packages',`?id=in.(${pids.join(',')})&select=id,name,duration_days`)]);
+    const[users,pkgs]=await Promise.all([api('member_directory',`?id=in.(${uids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`),api('marketplace_packages',`?id=in.(${pids.join(',')})&select=id,name,duration_days`)]);
     const um={};(users||[]).forEach(u=>um[u.id]=u);
     const pm={};(pkgs||[]).forEach(p=>pm[p.id]=p);
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
@@ -2591,7 +2591,7 @@ async function loadMyListings(){
     const ids=listings.map(l=>l.id);
     const inquiries=await api('marketplace_inquiries',`?listing_id=in.(${ids.join(',')})&order=created_at.desc&select=id,listing_id,buyer_id,message,created_at`)||[];
     const buyerIds=[...new Set(inquiries.map(i=>i.buyer_id))];let bm={};
-    if(buyerIds.length){try{const u=await api('users',`?id=in.(${buyerIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>bm[x.id]=x);}catch(e){}}
+    if(buyerIds.length){try{const u=await api('member_directory',`?id=in.(${buyerIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>bm[x.id]=x);}catch(e){}}
     el.innerHTML=listings.map(l=>{
       const myInquiries=inquiries.filter(i=>i.listing_id===l.id);
       return`<div class="card" style="margin-bottom:12px">
@@ -2611,7 +2611,7 @@ async function loadMyBriefs(){
     const ids=briefs.map(b=>b.id);
     const responses=await api('exchange_brief_responses',`?brief_id=in.(${ids.join(',')})&order=created_at.desc&select=id,brief_id,responder_id,message,created_at`)||[];
     const responderIds=[...new Set(responses.map(r=>r.responder_id))];let rm={};
-    if(responderIds.length){try{const u=await api('users',`?id=in.(${responderIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>rm[x.id]=x);}catch(e){}}
+    if(responderIds.length){try{const u=await api('member_directory',`?id=in.(${responderIds.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>rm[x.id]=x);}catch(e){}}
     el.innerHTML=briefs.map(b=>{
       const myResponses=responses.filter(r=>r.brief_id===b.id);
       return`<div class="card" style="margin-bottom:12px">
@@ -2638,7 +2638,7 @@ async function loadExchange(){
     const d=await api('exchange_briefs','?status=eq.open&order=created_at.desc&limit=50&select=id,brief_type,description,anonymous,author_id')||[];
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No open briefs yet.</div></div>';return;}
     const ids=[...new Set(d.filter(x=>!x.anonymous).map(x=>x.author_id))];let am={};
-    if(ids.length){try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     const labels=Object.fromEntries(BRIEF_TYPES);
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
       <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${labels[x.brief_type]||x.brief_type}</div>
@@ -3216,7 +3216,7 @@ async function loadMyAdCampaigns(){
     }
     let bucketCounts={};
     if(d.some(c=>c.target_bucket_ids?.length)){
-      try{const u=await api('users',`?status=eq.active&select=bucket_id`);(u||[]).forEach(x=>{if(x.bucket_id)bucketCounts[x.bucket_id]=(bucketCounts[x.bucket_id]||0)+1;});}catch(e){}
+      try{const u=await api('member_directory',`?status=eq.active&select=bucket_id`);(u||[]).forEach(x=>{if(x.bucket_id)bucketCounts[x.bucket_id]=(bucketCounts[x.bucket_id]||0)+1;});}catch(e){}
     }
     const statusLabel={pending_review:'Pending review',active:'Live',paused:'Paused',ended:'Ended',rejected:'Rejected'};
     el.innerHTML=d.map(c=>{
@@ -3240,7 +3240,7 @@ async function loadAdminAds(){
     const b=$('ads-badge');if(b)b.textContent=n>0?n+' pending':'';
     if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No campaigns.</div></div>';return;}
     const ids=[...new Set(d.map(x=>x.advertiser_id))];let am={};
-    try{const a=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
+    try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,organisation`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
       <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${x.status==='active'?'LIVE':'PENDING REVIEW'} · ${esc(dname(am[x.advertiser_id]||{}))}</div>
       <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.headline)}</div>
@@ -3334,7 +3334,7 @@ async function loadSettings(){
   try{
     const d=await api('blocked_users',`?blocker_id=eq.${ST.profile.id}&select=blocked_id`)||[];
     if(!d.length){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No blocked members.</p>';return;}
-    const ids=d.map(x=>x.blocked_id);const u=await api('users',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+    const ids=d.map(x=>x.blocked_id);const u=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
     const um={};(u||[]).forEach(x=>um[x.id]=x);
     el.innerHTML=d.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.blocked_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unblockUser('${x.blocked_id}')">Unblock</button></div>`).join('');
   }catch(e){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Unable to load</p>';}
@@ -3406,7 +3406,7 @@ async function loadFeedPreferences(){
   try{
     const[mu,mh]=await Promise.all([api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`)]);
     let rows=[];
-    if(mu&&mu.length){const u=await api('users',`?id=in.(${mu.map(x=>x.muted_id).join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);const um={};(u||[]).forEach(x=>um[x.id]=x);rows=rows.concat(mu.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.muted_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteUser('${x.muted_id}')">Unmute</button></div>`));}
+    if(mu&&mu.length){const u=await api('member_directory',`?id=in.(${mu.map(x=>x.muted_id).join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);const um={};(u||[]).forEach(x=>um[x.id]=x);rows=rows.concat(mu.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.muted_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteUser('${x.muted_id}')">Unmute</button></div>`));}
     if(mh&&mh.length){const h=await api('hashtags',`?id=in.(${mh.map(x=>x.hashtag_id).join(',')})&select=id,tag`);const hm={};(h||[]).forEach(x=>hm[x.id]=x);rows=rows.concat(mh.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">#${hm[x.hashtag_id]?.tag||''}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteHashtag('${x.hashtag_id}')">Unmute</button></div>`));}
     $('muted-list').innerHTML=rows.length?rows.join(''):'<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing muted.</p>';
   }catch(e){$('muted-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
