@@ -186,6 +186,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   body.in-app #app{margin-left:240px;margin-top:60px;height:calc(100% - 60px)}
   body.in-app .nav-bar{display:none}
   body.in-app .scroll-content,body.in-app .scroll-content-no-nav{max-width:680px;margin:0 auto;padding-bottom:40px}
+  /* Home's own two-column layout, per Feed.dc.html: main feed column + a thin right rail
+     (verticals / Exchange shortcuts) -- wider max-width than the generic 680px single-column
+     rule above, since this one needs room for both the 580px column and the 240px rail. */
+  body.in-app #home-scroll-content{max-width:960px;display:flex;gap:24px;align-items:flex-start}
+  #home-main-col{flex:1 1 580px;min-width:0}
+  #home-rail{display:none}
+  body.in-app #home-rail{display:block;flex:0 1 240px;min-width:220px}
   body.in-app #shell-topbar{
     display:flex;align-items:center;justify-content:space-between;
     position:fixed;top:0;left:0;right:0;height:60px;z-index:200;
@@ -208,7 +215,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     justify-content:center;padding:56px;overflow-y:auto;
   }
   #screen-login .back-btn{color:rgba(255,255,255,0.6)}
-  #screen-login .home-logo-link,#screen-login .page-header>a{font-size:26px!important}
+  #screen-login .home-logo-link,#screen-login .page-header>a{font-size:26px!important;color:#fff!important}
   #screen-login .page-title{color:#fff}
   #screen-login .page-subtitle{color:#C7D2E0}
   #screen-login .login-brand-extra{display:block;margin-top:40px}
@@ -560,7 +567,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     </div>
     <div id="home-badge" style="margin-top:10px"></div>
   </div>
-  <div class="scroll"><div class="scroll-content">
+  <div class="scroll"><div class="scroll-content" id="home-scroll-content">
+    <div id="home-main-col">
     <!-- Feed first, like Facebook/LinkedIn's own landing -- this used to sit below Quick
     Actions, Official Updates and the stats row, pushing the actual reason someone opens
     the app below the fold. Quick Actions (still needed on mobile, which has no sidebar for
@@ -586,6 +594,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="section-title" style="margin-top:20px">Official Updates</div>
     <div id="home-blog"><div class="loader"><div class="spinner"></div></div></div>
     <div class="stats-row" id="home-stats"></div>
+    </div>
+    <!-- Desktop-only right rail, per Feed.dc.html: kept thin, shortcuts only, never a
+         second nav. Hidden entirely below the desktop breakpoint, same as MobileHome.dc.html
+         not having one at all -- mobile already reaches both destinations via the bottom bar. -->
+    <div id="home-rail">
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:rgba(16,30,51,0.4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;font-family:var(--sans)">Your vertical</div>
+        <div id="home-rail-vertical" style="font-size:13px;font-weight:600;color:var(--white);font-family:var(--sans)">—</div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div style="font-size:11px;font-weight:700;color:rgba(16,30,51,0.4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;font-family:var(--sans)">On The Exchange</div>
+        <div id="home-rail-exchange" style="font-size:12.5px;color:var(--muted);line-height:1.6;font-family:var(--sans)">Checking for open briefs in your vertical…</div>
+        <a href="javascript:void(0)" onclick="goto('exchange')" style="display:block;margin-top:8px;font-size:12px;font-weight:700;color:var(--gold);font-family:var(--sans)">Browse The Exchange →</a>
+      </div>
+    </div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active" onclick="gotoTab('home')" id="nt-home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
@@ -653,6 +676,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div style="font-size:18px;color:var(--white);font-family:var(--sans);font-weight:600" id="mp-uname"></div>
       <div style="font-size:13px;color:var(--muted);font-family:var(--serif);font-style:italic" id="mp-rname"></div>
       <div id="mp-badge"></div>
+      <div style="font-size:12.5px;color:rgba(16,30,51,0.4);font-family:var(--sans)" id="mp-connections-stat"></div>
     </div>
     <div id="mp-info"></div>
     <div style="font-size:11px;color:rgba(16,30,51,0.4);text-align:center;margin-top:16px;line-height:1.6">Connect if you know each other — needs their acceptance. Follow just to see their posts — no acceptance needed.</div>
@@ -1770,11 +1794,24 @@ async function loadMemberHome(){
   $('home-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>${p.founding_member&&p.founding_approved?'<div class="badge-founding" style="margin-left:8px">◈ Founding Member</div>':''}`;
   $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${esc(p.domain_group)||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${esc(p.city)||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${esc(p.role.charAt(0).toUpperCase()+p.role.slice(1))}</div><div class="stat-lbl">Level</div></div>`;
   renderHomeTierNudge(p);
+  renderHomeRail(p);
   goto('home');gotoTab('home');
   loadBlogFeed('home-blog','home');
   loadSocialFeed();
   loadTrendingHashtags();
   setupRT();
+}
+
+// Desktop-only right rail, per Feed.dc.html -- "Your vertical" (real domain_group) and "On
+// The Exchange" (a real, bucket-matched count of open briefs, not a placeholder).
+async function renderHomeRail(p){
+  const vEl=$('home-rail-vertical');if(vEl)vEl.textContent=p.domain_group||'Not set — add one in Account';
+  const xEl=$('home-rail-exchange');if(!xEl)return;
+  if(!p.bucket_id){xEl.textContent='Add your vertical in Account to see matching briefs here.';return;}
+  try{
+    const d=await api('exchange_briefs_public',`?status=eq.open&bucket_id=eq.${p.bucket_id}&select=id`)||[];
+    xEl.textContent=d.length?`${d.length} open brief${d.length===1?'':'s'} in your vertical.`:'No open briefs yet in your vertical.';
+  }catch(e){xEl.textContent='No open briefs yet in your vertical.';}
 }
 
 async function loadBlog(){
@@ -1941,8 +1978,8 @@ async function renderPostCards(containerId,posts){
         ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:280px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
         ${href?`<a href="${href}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${esc(p.link_title)||href} →</a>`:''}
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
-          <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">${liked?'Liked':'Like'} (${likeCounts[p.id]||0})</button>
-          <button onclick="openPostThread('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} comments</button>
+          <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">✓ ${likeCounts[p.id]||0} found this useful</button>
+          <button onclick="openPostThread('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCounts[p.id]||0} replies</button>
           <button onclick="toggleSavePost('${p.id}',this)" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans);margin-left:auto">Save</button>
           <button onclick="reportPost('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans)">Report</button>
         </div>
@@ -2129,12 +2166,23 @@ async function openPostThread(postId){
     if(!p){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Post not found</div></div>';return;}
     let author={};
     try{const a=await api('member_directory',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved`);author=(a||[])[0]||{};}catch(e){}
+    let likeCount=0,liked=false;
+    try{
+      const likes=await api('post_likes',`?post_id=eq.${postId}&select=user_id`)||[];
+      likeCount=likes.length;liked=ST.profile&&likes.some(l=>l.user_id===ST.profile.id);
+    }catch(e){}
+    let commentCount=0;
+    try{commentCount=(await api('post_comments',`?post_id=eq.${postId}&select=id`)||[]).length;}catch(e){}
     $('thread-post').innerHTML=`<div class="card">
       <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${esc(dname(author))}</div>
       <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
       ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
-      <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:${p.image_url?'10px':'0'}">${linkifyHashtags(esc(p.body))}</div>
-      ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:320px;object-fit:cover" loading="lazy">`:''}
+      <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:${p.image_url?'10px':'10px'}">${linkifyHashtags(esc(p.body))}</div>
+      ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:320px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
+      <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
+        <button onclick="toggleLike('${postId}');openPostThread('${postId}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">✓ ${likeCount} found this useful</button>
+        <span style="color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCount} replies</span>
+      </div>
     </div>`;
   }catch(e){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load post</div></div>';}
   loadThreadComments(postId);
@@ -2202,11 +2250,27 @@ function viewMember(id){
   $('mp-connect-btn').style.display=isSelf?'none':'';
   $('mp-follow-btn').style.display=isSelf?'none':'';
   $('mp-safety-actions').style.display=isSelf?'none':'';
+  $('mp-connections-stat').textContent='';
   if(!isSelf){
     refreshConnectState(m.id);
     checkBlockedEitherWay(m.id);
+    loadConnectionStats(m.id);
   }
   goto('member-profile');
+}
+
+// Per the build spec's PublicProfile canvas: "N connections · M mutual". Both numbers come
+// from a security-definer RPC (get_connection_stats) that counts rows without exposing the
+// raw connection list -- member_connections' own RLS deliberately keeps a member from
+// reading anyone else's connections directly, and that stays true here too.
+async function loadConnectionStats(memberId){
+  const el=$('mp-connections-stat');if(!el)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/get_connection_stats`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json'},body:JSON.stringify({p_target_id:memberId})});
+    if(!r.ok)return;
+    const rows=await r.json();const s=(rows||[])[0];if(!s)return;
+    el.textContent=`${s.total_connections} connection${s.total_connections===1?'':'s'}${s.mutual_connections?' · '+s.mutual_connections+' mutual':''}`;
+  }catch(e){}
 }
 
 async function checkBlockedEitherWay(memberId){
