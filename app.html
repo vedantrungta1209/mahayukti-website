@@ -225,6 +225,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   #screen-login .login-brand-stat-lbl{color:#C7D2E0;font-size:12px}
   #screen-login .scroll{flex:1 1 480px;display:flex;align-items:center;justify-content:center}
   #screen-login .scroll-content-no-nav{max-width:380px;width:100%;padding:48px 24px}
+  /* Apply's own desktop treatment, per Apply.dc.html: a centered white card on a cream
+     page, not the mobile form stretched full-bleed with nothing either side of it. Field
+     ids/order are untouched -- this only changes the chrome around them, since the real
+     flow collects password/mobile fields the wireframe's OAuth-first layout doesn't show
+     at all, and remapping those risks breaking account creation for no visual gain. */
+  #screen-apply{background:var(--bg-alt)}
+  #screen-apply .page-header{max-width:720px;width:100%;margin:0 auto;padding-top:40px;background:none}
+  #screen-apply .scroll{display:flex;justify-content:center}
+  #screen-apply .scroll-content-no-nav{max-width:720px;width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:14px;padding:40px;margin:0 24px 64px}
 }
 .login-brand-extra{display:none}
 /* Literal light color, not var(--white) -- that token is actually dark navy (#101E33) in
