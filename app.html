@@ -198,7 +198,28 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     background:var(--bg-alt);border-right:1px solid var(--border2);
     padding:16px 10px;overflow-y:auto;
   }
+  /* Login's own split brand/form panel -- scoped by id, not .page-header/.scroll generally,
+     since those classes are shared by every other screen and must stay untouched there.
+     Splash/Apply are left as single-column; Login is the one pre-login screen worth the
+     two-panel treatment, since it's the one a desktop visitor returning to the app lands on. */
+  #screen-login.active{flex-direction:row}
+  #screen-login .page-header{
+    flex:1 1 440px;min-width:320px;background:var(--navy);display:flex;flex-direction:column;
+    justify-content:center;padding:56px;overflow-y:auto;
+  }
+  #screen-login .back-btn{color:rgba(255,255,255,0.6)}
+  #screen-login .home-logo-link,#screen-login .page-header>a{font-size:26px!important}
+  #screen-login .page-title{color:#fff}
+  #screen-login .page-subtitle{color:#C7D2E0}
+  #screen-login .login-brand-extra{display:block;margin-top:40px}
+  #screen-login .login-brand-quote{font-family:var(--serif);font-size:22px;color:#fff;line-height:1.5;max-width:360px;margin-bottom:22px}
+  #screen-login .login-brand-stats{display:flex;gap:26px}
+  #screen-login .login-brand-stat-val{color:var(--gold);font-weight:700;font-size:19px;font-family:var(--serif)}
+  #screen-login .login-brand-stat-lbl{color:#C7D2E0;font-size:12px}
+  #screen-login .scroll{flex:1 1 480px;display:flex;align-items:center;justify-content:center}
+  #screen-login .scroll-content-no-nav{max-width:380px;width:100%;padding:48px 24px}
 }
+.login-brand-extra{display:none}
 /* Literal light color, not var(--white) -- that token is actually dark navy (#101E33) in
    this app's system, meant for text on the LIGHT page-header gradient, not a real dark
    background like this topbar's. Using it here made "Maha" nearly invisible. */
@@ -263,6 +284,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <a href="index.html" style="font-size:32px;font-family:var(--serif);color:var(--navy);text-decoration:none">Maha<span style="color:var(--gold)">Yukti</span></a>
     <div class="page-title" style="margin-top:8px">Member Login</div>
     <div class="page-subtitle">Members, log in below. New here? Google or LinkedIn signs you up instantly.</div>
+    <!-- Desktop-only brand panel content (≥960px, see the #screen-login media rule) --
+         splash/login/apply never get the member shell's desktop treatment since they're
+         pre-login, so without this, Login just stretched the mobile header full-width with
+         nothing to fill the space. Hidden by default; the media query reveals it. -->
+    <div class="login-brand-extra">
+      <div class="login-brand-quote">"A register, not a marketplace — members help each other directly."</div>
+      <div class="login-brand-stats">
+        <div><div class="login-brand-stat-val">13</div><div class="login-brand-stat-lbl">verticals</div></div>
+        <div><div class="login-brand-stat-val">0%</div><div class="login-brand-stat-lbl">platform cut</div></div>
+        <div><div class="login-brand-stat-val">Free</div><div class="login-brand-stat-lbl">Member tier</div></div>
+      </div>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocapitalize="none"></div>
@@ -533,6 +566,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     the app below the fold. Quick Actions (still needed on mobile, which has no sidebar for
     Communities/Marketplace/Exchange/Events) and the rest now follow the feed instead of
     leading it; see renderShellNav() for the desktop sidebar that covers the same ground. -->
+    <div id="home-tier-nudge" style="display:none"></div>
     <div class="card" style="margin-bottom:14px">
       <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
       <div id="feed-image-preview" style="display:none;margin-top:8px"><img style="max-width:100%;border-radius:4px;max-height:160px;object-fit:cover" id="feed-image-preview-img"><button onclick="clearFeedImage()" style="display:block;margin-top:4px;background:none;border:none;color:rgba(224,85,85,0.7);font-size:11px;cursor:pointer;padding:0">Remove photo</button></div>
@@ -711,7 +745,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <button onclick="document.getElementById('modal-help').classList.add('open')" style="background:var(--gold);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
     </div>
   </div>
-  <div class="scroll"><div class="scroll-content" id="help-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="scroll"><div class="scroll-content">
+    <!-- Names the branded pillar family MY Help belongs to, per the build spec: MY Help is
+         the one that's live; MY Advisory/Consultancy/Concierge are named as planned, not
+         clickable from here, so the strategic pillar isn't mistaken for the whole plan. -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <span style="padding:6px 13px;border-radius:999px;background:var(--navy);color:#fff;font-size:11.5px;font-weight:700;font-family:var(--sans)">MY Help · live</span>
+      <span style="padding:6px 13px;border-radius:999px;border:1px dashed var(--border2);color:var(--muted);font-size:11.5px;font-weight:600;font-family:var(--sans)">MY Advisory · planned</span>
+      <span style="padding:6px 13px;border-radius:999px;border:1px dashed var(--border2);color:var(--muted);font-size:11.5px;font-weight:600;font-family:var(--sans)">MY Consultancy · planned</span>
+      <span style="padding:6px 13px;border-radius:999px;border:1px dashed var(--border2);color:var(--muted);font-size:11.5px;font-weight:600;font-family:var(--sans)">MY Concierge · planned</span>
+    </div>
+    <div id="help-list"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
   <div class="nav-bar">
     <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
     <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
@@ -891,6 +936,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
     <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
   </div>
+</div>
+
+<!-- BRIEF DETAIL -->
+<div class="screen" id="screen-brief-detail">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Brief</div>
+  </div>
+  <div class="scroll"><div class="scroll-content-no-nav">
+    <div id="bd-content"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
 </div>
 
 <!-- MY BRIEFS -->
@@ -1713,11 +1769,7 @@ async function loadMemberHome(){
   $('home-name').textContent=dname(p);
   $('home-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>${p.founding_member&&p.founding_approved?'<div class="badge-founding" style="margin-left:8px">◈ Founding Member</div>':''}`;
   $('home-stats').innerHTML=`<div class="stat-card"><div class="stat-val">${esc(p.domain_group)||'—'}</div><div class="stat-lbl">Domain</div></div><div class="stat-card"><div class="stat-val">${esc(p.city)||'—'}</div><div class="stat-lbl">City</div></div><div class="stat-card"><div class="stat-val">${esc(p.role.charAt(0).toUpperCase()+p.role.slice(1))}</div><div class="stat-lbl">Level</div></div>`;
-  // An admin is a member first -- handleSess() now always lands everyone on the member home,
-  // same screen a regular member sees, rather than forcing admins straight into the Admin
-  // Panel every time. The only difference for an admin is this one extra quick-action card
-  // to jump into the Admin Panel on demand.
-  const qaa=$('qa-admin');if(qaa)qaa.style.display=p.role==='admin'?'':'none';
+  renderHomeTierNudge(p);
   goto('home');gotoTab('home');
   loadBlogFeed('home-blog','home');
   loadSocialFeed();
@@ -2688,11 +2740,10 @@ async function loadExchange(){
     const ids=[...new Set(d.filter(x=>!x.anonymous).map(x=>x.author_id))];let am={};
     if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
     const labels=Object.fromEntries(BRIEF_TYPES);
-    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
+    el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openBriefDetail('${x.id}')">
       <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${labels[x.brief_type]||x.brief_type}</div>
       <div style="font-size:14px;color:var(--white);font-family:var(--sans);line-height:1.5;margin-bottom:8px">${esc(x.description)}</div>
-      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">${x.anonymous?'Posted anonymously':esc(dname(am[x.author_id]||{}))}</div>
-      ${x.author_id===ST.profile?.id?'':`<button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:12px" onclick="respondToBrief('${x.id}')">Respond</button>`}
+      <div style="font-size:12px;color:rgba(16,30,51,0.4)">${x.anonymous?'Posted anonymously':esc(dname(am[x.author_id]||{}))}</div>
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load The Exchange</div></div>';}
 }
@@ -2713,10 +2764,66 @@ async function submitBrief(){
   }catch(e){alert('Could not post the brief — please try again.');}
 }
 
-async function respondToBrief(briefId){
-  const msg=prompt('Your message to the author:');if(!msg||!msg.trim()||!ST.profile)return;
-  try{await api('exchange_brief_responses','','POST',{brief_id:briefId,responder_id:ST.profile.id,message:msg.trim()});alert('Sent.');}
-  catch(e){alert('Could not send — please try again.');}
+// ---- Brief Detail (replaces the old prompt()-based respondToBrief()) ------------------
+// A real screen per the build spec's BriefDetail.dc.html: full brief, a real response
+// form (not a blocking native prompt()), a response list, and the "not a party to this"
+// disclaimer linked to the Legal Center's Exchange & Marketplace Disclaimer. Responses stay
+// private-to-the-brief's-author by default (matching the RLS that's been in place all
+// along) -- the "share publicly" checkbox is an opt-IN to show a response to other members,
+// not an opt-out, so existing and new responses keep the privacy their senders already
+// expect unless they deliberately choose otherwise. See migration 20261123101000.
+async function openBriefDetail(briefId){
+  ST.currentBriefId=briefId;
+  goto('brief-detail');
+  await loadBriefDetail(briefId);
+}
+
+async function loadBriefDetail(briefId){
+  const el=$('bd-content');
+  el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  try{
+    const briefs=await api('exchange_briefs_public',`?id=eq.${briefId}&select=id,brief_type,description,anonymous,author_id,created_at`);
+    const brief=(briefs||[])[0];
+    if(!brief){el.innerHTML='<div class="empty-state"><div class="empty-text">This brief is no longer available.</div></div>';return;}
+    const isAuthor=brief.author_id===ST.profile?.id;
+    const labels=Object.fromEntries(BRIEF_TYPES);
+    let authorName='Posted anonymously';
+    if(!brief.anonymous){try{const a=await api('member_directory',`?id=eq.${brief.author_id}&select=id,username,real_name,show_real_name,real_name_approved`);authorName=dname((a||[])[0]||{});}catch(e){}}
+    const responses=await api('exchange_brief_responses',`?brief_id=eq.${briefId}&order=created_at.desc&select=id,responder_id,message,private_to_poster,created_at`)||[];
+    const rids=[...new Set(responses.map(r=>r.responder_id))];let rm={};
+    if(rids.length){try{const u=await api('member_directory',`?id=in.(${rids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>rm[x.id]=x);}catch(e){}}
+    el.innerHTML=`
+      <span style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px">${labels[brief.brief_type]||brief.brief_type}</span>
+      <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin:10px 0 6px">${esc(brief.description)}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:18px">${esc(authorName)} · ${new Date(brief.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · ${responses.length} response${responses.length===1?'':'s'}</div>
+      ${isAuthor?'':`<div class="card" style="margin-bottom:18px">
+        <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:10px">Respond to this brief</div>
+        <textarea id="bd-reply" rows="3" placeholder="Describe how you can help, your availability, and rough fee range..." style="width:100%;box-sizing:border-box;border:1.5px solid rgba(16,30,51,0.08);background:rgba(16,30,51,0.04);border-radius:4px;padding:10px 12px;font-family:var(--sans);font-size:13.5px;color:var(--white);resize:none"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="bd-public">Share this response with other members (off = visible only to the brief's author)</label>
+        <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="submitBriefResponse('${briefId}')">Send response</button>
+      </div>`}
+      <div style="font-size:11px;font-weight:700;color:rgba(16,30,51,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Responses${isAuthor?'':' visible to you'}</div>
+      <div id="bd-responses">${responses.length?responses.map(r=>`<div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--white);font-family:var(--sans);font-weight:600">${esc(dname(rm[r.responder_id]||{}))}</span>
+          ${r.private_to_poster?'<span style="font-size:10px;color:rgba(16,30,51,0.35)">· private to you</span>':''}
+        </div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6">${esc(r.message)}</div>
+      </div>`).join(''):'<p style="font-size:13px;color:var(--muted)">No responses yet.</p>'}</div>
+      <div style="background:rgba(201,148,58,0.06);border:1px solid var(--border);border-radius:4px;padding:12px 14px;margin-top:18px;font-size:11.5px;color:var(--muted);line-height:1.6">Reminder: MahaYukti is not a party to this engagement. Agree terms, fees and confidentiality directly with the respondent — see the <a href="javascript:void(0)" onclick="scrollToLegal('legal-marketplace')" style="color:var(--gold)">Exchange &amp; Marketplace Disclaimer</a> in the Legal Center.</div>
+    `;
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load this brief</div></div>';}
+}
+
+async function submitBriefResponse(briefId){
+  if(!ST.profile)return;
+  const message=$('bd-reply').value.trim();if(!message)return;
+  const isPublic=$('bd-public').checked;
+  try{
+    await api('exchange_brief_responses','','POST',{brief_id:briefId,responder_id:ST.profile.id,message,private_to_poster:!isPublic});
+    toast('Response sent','success');
+    await loadBriefDetail(briefId);
+  }catch(e){toast('Could not send — please try again.','error');}
 }
 
 // ---- Events ----
@@ -2856,6 +2963,32 @@ function renderUpgradeCard(p){
       <div style="color:rgba(16,30,51,0.35)">○ 1 verified referral from another member — not yet built</div>
     </div>
     ${eligible?`<button class="btn btn-gold btn-full" onclick="requestParticipantUpgrade()">Apply to become a Participant</button>`:''}
+  </div>`;
+}
+
+// Home's own tier-progress nudge, per the build spec's canvas (Feed.dc.html): a short,
+// legible "on your way to Participant" card with a progress ring, distinct from the full
+// Membership tier card on Account -- made visible so the tier isn't a hidden badge, but kept
+// out of the way (collapses entirely once there's nothing left to work toward) so it doesn't
+// compete with the feed itself.
+function renderHomeTierNudge(p){
+  const box=$('home-tier-nudge');if(!box)return;
+  if(p.role!=='member'){box.style.display='none';return;}
+  const daysOld=Math.floor((Date.now()-new Date(p.created_at).getTime())/86400000);
+  const complete=(f)=>!!(p[f]&&String(p[f]).trim());
+  const profileComplete=complete('about')&&complete('domain')&&complete('domain_group')&&complete('city')&&complete('experience');
+  const met=(daysOld>=90?1:0)+(profileComplete?1:0);
+  const pct=Math.round((met/3)*100);
+  box.style.display='';
+  box.innerHTML=`<div class="card" style="margin-bottom:14px;display:flex;align-items:center;gap:14px">
+    <div style="flex:none;width:40px;height:40px;border-radius:50%;background:conic-gradient(var(--gold) 0% ${pct}%, rgba(16,30,51,0.1) ${pct}% 100%);display:flex;align-items:center;justify-content:center">
+      <div style="width:29px;height:29px;border-radius:50%;background:var(--bg-alt);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--navy)">${met}/3</div>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;color:var(--white)">On your way to Participant tier</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5">Earned automatically, never applied for. Account age 90+ days ${daysOld>=90?'✓':'○'}, profile 100% complete ${profileComplete?'✓':'○'}, 1 verified referral — in progress.</div>
+    </div>
+    <button onclick="gotoTab('profile')" style="flex:none;background:none;border:none;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">Details →</button>
   </div>`;
 }
 
