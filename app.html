@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MahaYukti">
 <meta name="theme-color" content="#FFFFFF">
 <title>MahaYukti</title>
+<link rel="icon" type="image/svg+xml" href="resources/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -183,7 +184,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 #shell-topbar{display:none}
 #shell-sidebar{display:none}
 @media (min-width:960px){
-  body.in-app #app{margin-left:240px;margin-top:60px;height:calc(100% - 60px)}
+  body.in-app #app{margin-left:240px}
   body.in-app .nav-bar{display:none}
   body.in-app .scroll-content,body.in-app .scroll-content-no-nav{max-width:680px;margin:0 auto;padding-bottom:40px}
   /* Home's own two-column layout, per Feed.dc.html: main feed column + a thin right rail
@@ -193,18 +194,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   #home-main-col{flex:1 1 580px;min-width:0}
   #home-rail{display:none}
   body.in-app #home-rail{display:block;flex:0 1 240px;min-width:220px}
-  body.in-app #shell-topbar{
-    display:flex;align-items:center;justify-content:space-between;
-    position:fixed;top:0;left:0;right:0;height:60px;z-index:200;
-    background:var(--navy2);border-bottom:1px solid rgba(255,255,255,0.08);
-    padding:0 24px;
-  }
+  /* No separate fixed top bar -- none of the canvas's screens have one; each is sidebar +
+     content only, with a notification bell inside the screen's own header only where the
+     canvas actually shows one (Home/Feed.dc.html), not a persistent app-wide bar. */
   body.in-app #shell-sidebar{
-    display:flex;flex-direction:column;gap:2px;
-    position:fixed;top:60px;left:0;bottom:0;width:240px;z-index:150;
-    background:var(--bg-alt);border-right:1px solid var(--border2);
+    display:flex;flex-direction:column;justify-content:space-between;
+    position:fixed;top:0;left:0;bottom:0;width:240px;z-index:150;
+    background:var(--bg);border-right:1px solid var(--border2);
     padding:16px 10px;overflow-y:auto;
   }
+  #shell-sidebar-top{display:flex;flex-direction:column;gap:2px}
   /* Login's own split brand/form panel -- scoped by id, not .page-header/.scroll generally,
      since those classes are shared by every other screen and must stay untouched there.
      Splash/Apply are left as single-column; Login is the one pre-login screen worth the
@@ -239,12 +238,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* Literal light color, not var(--white) -- that token is actually dark navy (#101E33) in
    this app's system, meant for text on the LIGHT page-header gradient, not a real dark
    background like this topbar's. Using it here made "Maha" nearly invisible. */
-.shell-logo{font-family:var(--serif);font-size:19px;font-weight:700;color:#F2F0EA}
-.shell-logo span{color:var(--gold)}
-.shell-top-right{display:flex;align-items:center;gap:16px}
-.shell-bell{background:none;border:none;cursor:pointer;position:relative;padding:4px;display:flex}
-.shell-bell svg{width:21px;height:21px;stroke:#F2F0EA;fill:none;stroke-width:1.8}
-.shell-profile{display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:none;color:#F2F0EA;font-family:var(--sans);font-size:13px}
 .shell-nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:4px;cursor:pointer;color:var(--white);font-family:var(--sans);font-size:14px;transition:background .15s}
 .shell-nav-item svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
 .shell-nav-item:hover{background:rgba(19,51,94,0.06)}
@@ -253,17 +246,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 </style>
 </head>
 <body>
-<!-- DESKTOP SHELL: persistent top bar + sidebar, >=960px only, member/admin area only
-     (see the CSS block above and renderShellNav() below). Populated by JS, not hand-written
-     here, since the active-destination highlight and the admin-only entry are both dynamic. -->
-<div id="shell-topbar">
-  <div class="shell-logo">Maha<span>Yukti</span></div>
-  <div class="shell-top-right">
-    <button class="shell-bell" onclick="goto('notifications')"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div class="nav-badge" id="shell-notif-badge" style="display:none">0</div></button>
-    <button class="shell-profile" onclick="gotoTab('profile')"><div class="avatar" style="width:28px;height:28px;font-size:12px;background:var(--navy);color:var(--gold);border-color:var(--gold)" id="shell-profile-initial">?</div><span id="shell-profile-name">Member</span></button>
-  </div>
+<!-- DESKTOP SHELL: sidebar only, >=960px only, member/admin area only -- no separate fixed
+     top bar, matching every canvas screen (each is sidebar + content, nothing above either).
+     Populated by JS (renderShellNav below), since the active-destination highlight and the
+     admin-only entry are both dynamic. -->
+<div id="shell-sidebar">
+  <div id="shell-sidebar-top"></div>
+  <div id="shell-account-footer" onclick="gotoTab('profile')" style="display:flex;gap:10px;align-items:center;padding:14px 12px;border-top:1px solid var(--border2);cursor:pointer;border-radius:4px"></div>
 </div>
-<div id="shell-sidebar"></div>
 
 <div id="app">
 <div class="status-bar"></div>
@@ -659,7 +649,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     </div>
   </div>
   <div style="padding:0 20px 8px;flex-shrink:0">
-    <div class="search-bar"><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.3);fill:none;stroke-width:2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search username or domain..." id="dir-search" oninput="filterDir()" autocapitalize="none"></div>
+    <div class="search-bar"><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.3);fill:none;stroke-width:2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search username or domain..." id="dir-search" oninput="filterDir()" autocapitalize="none" autocomplete="off"></div>
     <div class="chips" id="dir-chips"></div>
   </div>
   <div class="scroll"><div style="padding:0 20px;padding-bottom:calc(80px + var(--safe-bottom))" id="dir-list"><div class="loader"><div class="spinner"></div></div></div></div>
@@ -1503,6 +1493,7 @@ function goto(n){
   if(document.body.classList.contains('in-app')){
     const shellGroup={forums:'directory',marketplace:'exchange',events:'exchange','my-briefs':'exchange','new-brief':'exchange','new-listing':'exchange','my-listings':'exchange','new-event':'exchange','marketplace-packages':'exchange'}[n]||n;
     document.querySelectorAll('.shell-nav-item').forEach(el=>el.classList.toggle('active',el.dataset.screen===shellGroup));
+    const af=$('shell-account-footer');if(af)af.style.background=shellGroup==='profile'?'var(--bg-alt)':'';
   }
 }
 function gotoTab(n){
@@ -1776,23 +1767,24 @@ async function handleSignOut(){
 // below the 960px breakpoint; .in-app is what actually reveals the shell at all.
 function renderShellNav(){
   const isAdmin=ST.profile?.role==='admin';
-  // Six destinations, same order as the mobile bottom bar, per the build spec's nav
-  // unification: Communities/Marketplace/Events no longer get their own sidebar slot --
-  // they're tabs inside Directory and The Exchange respectively (see the tab-row markup
-  // on those screens), and Settings merged into Account (screen-profile) along with the
-  // old avatar-only Profile screen.
+  // Five destinations, same set as the mobile bottom bar minus Account, which every canvas
+  // screen (Feed/Profile/MYHelp/Messages/Exchange/Network.dc.html) renders as a separate,
+  // bottom-pinned avatar card below a divider -- not a sixth plain list item. Admin Panel
+  // stays a regular list entry (admin-only), per AdminPanel.dc.html linking back to it the
+  // same way.
   const dests=[
     {n:'home',tab:true,label:'Home',icon:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>'},
     {n:'directory',tab:true,label:'Directory',icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'},
     {n:'exchange',tab:true,label:'The Exchange',icon:'<path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'},
     {n:'messages',tab:true,label:'Messages',icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'},
     {n:'help',tab:true,label:'MY Help',icon:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'},
-    {n:'profile',tab:true,label:'Account',icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'},
   ];
   if(isAdmin)dests.push({n:'admin-home',tab:false,label:'Admin Panel',icon:'<path d="M12 2l8 4v5c0 5.5-3.5 9-8 11-4.5-2-8-5.5-8-11V6z"/>'});
-  $('shell-sidebar').innerHTML=dests.map(d=>`<div class="shell-nav-item" data-screen="${d.n}" onclick="${d.tab?'gotoTab':'goto'}('${d.n}')"><svg viewBox="0 0 24 24">${d.icon}</svg><span>${esc(d.label)}</span></div>`).join('');
-  $('shell-profile-name').textContent=dname(ST.profile);
-  $('shell-profile-initial').textContent=(dname(ST.profile)||'?').charAt(0).toUpperCase();
+  const navHtml=`<div style="padding:6px 12px 18px;"><span style="font-family:var(--serif);font-weight:700;font-size:19px;color:var(--navy)">Maha<span style="color:var(--gold)">Yukti</span></span></div>`
+    +dests.map(d=>`<div class="shell-nav-item" data-screen="${d.n}" onclick="${d.tab?'gotoTab':'goto'}('${d.n}')"><svg viewBox="0 0 24 24">${d.icon}</svg><span>${esc(d.label)}</span></div>`).join('');
+  $('shell-sidebar-top').innerHTML=navHtml;
+  const n=dname(ST.profile);
+  $('shell-account-footer').innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex:none">${esc((n||'?').charAt(0).toUpperCase())}</div><div style="min-width:0"><div style="font-weight:700;font-size:12.5px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n)}</div><div style="font-size:11px;color:var(--gold);font-weight:600">Account &amp; Settings</div></div>`;
 }
 
 async function loadMemberHome(){
