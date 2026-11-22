@@ -185,12 +185,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 @media (min-width:960px){
   body.in-app #app{margin-left:240px;margin-top:60px;height:calc(100% - 60px)}
   body.in-app .nav-bar{display:none}
-  /* Quick Actions duplicates the sidebar item-for-item (Directory/Messages/Communities/
-     Marketplace/The Exchange/Events/Help/Admin Panel are all already one click away there)
-     -- it exists only because mobile has no sidebar. Never hidden here before, so desktop
-     showed the full sidebar AND a second, redundant copy of the same links -- heading
-     included -- as a card grid in the middle of the Home feed. */
-  body.in-app #quick-actions-block{display:none}
   body.in-app .scroll-content,body.in-app .scroll-content-no-nav{max-width:680px;margin:0 auto;padding-bottom:40px}
   body.in-app #shell-topbar{
     display:flex;align-items:center;justify-content:space-between;
@@ -557,27 +551,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div id="social-feed"><div class="loader"><div class="spinner"></div></div></div>
     <div class="section-title" style="margin-top:20px">Official Updates</div>
     <div id="home-blog"><div class="loader"><div class="spinner"></div></div></div>
-    <div id="quick-actions-block">
-    <div class="section-title" style="margin-top:20px">Quick Actions</div>
-    <div class="quick-grid">
-      <div class="quick-card" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></div>
-      <div class="quick-card" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></div>
-      <div class="quick-card" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>MY Help</span></div>
-      <div class="quick-card" onclick="goto('forums')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg><span>Communities</span></div>
-      <div class="quick-card" onclick="goto('marketplace')"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span>Marketplace</span></div>
-      <div class="quick-card" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>The Exchange</span></div>
-      <div class="quick-card" onclick="goto('events')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Events</span></div>
-      <div class="quick-card" id="qa-admin" onclick="goto('admin-home')" style="display:none;border-color:var(--gold)"><svg viewBox="0 0 24 24"><path d="M12 2l8 4v5c0 5.5-3.5 9-8 11-4.5-2-8-5.5-8-11V6z"/></svg><span>Admin Panel</span></div>
-    </div>
-    </div>
     <div class="stats-row" id="home-stats"></div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active" onclick="gotoTab('home')" id="nt-home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
     <button class="nav-item" onclick="gotoTab('directory')" id="nt-directory"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('exchange')" id="nt-exchange"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Exchange</span></button>
     <button class="nav-item" onclick="gotoTab('messages')" id="nt-messages"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
     <button class="nav-item" onclick="gotoTab('help')" id="nt-help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
-    <button class="nav-item" onclick="gotoTab('profile')" id="nt-profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')" id="nt-profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
   </div>
 </div>
 
@@ -604,6 +586,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="page-title">Directory</div>
     <div class="page-subtitle">Active Network Members</div>
   </div>
+  <div style="padding:10px 20px 0;flex-shrink:0">
+    <div class="tab-row" style="margin-bottom:10px">
+      <button class="tab-btn active">People</button>
+      <button class="tab-btn" onclick="goto('forums')">Communities</button>
+    </div>
+  </div>
   <div style="padding:0 20px 8px;flex-shrink:0">
     <div class="search-bar"><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.3);fill:none;stroke-width:2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search username or domain..." id="dir-search" oninput="filterDir()" autocapitalize="none"></div>
     <div class="chips" id="dir-chips"></div>
@@ -612,9 +600,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   <div class="nav-bar">
     <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
     <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Exchange</span></button>
     <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
     <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
-    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
   </div>
 </div>
 
@@ -667,9 +656,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   <div class="nav-bar">
     <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
     <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Exchange</span></button>
     <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
     <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
-    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
   </div>
 </div>
 
@@ -725,9 +715,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   <div class="nav-bar">
     <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
     <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Exchange</span></button>
     <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
     <button class="nav-item active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
-    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
   </div>
 </div>
 
@@ -751,8 +742,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <!-- COMMUNITIES -->
 <div class="screen" id="screen-forums">
   <div class="page-header gradient">
-    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Communities</div>
+    <button class="back-btn" onclick="goto('directory')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Directory</div>
+  </div>
+  <div style="padding:10px 20px 0;flex-shrink:0">
+    <div class="tab-row" style="margin-bottom:10px">
+      <button class="tab-btn" onclick="goto('directory')">People</button>
+      <button class="tab-btn active">Communities</button>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content">
     <!-- These two links used to be direct children of #forum-list itself, which
@@ -786,8 +783,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <!-- MARKETPLACE -->
 <div class="screen" id="screen-marketplace">
   <div class="page-header gradient">
-    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Marketplace</div>
+    <button class="back-btn" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">The Exchange</div>
+  </div>
+  <div style="padding:0 20px 4px;flex-shrink:0">
+    <div class="tab-row">
+      <button class="tab-btn" onclick="goto('exchange')">Briefs</button>
+      <button class="tab-btn active">Marketplace</button>
+      <button class="tab-btn" onclick="goto('events')">Events</button>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content">
     <div id="marketplace-cta" style="margin-bottom:10px"></div>
@@ -864,14 +868,29 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <!-- THE EXCHANGE -->
 <div class="screen" id="screen-exchange">
   <div class="page-header gradient">
-    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <button class="back-btn" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="page-title">The Exchange</div>
+  </div>
+  <div style="padding:0 20px 4px;flex-shrink:0">
+    <div class="tab-row">
+      <button class="tab-btn active">Briefs</button>
+      <button class="tab-btn" onclick="goto('marketplace')">Marketplace</button>
+      <button class="tab-btn" onclick="goto('events')">Events</button>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content">
     <a href="javascript:void(0)" onclick="goto('my-briefs')" style="display:block;font-size:12px;color:var(--gold);font-family:var(--sans);margin-bottom:12px;text-decoration:none">My briefs &amp; responses received →</a>
     <div id="exchange-list"><div class="loader"><div class="spinner"></div></div></div>
     <a href="javascript:void(0)" onclick="goto('new-brief')" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Post a brief</a>
   </div></div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
+    <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Exchange</span></button>
+    <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
+    <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
+  </div>
 </div>
 
 <!-- MY BRIEFS -->
@@ -900,8 +919,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 <!-- EVENTS -->
 <div class="screen" id="screen-events">
   <div class="page-header gradient">
-    <button class="back-btn" onclick="goto('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Events</div>
+    <button class="back-btn" onclick="goto('exchange')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">The Exchange</div>
+  </div>
+  <div style="padding:0 20px 4px;flex-shrink:0">
+    <div class="tab-row">
+      <button class="tab-btn" onclick="goto('exchange')">Briefs</button>
+      <button class="tab-btn" onclick="goto('marketplace')">Marketplace</button>
+      <button class="tab-btn active">Events</button>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content">
     <!-- Same bug as Communities' old forum-list: loadEventsList() always fully overwrites
@@ -979,21 +1005,42 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div id="li-status" style="font-size:13px;color:var(--muted);font-family:var(--sans);margin-bottom:10px">Checking connection…</div>
     <div style="display:flex;gap:10px" id="li-actions"></div>
     <div class="divider"></div>
-    <div style="background:rgba(16,30,51,0.02);border-radius:0;padding:10px;margin-top:12px"><p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans)">Phone numbers are never displayed to anyone on MahaYukti.</p></div>
-    <div class="divider"></div>
-    <div class="divider"></div>
-    <div class="card" onclick="goto('advertise')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:12px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Advertise on MahaYukti</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-    <div class="card" onclick="goto('developer-settings')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Developer &amp; API access</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-    <div class="card" onclick="goto('settings')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Settings &amp; privacy</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-    <div class="card" onclick="goto('feed-preferences')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Feed preferences</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+
+    <!-- Settings & Privacy -- merged in from the old standalone "Settings" nav item, per
+         the build spec's Account merge: one predictable screen instead of a duplicated
+         top-level item plus this avatar screen. -->
+    <div class="section-title" style="margin-top:16px">Settings &amp; Privacy</div>
+    <div style="font-size:11.5px;color:rgba(16,30,51,0.4);font-family:var(--sans);margin-bottom:6px">Who can message you</div>
+    <div class="chips" id="msg-perm-chips" style="margin-bottom:16px"></div>
+    <div style="font-size:11.5px;color:rgba(16,30,51,0.4);font-family:var(--sans);margin-bottom:6px">Blocked</div>
+    <div id="blocked-list" style="margin-bottom:16px"><div class="loader"><div class="spinner"></div></div></div>
+    <div class="card" onclick="goto('feed-preferences')" style="cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Feed Preferences</span><span style="color:var(--gold)">→</span></div>
+    <button class="btn btn-outline btn-full" onclick="downloadMyData()" style="margin-bottom:8px">Download my data</button>
+    <div class="card" onclick="goto('app-support')" style="cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">FAQs &amp; Support</span><span style="color:var(--gold)">→</span></div>
+    <div class="card" onclick="goto('legal')" style="cursor:pointer;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Trust &amp; Legal Center</span><span style="color:var(--gold)">→</span></div>
+    <div style="background:rgba(16,30,51,0.02);border-radius:0;padding:10px;margin-bottom:16px"><p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans)">Phone numbers are never displayed to anyone on MahaYukti.</p></div>
+
+    <div class="section-title">Register tools</div>
+    <div class="card" onclick="goto('advertise')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Advertise on MahaYukti</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="goto('developer-settings')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:16px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Developer &amp; API access</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+
+    <!-- Admin-only, pinned here instead of its own sidebar slot -- stops an empty nav item
+         showing for the ~99% of members who aren't admins. -->
+    <div class="card" id="qa-admin-profile" onclick="goto('admin-home')" style="display:none;border-color:var(--gold);align-items:center;gap:12px;cursor:pointer;margin-bottom:16px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M12 2l8 4v5c0 5.5-3.5 9-8 11-4.5-2-8-5.5-8-11V6z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Admin Panel — you have admin access</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+
+    <button class="btn btn-outline btn-full" onclick="deactivateAccount()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-bottom:10px">Deactivate account</button>
+    <button class="btn btn-outline btn-full" onclick="requestAccountDeletion()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-bottom:8px">Request permanent deletion</button>
+    <p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);margin-bottom:16px;line-height:1.6">Permanent deletion is reviewed by an admin, same as every account-level action here — it isn't instant self-service, by design.</p>
+
     <button onclick="handleSignOut()" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:rgba(16,30,51,0.35);font-size:13px;font-family:var(--sans);cursor:pointer;padding:16px 0"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
     <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Exchange</span></button>
     <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
     <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
-    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
   </div>
 </div>
 
@@ -1164,37 +1211,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   <div class="scroll"><div class="scroll-content" id="hashtag-posts"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
 
-<!-- SETTINGS -->
-<div class="screen" id="screen-settings">
-  <div class="page-header gradient">
-    <button class="back-btn" onclick="goto('profile')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Settings &amp; Privacy</div>
-  </div>
-  <div class="scroll"><div class="scroll-content-no-nav">
-    <div class="section-title">Who can message you</div>
-    <div class="chips" id="msg-perm-chips" style="margin-bottom:20px"></div>
-
-    <div class="section-title">Blocked</div>
-    <div id="blocked-list" style="margin-bottom:20px"><div class="loader"><div class="spinner"></div></div></div>
-
-    <div class="section-title">Your data</div>
-    <button class="btn btn-outline btn-full" onclick="downloadMyData()" style="margin-bottom:10px">Download my data</button>
-    <div class="divider"></div>
-    <button class="btn btn-outline btn-full" onclick="deactivateAccount()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:12px">Deactivate account</button>
-    <button class="btn btn-outline btn-full" onclick="requestAccountDeletion()" style="color:var(--red);border-color:rgba(224,85,85,0.3);margin-top:10px">Request permanent deletion</button>
-    <p style="font-size:11px;color:rgba(16,30,51,0.3);font-family:var(--sans);margin-top:8px;line-height:1.6">Permanent deletion is reviewed by an admin, same as every account-level action here — it isn't instant self-service, by design.</p>
-    <div class="divider"></div>
-    <div class="card" onclick="goto('feed-preferences')" style="cursor:pointer;margin-top:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Feed Preferences</span><span style="color:var(--gold)">→</span></div>
-    <div class="card" onclick="goto('app-support')" style="cursor:pointer;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">FAQs &amp; Support</span><span style="color:var(--gold)">→</span></div>
-    <div class="card" onclick="goto('legal')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Privacy Policy, Terms &amp; Community Guidelines</span><span style="color:var(--gold)">→</span></div>
-  </div></div>
-</div>
-
 <!-- APP SUPPORT (FAQs + how to get help with the app/website itself -- distinct from
      MY Help, the member-to-member community Q&A board) -->
 <div class="screen" id="screen-app-support">
   <div class="page-header gradient">
-    <button class="back-btn" onclick="goto('settings')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <button class="back-btn" onclick="goto('profile')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
     <div class="page-title">FAQs &amp; Support</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
@@ -1383,13 +1404,16 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,settings:loadSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs,'admin-deletions':loadAdminDeletions};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'admin-moderation':loadModerationQueue,'admin-ads':loadAdminAds,'admin-partners':loadAdminPartners,'developer-settings':loadDeveloperSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'admin-packages':loadAdminPackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs,'admin-deletions':loadAdminDeletions};
   if(loads[n])loads[n]();
   // Desktop sidebar active-state highlight -- a no-op unless the shell is actually showing
   // (body.in-app, set in loadMemberHome()/loadAdminHome()), so this never touches anything
-  // on splash/login/apply or on a narrow/mobile viewport.
+  // on splash/login/apply or on a narrow/mobile viewport. Communities/Marketplace/Events no
+  // longer have their own sidebar entry (they're tabs inside Directory/The Exchange -- see
+  // renderShellNav), so visiting them highlights the destination they live under instead.
   if(document.body.classList.contains('in-app')){
-    document.querySelectorAll('.shell-nav-item').forEach(el=>el.classList.toggle('active',el.dataset.screen===n));
+    const shellGroup={forums:'directory',marketplace:'exchange',events:'exchange','my-briefs':'exchange','new-brief':'exchange','new-listing':'exchange','my-listings':'exchange','new-event':'exchange','marketplace-packages':'exchange'}[n]||n;
+    document.querySelectorAll('.shell-nav-item').forEach(el=>el.classList.toggle('active',el.dataset.screen===shellGroup));
   }
 }
 function gotoTab(n){
@@ -1663,16 +1687,18 @@ async function handleSignOut(){
 // below the 960px breakpoint; .in-app is what actually reveals the shell at all.
 function renderShellNav(){
   const isAdmin=ST.profile?.role==='admin';
+  // Six destinations, same order as the mobile bottom bar, per the build spec's nav
+  // unification: Communities/Marketplace/Events no longer get their own sidebar slot --
+  // they're tabs inside Directory and The Exchange respectively (see the tab-row markup
+  // on those screens), and Settings merged into Account (screen-profile) along with the
+  // old avatar-only Profile screen.
   const dests=[
     {n:'home',tab:true,label:'Home',icon:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>'},
     {n:'directory',tab:true,label:'Directory',icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'},
+    {n:'exchange',tab:true,label:'The Exchange',icon:'<path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'},
     {n:'messages',tab:true,label:'Messages',icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'},
-    {n:'forums',tab:false,label:'Communities',icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/>'},
-    {n:'marketplace',tab:false,label:'Marketplace',icon:'<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'},
-    {n:'exchange',tab:false,label:'The Exchange',icon:'<path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'},
-    {n:'events',tab:false,label:'Events',icon:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'},
     {n:'help',tab:true,label:'MY Help',icon:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'},
-    {n:'settings',tab:false,label:'Settings',icon:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'},
+    {n:'profile',tab:true,label:'Account',icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'},
   ];
   if(isAdmin)dests.push({n:'admin-home',tab:false,label:'Admin Panel',icon:'<path d="M12 2l8 4v5c0 5.5-3.5 9-8 11-4.5-2-8-5.5-8-11V6z"/>'});
   $('shell-sidebar').innerHTML=dests.map(d=>`<div class="shell-nav-item" data-screen="${d.n}" onclick="${d.tab?'gotoTab':'goto'}('${d.n}')"><svg viewBox="0 0 24 24">${d.icon}</svg><span>${esc(d.label)}</span></div>`).join('');
@@ -2789,32 +2815,47 @@ function renderProfile(){
   $('about-inp').value=p.about||'';
   renderUpgradeCard(p);
   loadLiStatus();
+  loadSettings();
+  $('qa-admin-profile').style.display=p.role==='admin'?'':'none';
 }
 
-// --- Self-initiated tier upgrade -----------------------------------------------------------
+// --- Membership tier card -------------------------------------------------------------
 // Member -> Participant is earned, not bought and not silently granted in the background --
 // the member has to actually come here and ask. The server (maybe_promote_to_participant,
-// Supabase) is the only source of truth on eligibility; this just shows a friendly preview
-// of the same two criteria so the button isn't a mystery before they press it.
+// Supabase) is the only source of truth on eligibility; this just shows a friendly, always-
+// visible preview of the real criteria (see 20261123100000_update_participant_criteria_to_
+// 90_days_full_profile.sql) so the tier is a legible checklist, not a hidden badge, per the
+// build spec's Account screen design -- and a third criterion, verified referrals, is shown
+// as a disclosed but not-yet-built signal rather than silently omitted.
 function renderUpgradeCard(p){
   const box=$('my-upgrade');if(!box)return;
-  if(p.role!=='member'){box.style.display='none';return;}
-  const daysOld=Math.floor((Date.now()-new Date(p.created_at).getTime())/86400000);
-  const hasAbout=!!(p.about&&p.about.trim());
-  const eligible=daysOld>=7&&hasAbout;
   box.style.display='';
-  box.innerHTML=`<div class="choice-card" style="margin-bottom:20px;${eligible?'':'cursor:default'}" ${eligible?'onclick="requestParticipantUpgrade()"':''}>
-    <div class="choice-icon">◇</div>
-    <div>
-      <div class="choice-name">${eligible?'Apply to become a Participant':'Upgrade to Participant'}</div>
-      <div class="choice-desc">
-        ${eligible?'You meet the criteria — tap to request it.':'Earned automatically once both are true:'}
-        <div style="margin-top:8px;font-size:12px">
-          <div style="color:${daysOld>=7?'var(--navy)':'rgba(16,30,51,0.4)'}">${daysOld>=7?'✓':'○'} Member for 7+ days (you: ${daysOld})</div>
-          <div style="color:${hasAbout?'var(--navy)':'rgba(16,30,51,0.4)'}">${hasAbout?'✓':'○'} "About you" filled in${hasAbout?'':' — add one below'}</div>
-        </div>
+  if(p.role!=='member'){
+    box.innerHTML=`<div class="card" style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div class="section-title" style="margin:0">Membership tier</div>
+        <span class="layer-badge ${lbadge(p.role)}" style="font-size:11px;padding:3px 10px;border-radius:999px;display:inline-block">${lbadgeLabel(p.role)}</span>
       </div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.6">Earned automatically through account age, a complete profile, and (once built) verified peer referrals — never applied for, never bought.</div>
+    </div>`;
+    return;
+  }
+  const daysOld=Math.floor((Date.now()-new Date(p.created_at).getTime())/86400000);
+  const complete=(f)=>!!(p[f]&&String(p[f]).trim());
+  const profileComplete=complete('about')&&complete('domain')&&complete('domain_group')&&complete('city')&&complete('experience');
+  const eligible=daysOld>=90&&profileComplete;
+  box.innerHTML=`<div class="card" style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-title" style="margin:0">Membership tier</div>
+      <span class="layer-badge ${lbadge(p.role)}" style="font-size:11px;padding:3px 10px;border-radius:999px;display:inline-block">${lbadgeLabel(p.role)}</span>
     </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Participant and above are earned automatically through real activity — never applied for, never bought. Here's exactly what counts:</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;margin-bottom:${eligible?'12':'0'}px">
+      <div style="color:${daysOld>=90?'var(--navy)':'rgba(16,30,51,0.4)'}">${daysOld>=90?'✓':'○'} Account age 90+ days (you: ${daysOld})</div>
+      <div style="color:${profileComplete?'var(--navy)':'rgba(16,30,51,0.4)'}">${profileComplete?'✓':'○'} Profile 100% complete${profileComplete?'':' — finish Professional Info and About below'}</div>
+      <div style="color:rgba(16,30,51,0.35)">○ 1 verified referral from another member — not yet built</div>
+    </div>
+    ${eligible?`<button class="btn btn-gold btn-full" onclick="requestParticipantUpgrade()">Apply to become a Participant</button>`:''}
   </div>`;
 }
 
@@ -3142,7 +3183,8 @@ async function loadAdminHome(){
   // forever, confirmed empirically (manually capped at 200 nested calls, climbing). It
   // doesn't crash quickly because each frame is cheap, but it silently fires the admin
   // dashboard's queries hundreds of times over. Callers that need to land here navigate
-  // with goto('admin-home') themselves (see handleSess() and the "Admin Panel" quick-card);
+  // with goto('admin-home') themselves (see handleSess() and the Account screen's pinned
+  // "Admin Panel" card, qa-admin-profile);
   // this function only ever populates the screen's own elements.
   try{
     const[apps,briefs]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100')]);
