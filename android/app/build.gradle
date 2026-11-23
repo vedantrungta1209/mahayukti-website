@@ -1,5 +1,13 @@
 apply plugin: 'com.android.application'
 
+// Play Console rejects re-uploading a versionCode that's ever been used before (confirmed
+// live: "Version code 1 has already been used" the moment a second real build tried to
+// publish). Codemagic's own BUILD_NUMBER env var increments once per app across every
+// workflow, same counter iOS's own agvtool step already uses -- reusing it here instead of
+// a hardcoded value keeps both platforms' version numbers rising together and makes every
+// future automated release actually publishable without a manual bump each time.
+def cmBuildNumber = (System.getenv("BUILD_NUMBER") ?: "1").toInteger()
+
 android {
     namespace = "com.mahayukti.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +15,8 @@ android {
         applicationId "com.mahayukti.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode cmBuildNumber
+        versionName "1.0.${cmBuildNumber}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
