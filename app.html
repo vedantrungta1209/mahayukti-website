@@ -55,6 +55,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .btn-outline{background:transparent;border:1px solid var(--navy);color:var(--navy)}
 .btn-full{width:100%}
 .btn:disabled{opacity:0.5;cursor:not-allowed}
+.composer-tool-btn{background:none;border:1px solid var(--border2);border-radius:4px;padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--muted);font-family:var(--sans);font-size:12px;font-weight:600;transition:border-color .15s,color .15s}
+.composer-tool-btn:hover{border-color:var(--gold);color:var(--gold2)}
+.audience-group{display:flex;background:var(--bg);border:1px solid var(--border2);border-radius:4px;overflow:hidden}
+.aud-pill{background:none;border:none;border-right:1px solid var(--border2);padding:7px 10px;cursor:pointer;font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap;transition:background .15s,color .15s}
+.aud-pill:last-child{border-right:none}
+.aud-pill.active{background:var(--navy);color:#fff}
+.aud-pill:not(.active):hover{background:var(--border2)}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:11px;font-weight:400;color:rgba(16,30,51,0.4);letter-spacing:.3px;margin-bottom:6px;font-family:var(--mono)}
 .field input,.field textarea,.field select{width:100%;background:rgba(16,30,51,0.04);border:1.5px solid rgba(16,30,51,0.08);border-radius:0;padding:12px 14px;font-size:15px;color:var(--white);font-family:var(--sans);-webkit-appearance:none;outline:none;transition:border-color .2s}
@@ -578,14 +585,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
       <div id="feed-image-preview" style="display:none;margin-top:8px"><img style="max-width:100%;border-radius:4px;max-height:160px;object-fit:cover" id="feed-image-preview-img"><button onclick="clearFeedImage()" style="display:block;margin-top:4px;background:none;border:none;color:rgba(224,85,85,0.7);font-size:11px;cursor:pointer;padding:0">Remove photo</button></div>
       <input type="file" id="feed-image-input" accept="image/*" style="display:none" onchange="onFeedImageSelected(this)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px">
-        <button onclick="document.getElementById('feed-image-input').click()" style="background:none;border:1px solid rgba(16,30,51,0.1);border-radius:4px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:4px"><svg style="width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></button>
-        <select id="feed-audience" style="background:rgba(16,30,51,0.04);border:1px solid rgba(16,30,51,0.08);border-radius:4px;padding:6px 8px;font-size:11.5px;color:var(--white);font-family:var(--sans);flex:1">
-          <option value="sector">My sector only</option>
-          <option value="connections">Connections only</option>
-          <option value="everyone">Everyone</option>
-        </select>
-        <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" id="feed-post-btn" onclick="submitPost()">Post</button>
+      <select id="feed-audience" style="display:none">
+        <option value="sector">My sector only</option>
+        <option value="connections">Connections only</option>
+        <option value="everyone">Everyone</option>
+      </select>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);gap:10px;flex-wrap:wrap">
+        <button class="composer-tool-btn" onclick="document.getElementById('feed-image-input').click()"><svg style="width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>Photo / Video</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <div class="audience-group" id="feed-audience-pills">
+            <button type="button" class="aud-pill active" data-val="sector" onclick="setFeedAudience('sector')">Sector</button>
+            <button type="button" class="aud-pill" data-val="connections" onclick="setFeedAudience('connections')">Connections</button>
+            <button type="button" class="aud-pill" data-val="everyone" onclick="setFeedAudience('everyone')">Everyone</button>
+          </div>
+          <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" id="feed-post-btn" onclick="submitPost()">Post</button>
+        </div>
       </div>
     </div>
     <div id="trending-hashtags" style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px"></div>
@@ -2024,6 +2038,10 @@ async function uploadImage(file){
   return data?.publicUrl||null;
 }
 
+function setFeedAudience(val){
+  $('feed-audience').value=val;
+  document.querySelectorAll('#feed-audience-pills .aud-pill').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
+}
 let feedImageFile=null;
 function onFeedImageSelected(input){
   const file=input.files?.[0];if(!file)return;
