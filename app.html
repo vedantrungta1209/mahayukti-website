@@ -1628,6 +1628,7 @@ async function init(){
   });
   checkLinkedInReturn();
   checkLiAuthReturn();
+  initNativeAuthCallback();
 }
 
 function renderPendingScreen(status,note){
@@ -1725,13 +1726,55 @@ async function handleSetNewPassword(){
 // finds their profile and logs them straight in) and brand-new ones
 // (handleSess finds no profile and opens the completion modal instead).
 // There is deliberately no separate "apply via Google" path any more.
+//
+// Inside the native app, this can't just navigate the WebView to Google like
+// the web version does: Google actively refuses to complete sign-in inside a
+// raw embedded WebView (confirmed live on a real iOS device -- it silently
+// kicked the user out to full Safari, which then stranded them on the
+// website instead of back in the app). The fix is the standard Capacitor
+// pattern: open Google's consent screen in the system browser (Custom Tabs /
+// SFSafariViewController, which Google does allow), and get back into the
+// app via a custom URL scheme redirect instead of a regular https one --
+// see the appUrlOpen listener in init() for the other half of this.
 async function googleAuth(){
+  if(window.Capacitor?.isNativePlatform?.()){
+    try{
+      const{data,error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:'com.mahayukti.app://auth-callback',skipBrowserRedirect:true}});
+      if(error){toast(error.message||'Could not start Google sign-in','error');return;}
+      await Capacitor.Plugins.Browser.open({url:data.url});
+    }catch(e){toast('Could not start Google sign-in','error');}
+    return;
+  }
   // No hash suffix here -- Supabase's own implicit-grant redirect appends
   // "#access_token=...&..." to this URL, and anything already in front of
   // that produces a malformed double hash its own parser silently fails to
   // read -- confirmed live by actually completing this OAuth round-trip.
   const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});
   if(error)toast(error.message||'Could not start Google sign-in','error');
+}
+
+// The other half of native Google sign-in: Supabase redirects the system
+// browser sheet to com.mahayukti.app://auth-callback#access_token=...; iOS/
+// Android hand that straight to the app as an appUrlOpen event (the URL never
+// touches the WebView itself, so supabase-js's own detectSessionInUrl never
+// sees it). Parse the tokens out by hand and establish the session the same
+// way a password or magic-link sign-in would.
+function initNativeAuthCallback(){
+  if(!window.Capacitor?.isNativePlatform?.())return;
+  Capacitor.Plugins.App.addListener('appUrlOpen',async({url})=>{
+    if(!url||!url.startsWith('com.mahayukti.app://auth-callback'))return;
+    try{await Capacitor.Plugins.Browser.close();}catch(e){}
+    const hash=(url.split('#')[1]||url.split('?')[1]||'');
+    const params=new URLSearchParams(hash);
+    const access_token=params.get('access_token'),refresh_token=params.get('refresh_token');
+    if(access_token&&refresh_token){
+      const{error}=await sb.auth.setSession({access_token,refresh_token});
+      if(error)toast(error.message||'Could not complete sign-in','error');
+    }else{
+      const err=params.get('error_description')||params.get('error');
+      toast(err||'Could not complete sign-in','error');
+    }
+  });
 }
 
 // --- OAuth profile completion (Google or LinkedIn, brand-new member) -------------------
