@@ -1,0 +1,21 @@
+{
+  "appId": "com.mahayukti.app",
+  "appName": "MahaYukti",
+  "webDir": "www",
+  "server": {
+    "url": "https://mahayukti.com/app.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "mahayukti.com",
+      "*.mahayukti.com",
+      "www.linkedin.com",
+      "linkedin.com",
+      "*.supabase.co"
+    ]
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

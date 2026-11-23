@@ -1,0 +1,13 @@
+{
+  "name": "mahayukti-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capacitor native wrapper for the MahaYukti web app (loads https://mahayukti.com)",
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
+    "@capacitor/push-notifications": "^8.1.3"
+  }
+}
