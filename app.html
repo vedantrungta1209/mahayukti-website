@@ -2961,10 +2961,11 @@ async function loadBriefDetail(briefId){
     const responses=await api('exchange_brief_responses',`?brief_id=eq.${briefId}&order=created_at.desc&select=id,responder_id,message,private_to_poster,created_at`)||[];
     const rids=[...new Set(responses.map(r=>r.responder_id))];let rm={};
     if(rids.length){try{const u=await api('member_directory',`?id=in.(${rids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>rm[x.id]=x);}catch(e){}}
+    const authorAvatar=brief.anonymous?'':`<div class="avatar avatar-sm" style="width:24px;height:24px;font-size:11px;border-color:rgba(201,148,58,0.3);color:var(--gold);cursor:pointer;display:inline-flex;vertical-align:middle;margin-right:6px" onclick="viewMemberById('${brief.author_id}')">${esc((authorName||'?').charAt(0).toUpperCase())}</div>`;
     el.innerHTML=`
       <span style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px">${labels[brief.brief_type]||brief.brief_type}</span>
       <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin:10px 0 6px">${esc(brief.description)}</div>
-      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:18px">${esc(authorName)} · ${new Date(brief.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · ${responses.length} response${responses.length===1?'':'s'}</div>
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:18px;display:flex;align-items:center">${authorAvatar}<span${brief.anonymous?'':` style="cursor:pointer" onclick="viewMemberById('${brief.author_id}')"`}>${esc(authorName)}</span>&nbsp;· ${new Date(brief.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · ${responses.length} response${responses.length===1?'':'s'}</div>
       ${isAuthor?'':`<div class="card" style="margin-bottom:18px">
         <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:10px">Respond to this brief</div>
         <textarea id="bd-reply" rows="3" placeholder="Describe how you can help, your availability, and rough fee range..." style="width:100%;box-sizing:border-box;border:1.5px solid rgba(16,30,51,0.08);background:rgba(16,30,51,0.04);border-radius:4px;padding:10px 12px;font-family:var(--sans);font-size:13.5px;color:var(--white);resize:none"></textarea>
@@ -2972,13 +2973,14 @@ async function loadBriefDetail(briefId){
         <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="submitBriefResponse('${briefId}')">Send response</button>
       </div>`}
       <div style="font-size:11px;font-weight:700;color:rgba(16,30,51,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Responses${isAuthor?'':' visible to you'}</div>
-      <div id="bd-responses">${responses.length?responses.map(r=>`<div class="card" style="margin-bottom:8px">
+      <div id="bd-responses">${responses.length?responses.map(r=>{const rn=dname(rm[r.responder_id]||{});return`<div class="card" style="margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span style="font-size:12.5px;color:var(--white);font-family:var(--sans);font-weight:600">${esc(dname(rm[r.responder_id]||{}))}</span>
+          <div class="avatar avatar-sm" style="width:26px;height:26px;font-size:12px;border-color:rgba(201,148,58,0.3);color:var(--gold);cursor:pointer" onclick="viewMemberById('${r.responder_id}')">${esc((rn||'?').charAt(0).toUpperCase())}</div>
+          <span style="font-size:12.5px;color:var(--white);font-family:var(--sans);font-weight:600;cursor:pointer" onclick="viewMemberById('${r.responder_id}')">${esc(rn)}</span>
           ${r.private_to_poster?'<span style="font-size:10px;color:rgba(16,30,51,0.35)">· private to you</span>':''}
         </div>
         <div style="font-size:13px;color:var(--muted);line-height:1.6">${esc(r.message)}</div>
-      </div>`).join(''):'<p style="font-size:13px;color:var(--muted)">No responses yet.</p>'}</div>
+      </div>`}).join(''):'<p style="font-size:13px;color:var(--muted)">No responses yet.</p>'}</div>
       <div style="background:rgba(201,148,58,0.06);border:1px solid var(--border);border-radius:4px;padding:12px 14px;margin-top:18px;font-size:11.5px;color:var(--muted);line-height:1.6">Reminder: MahaYukti is not a party to this engagement. Agree terms, fees and confidentiality directly with the respondent — see the <a href="javascript:void(0)" onclick="scrollToLegal('legal-marketplace')" style="color:var(--gold)">Exchange &amp; Marketplace Disclaimer</a> in the Legal Center.</div>
     `;
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load this brief</div></div>';}
