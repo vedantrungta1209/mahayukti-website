@@ -23,6 +23,7 @@ workflows:
     environment:
       groups:
         - android_signing
+        - google_play
       node: 22
       java: 21
     scripts:
@@ -47,6 +48,17 @@ workflows:
           ./gradlew bundleRelease --no-daemon
     artifacts:
       - android/app/build/outputs/bundle/release/*.aab
+    # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS reuses the existing codemagic-play-publisher
+    # service account already set up for the Vee app (already has account-level Admin
+    # permissions in this same Play Console developer account, so it already covers
+    # MahaYukti too -- just generated it a fresh key rather than touching Vee's). Track
+    # is internal, matching the manual upload already done; promote to a wider track
+    # from Play Console once a release has actually been tested.
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: false
 
   mahayukti-ios-debug:
     name: MahaYukti iOS (debug build, unsigned, no distribution)
