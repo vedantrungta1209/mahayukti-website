@@ -19,7 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <!-- Catches the OAuth redirect after Google sign-in completes in the system
-                 browser tab (see googleAuth() in app.html) -- Google itself blocks
+                 browser tab (see googleAuth() in app.html). Google itself blocks
                  completing sign-in inside a raw embedded WebView, so that leg has to
                  happen in Chrome Custom Tabs, with this scheme bringing control back
                  to the app instead of leaving the user stranded in the browser. -->
