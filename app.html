@@ -2017,7 +2017,7 @@ function extractHashtags(text){
 }
 function linkifyHashtags(text){
   if(!text)return'';
-  return text.replace(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g,(full,tag)=>`<a href="javascript:void(0)" onclick="openHashtag('${tag.toLowerCase()}')" style="color:var(--gold)">#${tag}</a>`);
+  return text.replace(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g,(full,tag)=>`<a href="javascript:void(0)" onclick="openHashtag('${esc(tag.toLowerCase())}')" style="color:var(--gold)">#${esc(tag)}</a>`);
 }
 function extractLinkUrl(text){
   const m=text.match(/https?:\/\/[^\s]+/);
@@ -2113,7 +2113,7 @@ async function loadTrendingHashtags(){
     const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x=>x[0]);
     const tags=await api('hashtags',`?id=in.(${top.join(',')})&select=id,tag`)||[];
     const tagMap={};tags.forEach(t=>tagMap[t.id]=t.tag);
-    el.innerHTML=top.filter(id=>tagMap[id]).map(id=>`<div class="chip" style="white-space:nowrap;cursor:pointer" onclick="openHashtag('${tagMap[id]}')">#${tagMap[id]} · ${counts[id]}</div>`).join('');
+    el.innerHTML=top.filter(id=>tagMap[id]).map(id=>`<div class="chip" style="white-space:nowrap;cursor:pointer" onclick="openHashtag('${esc(tagMap[id])}')">#${esc(tagMap[id])} · ${counts[id]}</div>`).join('');
   }catch(e){el.innerHTML='';}
 }
 
@@ -3590,7 +3590,7 @@ async function loadAdminPartners(){
     el.innerHTML=d.map(x=>`<div class="card" style="margin-bottom:10px">
       <div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:4px">${esc(x.name)}</div>
       <div style="font-size:11px;color:var(--gold);margin-bottom:6px">${x.kind==='data_partner'?'Data partner':'Publishing partner'} · ${esc(x.status)}</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Requesting: ${(x.requested_scopes||[]).join(', ')||'—'}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Requesting: ${esc((x.requested_scopes||[]).join(', '))||'—'}</div>
       ${x.status==='pending'?`<div style="display:flex;gap:8px"><button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePartner('${x.id}','approved')">Approve</button><button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="decidePartner('${x.id}','denied')">Deny</button></div>`:''}
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load partners</div></div>';}
@@ -3608,8 +3608,8 @@ async function loadDeveloperSettings(){
   try{
     const keys=await api('api_keys',`?user_id=eq.${ST.profile.id}&revoked_at=is.null&order=created_at.desc&select=id,label,scopes,created_at,last_used_at`)||[];
     $('api-key-area').innerHTML=(keys.length?keys.map(k=>`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600">${k.label||'API key'}</div>
-      <div style="font-size:11px;color:rgba(16,30,51,0.4);margin:4px 0 8px">Created ${new Date(k.created_at).toLocaleDateString('en-IN')} · scopes: ${(k.scopes||[]).join(', ')||'none'}</div>
+      <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600">${esc(k.label)||'API key'}</div>
+      <div style="font-size:11px;color:rgba(16,30,51,0.4);margin:4px 0 8px">Created ${new Date(k.created_at).toLocaleDateString('en-IN')} · scopes: ${esc((k.scopes||[]).join(', '))||'none'}</div>
       <button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="revokeApiKey('${k.id}')">Revoke</button>
     </div>`).join(''):'')+'<button class="btn btn-gold btn-full" onclick="generateApiKey()">+ Generate a new key</button>';
     $('api-key-stats').textContent=keys.length+' active key'+(keys.length===1?'':'s')+' — per-call usage metering isn\'t built yet.';
@@ -3645,7 +3645,7 @@ async function loadSettings(){
     if(!d.length){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">No blocked members.</p>';return;}
     const ids=d.map(x=>x.blocked_id);const u=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
     const um={};(u||[]).forEach(x=>um[x.id]=x);
-    el.innerHTML=d.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.blocked_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unblockUser('${x.blocked_id}')">Unblock</button></div>`).join('');
+    el.innerHTML=d.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${esc(dname(um[x.blocked_id]||{}))}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unblockUser('${x.blocked_id}')">Unblock</button></div>`).join('');
   }catch(e){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Unable to load</p>';}
 }
 
@@ -3716,8 +3716,8 @@ async function loadFeedPreferences(){
   try{
     const[mu,mh]=await Promise.all([api('muted_users',`?muter_id=eq.${ST.profile.id}&select=muted_id`),api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`)]);
     let rows=[];
-    if(mu&&mu.length){const u=await api('member_directory',`?id=in.(${mu.map(x=>x.muted_id).join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);const um={};(u||[]).forEach(x=>um[x.id]=x);rows=rows.concat(mu.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${dname(um[x.muted_id]||{})}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteUser('${x.muted_id}')">Unmute</button></div>`));}
-    if(mh&&mh.length){const h=await api('hashtags',`?id=in.(${mh.map(x=>x.hashtag_id).join(',')})&select=id,tag`);const hm={};(h||[]).forEach(x=>hm[x.id]=x);rows=rows.concat(mh.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">#${hm[x.hashtag_id]?.tag||''}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteHashtag('${x.hashtag_id}')">Unmute</button></div>`));}
+    if(mu&&mu.length){const u=await api('member_directory',`?id=in.(${mu.map(x=>x.muted_id).join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);const um={};(u||[]).forEach(x=>um[x.id]=x);rows=rows.concat(mu.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">${esc(dname(um[x.muted_id]||{}))}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteUser('${x.muted_id}')">Unmute</button></div>`));}
+    if(mh&&mh.length){const h=await api('hashtags',`?id=in.(${mh.map(x=>x.hashtag_id).join(',')})&select=id,tag`);const hm={};(h||[]).forEach(x=>hm[x.id]=x);rows=rows.concat(mh.map(x=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:var(--white);font-family:var(--sans)">#${esc(hm[x.hashtag_id]?.tag||'')}</span><button class="btn btn-outline" style="width:auto;padding:6px 12px;font-size:11.5px" onclick="unmuteHashtag('${x.hashtag_id}')">Unmute</button></div>`));}
     $('muted-list').innerHTML=rows.length?rows.join(''):'<p style="font-size:13px;color:var(--muted);font-family:var(--sans)">Nothing muted.</p>';
   }catch(e){$('muted-list').innerHTML='<p style="font-size:13px;color:var(--muted)">Unable to load</p>';}
 
