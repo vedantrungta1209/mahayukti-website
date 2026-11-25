@@ -31,12 +31,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .scroll::-webkit-scrollbar{display:none}
 .nav-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(16,30,51,0.94);backdrop-filter:blur(20px);border-top:1px solid var(--border2);display:flex;padding-bottom:var(--safe-bottom)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;cursor:pointer;border:none;background:none;color:rgba(16,30,51,0.35);transition:color .2s}
-.nav-item.active{color:var(--navy)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;cursor:pointer;border:none;background:none;color:rgba(255,255,255,0.5);transition:color .2s}
+.nav-item.active{color:var(--gold)}
 .nav-item svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
 .nav-item span{font-size:10px;font-family:var(--sans)}
 .status-bar{height:var(--safe-top);background:var(--bg-alt);flex-shrink:0}
-.page-header{padding:20px 20px 16px;flex-shrink:0;position:relative}
+.page-header{padding:calc(20px + var(--safe-top)) 20px 16px;flex-shrink:0;position:relative}
 .home-logo-link{position:absolute;top:18px;right:20px;font-family:var(--serif);font-size:15px;font-weight:700;color:var(--navy);text-decoration:none;z-index:2}
 .home-logo-link span{color:var(--gold)}
 .page-header.gradient .home-logo-link{color:var(--white)}
