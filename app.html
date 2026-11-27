@@ -2449,27 +2449,66 @@ async function openPostThread(postId){
 async function loadThreadComments(postId){
   const el=$('thread-comments');if(!el)return;
   try{
-    const comments=await api('post_comments',`?post_id=eq.${postId}&order=created_at.asc&select=id,body,created_at,author_id`)||[];
+    const comments=await api('post_comments',`?post_id=eq.${postId}&order=created_at.asc&select=id,body,created_at,author_id,parent_comment_id`)||[];
     if(!comments.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No comments yet</div></div>';return;}
     const ids=[...new Set(comments.map(c=>c.author_id))];let am={};
     if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
-    el.innerHTML=comments.map(c=>{const cn=dname(am[c.author_id]||{});return`<div class="card" style="margin-bottom:8px">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-        <div class="avatar avatar-sm" style="width:26px;height:26px;font-size:12px;border-color:rgba(201,148,58,0.3);color:var(--gold);cursor:pointer" onclick="viewMemberById('${c.author_id}')">${esc((cn||'?').charAt(0).toUpperCase())}</div>
-        <span style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600;cursor:pointer" onclick="viewMemberById('${c.author_id}')">${esc(cn)}</span>
-        <span style="font-size:10.5px;color:rgba(16,30,51,0.3);margin-left:auto">${new Date(c.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
-      </div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.5">${esc(c.body)}</div>
-    </div>`}).join('');
+    const cIds=comments.map(c=>c.id);
+    let likeCounts={},likedSet=new Set();
+    try{const cl=await api('comment_likes',`?comment_id=in.(${cIds.join(',')})&select=comment_id,user_id`)||[];cl.forEach(r=>{likeCounts[r.comment_id]=(likeCounts[r.comment_id]||0)+1;if(ST.profile&&r.user_id===ST.profile.id)likedSet.add(r.comment_id);});}catch(e){}
+    const byParent={};
+    comments.forEach(c=>{const k=c.parent_comment_id||'root';(byParent[k]=byParent[k]||[]).push(c);});
+    const renderOne=(c,depth)=>{
+      const cn=dname(am[c.author_id]||{});
+      const liked=likedSet.has(c.id);
+      const replies=byParent[c.id]||[];
+      return`<div class="card" style="margin-bottom:8px;margin-left:${depth*24}px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <div class="avatar avatar-sm" style="width:26px;height:26px;font-size:12px;border-color:rgba(201,148,58,0.3);color:var(--gold);cursor:pointer" onclick="viewMemberById('${c.author_id}')">${esc((cn||'?').charAt(0).toUpperCase())}</div>
+          <span style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600;cursor:pointer" onclick="viewMemberById('${c.author_id}')">${esc(cn)}</span>
+          <span style="font-size:10.5px;color:rgba(16,30,51,0.3);margin-left:auto">${new Date(c.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:6px">${esc(c.body)}</div>
+        <div style="display:flex;gap:14px">
+          <button onclick="toggleCommentLike('${c.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.4)'};font-size:11px;font-family:var(--sans)">✓ ${likeCounts[c.id]||0}</button>
+          <button onclick="startCommentReply('${c.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.4);font-size:11px;font-family:var(--sans)">Reply</button>
+        </div>
+        <div id="reply-box-${c.id}"></div>
+        ${replies.map(r=>renderOne(r,depth+1)).join('')}
+      </div>`;
+    };
+    el.innerHTML=(byParent['root']||[]).map(c=>renderOne(c,0)).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load comments</div></div>';}
 }
 
-async function submitComment(){
-  const postId=ST.currentThreadPostId,body=$('comment-compose').value.trim();
+function startCommentReply(commentId){
+  const box=$('reply-box-'+commentId);if(!box)return;
+  if(box.innerHTML){box.innerHTML='';return;}
+  box.innerHTML=`<div style="display:flex;gap:6px;margin-top:8px">
+    <input type="text" id="reply-input-${commentId}" placeholder="Write a reply…" style="flex:1;padding:6px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)">
+    <button onclick="submitComment('${commentId}')" class="btn btn-gold" style="padding:6px 12px;font-size:11px">Reply</button>
+  </div>`;
+  $('reply-input-'+commentId).focus();
+}
+
+async function toggleCommentLike(commentId){
+  if(!ST.profile)return;
+  try{
+    const mine=await api('comment_likes',`?comment_id=eq.${commentId}&user_id=eq.${ST.profile.id}&select=comment_id`);
+    if(mine&&mine.length)await api('comment_likes',`?comment_id=eq.${commentId}&user_id=eq.${ST.profile.id}`,'DELETE');
+    else await api('comment_likes','','POST',{comment_id:commentId,user_id:ST.profile.id});
+    await loadThreadComments(ST.currentThreadPostId);
+  }catch(e){}
+}
+
+async function submitComment(parentId){
+  const postId=ST.currentThreadPostId;
+  const inputId=parentId?('reply-input-'+parentId):'comment-compose';
+  const body=$(inputId)?.value.trim();
   if(!postId||!body||!ST.profile)return;
   try{
-    await api('post_comments','','POST',{post_id:postId,author_id:ST.profile.id,body});
-    $('comment-compose').value='';
+    await api('post_comments','','POST',{post_id:postId,author_id:ST.profile.id,body,parent_comment_id:parentId||null});
+    $(inputId).value='';
     await loadThreadComments(postId);
   }catch(e){alert('Could not post comment — please try again.');}
 }
