@@ -631,6 +631,7 @@ img.avatar{object-fit:cover}
         <option value="connections">Connections only</option>
         <option value="everyone">Everyone</option>
       </select>
+      <label id="feed-public-row" style="display:none;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="feed-public-visible">Also make this post public -- viewable by anyone, even without a MahaYukti account</label>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);gap:10px;flex-wrap:wrap">
         <button class="composer-tool-btn" onclick="document.getElementById('feed-image-input').click()"><svg style="width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>Photo / Video</button>
         <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
@@ -2165,7 +2166,7 @@ async function loadSocialFeed(){
   const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
   const el=$('social-feed');if(!el)return;
   try{
-    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at`)||[];
+    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at,public_visible`)||[];
     if(ST.profile&&candidates.length){
       try{
         const muted=await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`);
@@ -2222,7 +2223,7 @@ async function loadMoreFeed(){
   if(ST.feedExhausted||!ST.feedOldestCreatedAt){if(btn)btn.remove();return;}
   // Already-fetched window is used up but the server might have more -- pull the next page by cursoring on created_at.
   try{
-    const more=await api('posts',`?community_id=is.null&${ST.feedAudienceClause||'or=(audience.eq.everyone)'}&created_at=lt.${encodeURIComponent(ST.feedOldestCreatedAt)}&order=created_at.desc&limit=30${ST.feedExcludeClause||''}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at`)||[];
+    const more=await api('posts',`?community_id=is.null&${ST.feedAudienceClause||'or=(audience.eq.everyone)'}&created_at=lt.${encodeURIComponent(ST.feedOldestCreatedAt)}&order=created_at.desc&limit=30${ST.feedExcludeClause||''}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at,public_visible`)||[];
     ST.feedExhausted=more.length<30;
     if(more.length){
       ST.feedOldestCreatedAt=more[more.length-1].created_at;
@@ -2276,7 +2277,7 @@ async function renderPostCards(containerId,posts){
             <button onclick="deletePost('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.35);font-size:11px;font-family:var(--sans)">Delete</button>
           </div>`:''}
         </div>
-        <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}${p.edited_at?' · edited':''}</div>
+        <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}${p.edited_at?' · edited':''}${p.public_visible?' · <span style="color:var(--gold);cursor:pointer" onclick="copyPublicPostLink(\''+p.id+'\')">Public — copy link</span>':''}</div>
         <div id="post-view-${p.id}">
         ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
         <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyMentions(linkifyHashtags(esc(p.body)))}</div>
@@ -2292,6 +2293,12 @@ async function renderPostCards(containerId,posts){
       </div>`;
     }).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+function copyPublicPostLink(id){
+  const url=`${window.location.origin}/p/${id}`;
+  try{navigator.clipboard.writeText(url);toast('Public link copied','success');}
+  catch(e){prompt('Copy this link:',url);}
 }
 
 function startPostEdit(p){
@@ -2437,6 +2444,13 @@ async function handleAvatarUpload(file){
 function setFeedAudience(val){
   $('feed-audience').value=val;
   document.querySelectorAll('#feed-audience-pills .aud-pill').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
+  // A post can only be made public when it's already visible to everyone in
+  // the register -- matches validate_public_visible()'s own DB-side check,
+  // so switching away from Everyone here also clears the checkbox instead
+  // of leaving a stale choice the server would reject anyway.
+  const row=$('feed-public-row');
+  if(val==='everyone')row.style.display='flex';
+  else{row.style.display='none';$('feed-public-visible').checked=false;}
 }
 let feedImageFiles=[];
 const MAX_POST_IMAGES=6;
@@ -2501,10 +2515,12 @@ async function submitPost(){
       bucket_id:ST.profile.bucket_id||null,
       audience:$('feed-audience').value,
       link_url:extractLinkUrl(body),
-      image_url,image_urls
+      image_url,image_urls,
+      public_visible:$('feed-audience').value==='everyone'&&$('feed-public-visible').checked
     });
     $('feed-compose').value='';
     clearFeedImage();
+    $('feed-public-visible').checked=false;$('feed-public-row').style.display='none';
     await loadSocialFeed();
   }catch(e){btn.disabled=false;btn.textContent='Post';alert('Could not post — please try again.');}
 }
