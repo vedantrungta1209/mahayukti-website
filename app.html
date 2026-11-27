@@ -3185,7 +3185,7 @@ async function loadForums(){
   const el=$('forum-list');
   const il=$('create-institution-link');if(il)il.style.display=ST.profile?.role==='admin'?'flex':'none';
   try{
-    const communities=await api('communities','?order=created_at.asc&select=id,name,kind,bucket_id,institution_name,requires_verification')||[];
+    const communities=await api('communities','?order=created_at.asc&select=id,name,kind,bucket_id,institution_name,requires_verification,created_by')||[];
     if(!communities.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No communities yet — start one.</div></div>';return;}
     const counts={};
     try{const cm=await api('community_members',`?community_id=in.(${communities.map(c=>c.id).join(',')})&status=eq.active&select=community_id`);(cm||[]).forEach(r=>counts[r.community_id]=(counts[r.community_id]||0)+1);}catch(e){}
@@ -3325,7 +3325,8 @@ async function joinCommunityIfNeeded(c){
   try{
     const existing=await api('community_members',`?community_id=eq.${c.id}&user_id=eq.${ST.profile.id}&select=user_id`);
     if(!existing||!existing.length){
-      await api('community_members','','POST',{community_id:c.id,user_id:ST.profile.id,status:c.requires_verification?'pending':'active'});
+      const isCreator=c.created_by&&c.created_by===ST.profile.id;
+      await api('community_members','','POST',{community_id:c.id,user_id:ST.profile.id,status:c.requires_verification?'pending':'active',role:isCreator?'moderator':'member'});
     }
   }catch(e){}
 }
