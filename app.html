@@ -1723,6 +1723,15 @@ async function init(){
     // in a browser, never by reading the code.
     if(evt==='INITIAL_SESSION')return;
     if(evt==='PASSWORD_RECOVERY'){goto('reset-password');return;}
+    // TOKEN_REFRESHED fires silently in the background every time Supabase
+    // renews the access token (periodically, and on tab focus) -- handleSess()
+    // unconditionally calls loadMemberHome(), which navigates to Home. Taken
+    // together, that was yanking anyone back to Home mid-browse (e.g. while
+    // viewing another member's profile) a few seconds after opening any
+    // screen, with no action of their own. Only run the full
+    // handleSess()/loadMemberHome() path for an actual sign-in; a background
+    // token refresh while already in the app just needs the new token stored.
+    if(evt==='TOKEN_REFRESHED'&&document.body.classList.contains('in-app')){if(s){ST.user=s.user;ST.user.access_token=s.access_token;}return;}
     if(s)await handleSess(s);else{ST.user=null;ST.profile=null;document.body.classList.remove('in-app');goto('splash');}
   });
   checkLinkedInReturn();
