@@ -720,7 +720,10 @@ img.avatar{object-fit:cover}
       </select>
     </div>
   </div>
-  <div class="scroll"><div style="padding:0 20px;padding-bottom:calc(80px + var(--safe-bottom))" id="dir-list"><div class="loader"><div class="spinner"></div></div></div></div>
+  <div class="scroll"><div style="padding:0 20px;padding-bottom:calc(80px + var(--safe-bottom))">
+    <div id="suggested-connections" style="margin-bottom:14px"></div>
+    <div id="dir-list"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
   <div class="nav-bar">
     <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
     <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
@@ -2844,6 +2847,43 @@ async function loadDir(){
   }
   $('dir-chips').innerHTML=DG.slice(0,8).map(g=>`<div class="chip${g===ST.dirFilter?' active':''}" onclick="setDirFilter('${g}')">${g}</div>`).join('');
   filterDir();
+  loadSuggestedConnections();
+}
+
+// "People you may know" -- Directory had no discovery mechanism beyond
+// manual browsing/search before this; ranks by shared connections, the
+// standard signal every comparable platform uses.
+async function loadSuggestedConnections(){
+  if(!ST.profile)return;
+  const el=$('suggested-connections');if(!el)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/get_suggested_connections`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json'},body:JSON.stringify({p_limit:8})});
+    if(!r.ok){el.innerHTML='';return;}
+    const suggestions=(await r.json())||[];
+    if(!suggestions.length){el.innerHTML='';return;}
+    suggestions.forEach(s=>{if(!ST.members.find(m=>m.id===s.id))ST.members.push(s);});
+    el.innerHTML=`<div class="section-title" style="margin-bottom:8px">People you may know</div>
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">
+      ${suggestions.map(s=>{
+        const n=esc(dname(s));
+        const av=s.avatar_url?`<img class="avatar avatar-md" src="${esc(s.avatar_url)}" alt="">`:`<div class="avatar avatar-md" style="color:var(--gold)">${esc((n||'?').charAt(0).toUpperCase())}</div>`;
+        return`<div class="card" style="min-width:140px;flex-shrink:0;text-align:center;cursor:pointer" onclick="viewMember('${s.id}')">
+          ${av}
+          <div style="font-size:12.5px;color:var(--white);font-family:var(--sans);font-weight:600;margin-top:8px">${n}</div>
+          <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${s.mutual_count>0?s.mutual_count+' mutual':esc(s.domain)||''}</div>
+          <button onclick="event.stopPropagation();quickConnect('${s.id}',this)" style="background:none;border:1px solid var(--gold);color:var(--gold);border-radius:14px;padding:4px 14px;font-size:11px;cursor:pointer;width:100%">+ Connect</button>
+        </div>`;
+      }).join('')}
+      </div>`;
+  }catch(e){el.innerHTML='';}
+}
+
+async function quickConnect(memberId,btn){
+  if(!ST.profile)return;
+  try{
+    await api('member_connections','','POST',{requester_id:ST.profile.id,addressee_id:memberId});
+    btn.textContent='Request sent';btn.disabled=true;btn.style.opacity='0.5';
+  }catch(e){toast('Could not send request','error');}
 }
 
 function setDirFilter(g){ST.dirFilter=g;
