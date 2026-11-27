@@ -3,21 +3,31 @@
 // Called by trigger_send_push() (a Postgres trigger, via pg_net) for every
 // new row inserted into public.notifications, regardless of which feature
 // created it -- mentions, comments, DMs, connection requests, new
-// followers, best-answer, etc. This is the ONE place that actually talks to
-// FCM, so every notification type gets real push delivery for free instead
-// of each feature's own trigger needing to know about push at all.
+// followers, best-answer, etc. This is the ONE place that actually sends
+// push notifications, so every notification type gets real delivery for
+// free instead of each feature's own trigger needing to know about push.
 //
-// FCM's legacy server-key API was shut down (June 2024) -- the only way to
-// send now is the HTTP v1 API, which needs a short-lived OAuth2 access
-// token minted from a Firebase service account, not a long-lived server
-// key. That token-exchange dance (sign a JWT with the service account's
-// RSA key, trade it for an access token, then call FCM) is what most of
-// this file is doing.
+// Android tokens go through FCM's HTTP v1 API (the legacy server-key API
+// was shut down in 2024 -- this needs a short-lived OAuth2 access token
+// minted from a Firebase service account instead).
+//
+// iOS tokens do NOT go through FCM at all: Capacitor's push-notifications
+// plugin returns the raw APNs device token on iOS, and nothing in this
+// native project integrates the Firebase iOS SDK to convert that into an
+// FCM-format token (confirmed live: FCM's v1 API rejected a real registered
+// iOS token with "not a valid FCM registration token"). iOS tokens are sent
+// directly to Apple's APNs HTTP/2 API instead, authenticated with a
+// provider JWT signed by the Apple-issued APNs Auth Key (ES256), which is
+// what most of the iOS-specific code below is doing.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
+const APNS_AUTH_KEY = Deno.env.get("APNS_AUTH_KEY");
+const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID");
+const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID");
+const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID") ?? "com.mahayukti.app";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -30,8 +40,8 @@ function base64url(bytes: ArrayBuffer | Uint8Array): string {
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function pemToArrayBuffer(pem: string): ArrayBuffer {
-  const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s/g, "");
+function pemToArrayBuffer(pem: string, label: string): ArrayBuffer {
+  const b64 = pem.replace(new RegExp(`-----BEGIN ${label}-----`), "").replace(new RegExp(`-----END ${label}-----`), "").replace(/\s/g, "");
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -57,7 +67,7 @@ async function getFcmAccessToken(serviceAccount: { client_email: string; private
 
   const key = await crypto.subtle.importKey(
     "pkcs8",
-    pemToArrayBuffer(serviceAccount.private_key),
+    pemToArrayBuffer(serviceAccount.private_key, "PRIVATE KEY"),
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
     ["sign"],
@@ -80,15 +90,56 @@ async function getFcmAccessToken(serviceAccount: { client_email: string; private
   return tokenData.access_token;
 }
 
+// APNs provider tokens are valid up to an hour -- cached per cold-start
+// instance instead of re-signed on every single device in the loop below.
+let cachedApnsJwt: { jwt: string; exp: number } | null = null;
+async function getApnsProviderJwt(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedApnsJwt && cachedApnsJwt.exp - now > 60) return cachedApnsJwt.jwt;
+
+  const header = { alg: "ES256", kid: APNS_KEY_ID };
+  const claims = { iss: APNS_TEAM_ID, iat: now };
+  const encHeader = base64url(new TextEncoder().encode(JSON.stringify(header)));
+  const encClaims = base64url(new TextEncoder().encode(JSON.stringify(claims)));
+  const signingInput = `${encHeader}.${encClaims}`;
+
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    pemToArrayBuffer(APNS_AUTH_KEY!, "PRIVATE KEY"),
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"],
+  );
+  // Web Crypto's ECDSA signatures are already raw (r||s) IEEE P1363 format --
+  // exactly what a JWT's ES256 signature needs, unlike most server-side
+  // crypto libraries which default to DER and need manual re-encoding.
+  const signature = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(signingInput));
+  const jwt = `${signingInput}.${base64url(signature)}`;
+  cachedApnsJwt = { jwt, exp: now + 3600 };
+  return jwt;
+}
+
+async function sendViaApns(token: string, title: string, body: string, data: Record<string, string>) {
+  const jwt = await getApnsProviderJwt();
+  // TestFlight and App Store builds both use the production APNs gateway,
+  // not sandbox -- confirmed live against a real TestFlight-installed
+  // device (the sandbox gateway rejects a production-environment token).
+  const res = await fetch(`https://api.push.apple.com/3/device/${token}`, {
+    method: "POST",
+    headers: {
+      authorization: `bearer ${jwt}`,
+      "apns-topic": APNS_BUNDLE_ID,
+      "apns-push-type": "alert",
+    },
+    body: JSON.stringify({ aps: { alert: { title, body }, sound: "default" }, ...data }),
+  });
+  let detail;
+  try { detail = await res.json(); } catch { detail = null; }
+  return { ok: res.ok, detail };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
-
-  if (!FCM_SERVICE_ACCOUNT_JSON) {
-    // Not configured yet -- fail soft. The in-app notification row this was
-    // triggered from already exists regardless; push is additive on top of
-    // it, never a dependency for the notification itself to "work".
-    return json({ ok: true, skipped: "FCM_SERVICE_ACCOUNT_JSON not set" });
-  }
 
   let body: { notification_id?: string };
   try {
@@ -115,55 +166,64 @@ Deno.serve(async (req: Request) => {
   if (tokErr) return json({ error: tokErr.message }, 500);
   if (!tokens || !tokens.length) return json({ ok: true, note: "No registered devices for this user" });
 
-  let serviceAccount: { project_id: string; client_email: string; private_key: string };
-  try {
-    serviceAccount = JSON.parse(FCM_SERVICE_ACCOUNT_JSON);
-  } catch {
-    return json({ error: "FCM_SERVICE_ACCOUNT_JSON is not valid JSON" }, 500);
+  const data = notif.link_type && notif.link_id
+    ? { link_type: notif.link_type, link_id: notif.link_id }
+    : {};
+
+  const androidTokens = tokens.filter((t) => t.platform === "android");
+  const iosTokens = tokens.filter((t) => t.platform === "ios");
+  const results: { platform: string; ok: boolean; detail?: unknown }[] = [];
+
+  if (androidTokens.length) {
+    if (!FCM_SERVICE_ACCOUNT_JSON) {
+      results.push({ platform: "android", ok: false, detail: "FCM_SERVICE_ACCOUNT_JSON not set" });
+    } else {
+      try {
+        const serviceAccount = JSON.parse(FCM_SERVICE_ACCOUNT_JSON);
+        const accessToken = await getFcmAccessToken(serviceAccount);
+        for (const t of androidTokens) {
+          const sendRes = await fetch(
+            `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: {
+                  token: t.token,
+                  notification: { title: notif.title, body: notif.body },
+                  data,
+                  android: { priority: "high" },
+                },
+              }),
+            },
+          );
+          const sendData = await sendRes.json();
+          results.push({ platform: "android", ok: sendRes.ok, detail: sendRes.ok ? undefined : sendData });
+          if (!sendRes.ok && (sendData?.error?.status === "UNREGISTERED" || sendData?.error?.status === "NOT_FOUND")) {
+            await admin.from("push_tokens").delete().eq("token", t.token);
+          }
+        }
+      } catch (e) {
+        results.push({ platform: "android", ok: false, detail: String(e) });
+      }
+    }
   }
 
-  let accessToken: string;
-  try {
-    accessToken = await getFcmAccessToken(serviceAccount);
-  } catch (e) {
-    return json({ error: String(e) }, 500);
-  }
-
-  const results = [];
-  for (const t of tokens) {
-    const sendRes = await fetch(
-      `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: {
-            token: t.token,
-            notification: { title: notif.title, body: notif.body },
-            // data lets a tapped notification actually navigate somewhere
-            // (see navigateToNotificationLink / pushNotificationActionPerformed
-            // on the client) instead of just opening the app to Home. FCM
-            // data payload values must all be strings, and both fields must
-            // be present or absent together, same as the DB column pairing.
-            data: notif.link_type && notif.link_id
-              ? { link_type: notif.link_type, link_id: notif.link_id }
-              : {},
-            // Both platforms read the plain notification block above for the
-            // visible push; these per-platform blocks only add delivery
-            // behavior (sound, priority), not duplicate content.
-            apns: { payload: { aps: { sound: "default" } } },
-            android: { priority: "high" },
-          },
-        }),
-      },
-    );
-    const sendData = await sendRes.json();
-    results.push({ platform: t.platform, ok: sendRes.ok, detail: sendRes.ok ? undefined : sendData });
-    // A token FCM reports as unregistered/invalid is a dead device (app
-    // reinstalled, uninstalled, etc.) -- worth clearing so this user stops
-    // accumulating failed sends to it forever, not worth treating as an error.
-    if (!sendRes.ok && (sendData?.error?.status === "UNREGISTERED" || sendData?.error?.status === "NOT_FOUND")) {
-      await admin.from("push_tokens").delete().eq("token", t.token);
+  if (iosTokens.length) {
+    if (!APNS_AUTH_KEY || !APNS_KEY_ID || !APNS_TEAM_ID) {
+      results.push({ platform: "ios", ok: false, detail: "APNS_AUTH_KEY/APNS_KEY_ID/APNS_TEAM_ID not set" });
+    } else {
+      for (const t of iosTokens) {
+        try {
+          const { ok, detail } = await sendViaApns(t.token, notif.title, notif.body, data);
+          results.push({ platform: "ios", ok, detail });
+          if (!ok && (detail?.reason === "Unregistered" || detail?.reason === "BadDeviceToken")) {
+            await admin.from("push_tokens").delete().eq("token", t.token);
+          }
+        } catch (e) {
+          results.push({ platform: "ios", ok: false, detail: String(e) });
+        }
+      }
     }
   }
 
