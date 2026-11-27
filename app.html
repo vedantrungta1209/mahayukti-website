@@ -2136,7 +2136,7 @@ async function renderPostCards(containerId,posts){
         <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}${p.edited_at?' · edited':''}</div>
         <div id="post-view-${p.id}">
         ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
-        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(esc(p.body))}</div>
+        <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyMentions(linkifyHashtags(esc(p.body)))}</div>
         </div>
         ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:280px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
         ${href?`<a href="${href}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${esc(p.link_title)||href} →</a>`:''}
@@ -2173,7 +2173,7 @@ async function reloadSinglePostView(id){
     const d=await api('posts',`?id=eq.${id}&select=title,body`);
     const p=(d||[])[0];if(!p)return;
     const el=$('post-view-'+id);if(!el)return;
-    el.innerHTML=`${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}<div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(esc(p.body))}</div>`;
+    el.innerHTML=`${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}<div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyMentions(linkifyHashtags(esc(p.body)))}</div>`;
   }catch(e){}
 }
 async function savePostEdit(id){
@@ -2211,6 +2211,16 @@ function extractHashtags(text){
 function linkifyHashtags(text){
   if(!text)return'';
   return text.replace(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g,(full,tag)=>`<a href="javascript:void(0)" onclick="openHashtag('${esc(tag.toLowerCase())}')" style="color:var(--gold)">#${esc(tag)}</a>`);
+}
+function linkifyMentions(text){
+  if(!text)return'';
+  return text.replace(/@([a-zA-Z][a-zA-Z0-9_]{1,29})/g,(full,uname)=>`<a href="javascript:void(0)" onclick="viewMemberByUsername('${esc(uname.toLowerCase())}')" style="color:var(--gold)">@${esc(uname)}</a>`);
+}
+async function viewMemberByUsername(username){
+  try{
+    const m=await api('member_directory',`?username=ilike.${encodeURIComponent(username)}&select=id`);
+    if(m&&m[0])viewMemberById(m[0].id);
+  }catch(e){}
 }
 function extractLinkUrl(text){
   const m=text.match(/https?:\/\/[^\s]+/);
@@ -2435,7 +2445,7 @@ async function openPostThread(postId){
         </div>
       </div>
       ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
-      <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:${p.image_url?'10px':'10px'}">${linkifyHashtags(esc(p.body))}</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:${p.image_url?'10px':'10px'}">${linkifyMentions(linkifyHashtags(esc(p.body)))}</div>
       ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:320px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
       <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
         <button onclick="toggleLike('${postId}');openPostThread('${postId}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">✓ ${likeCount} found this useful</button>
@@ -2468,7 +2478,7 @@ async function loadThreadComments(postId){
           <span style="font-size:12px;color:var(--white);font-family:var(--sans);font-weight:600;cursor:pointer" onclick="viewMemberById('${c.author_id}')">${esc(cn)}</span>
           <span style="font-size:10.5px;color:rgba(16,30,51,0.3);margin-left:auto">${new Date(c.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:6px">${esc(c.body)}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:6px">${linkifyMentions(esc(c.body))}</div>
         <div style="display:flex;gap:14px">
           <button onclick="toggleCommentLike('${c.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.4)'};font-size:11px;font-family:var(--sans)">✓ ${likeCounts[c.id]||0}</button>
           <button onclick="startCommentReply('${c.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.4);font-size:11px;font-family:var(--sans)">Reply</button>
