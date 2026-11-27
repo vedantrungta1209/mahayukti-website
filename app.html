@@ -929,8 +929,17 @@ img.avatar{object-fit:cover}
     this screen and looking for the button the empty state's own text promised ("start one")
     and finding none. Moved outside the dynamically-replaced container so they're permanent. -->
     <div id="forum-list"><div class="loader"><div class="spinner"></div></div></div>
-    <a href="javascript:void(0)" onclick="promptNewCommunity()" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create a community</a>
-    <a href="javascript:void(0)" id="create-institution-link" onclick="promptNewInstitutionCommunity()" style="display:none;align-items:center;justify-content:center;padding:14px;border:1.5px dashed rgba(16,30,51,0.2);border-radius:4px;color:rgba(16,30,51,0.5);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create an institution-verified community (admin)</a>
+    <a href="javascript:void(0)" onclick="toggleNewCommunityForm()" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create a community</a>
+    <div class="card" id="new-community-form" style="display:none;margin-top:10px">
+      <input type="text" id="new-community-name" placeholder="Community name, e.g. Early-Stage Capital" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border2);border-radius:4px;font-size:14px;font-family:var(--sans)">
+      <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="createCommunity()">Create</button>
+    </div>
+    <a href="javascript:void(0)" id="create-institution-link" onclick="toggleNewInstitutionForm()" style="display:none;align-items:center;justify-content:center;padding:14px;border:1.5px dashed rgba(16,30,51,0.2);border-radius:4px;color:rgba(16,30,51,0.5);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create an institution-verified community (admin)</a>
+    <div class="card" id="new-institution-form" style="display:none;margin-top:10px">
+      <input type="text" id="new-institution-name" placeholder="Institution name, e.g. IIT Delhi" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border2);border-radius:4px;font-size:14px;font-family:var(--sans)">
+      <input type="text" id="new-institution-display-name" placeholder="Community display name, e.g. IIT Delhi Alumni" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border2);border-radius:4px;font-size:14px;font-family:var(--sans)">
+      <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="createInstitutionCommunity()">Create</button>
+    </div>
   </div></div>
 </div>
 
@@ -938,9 +947,13 @@ img.avatar{object-fit:cover}
 <div class="screen" id="screen-community">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('forums')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title" id="community-title">Community</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="page-title" id="community-title">Community</div>
+      <button onclick="toggleCommunityRoster()" style="background:none;border:1px solid var(--border2);border-radius:14px;padding:4px 12px;cursor:pointer;color:var(--muted);font-size:11px;font-family:var(--sans)">Members</button>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content">
+    <div class="card" id="community-roster" style="display:none;margin-bottom:14px"></div>
     <div class="card" style="margin-bottom:14px">
       <textarea id="community-compose" rows="2" placeholder="Post in this community…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
       <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitCommunityPost()">Post</button></div>
@@ -3187,33 +3200,101 @@ async function loadForums(){
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load communities</div></div>';}
 }
 
-async function promptNewCommunity(){
-  const name=prompt('Name this community (e.g. "Early-Stage Capital"):');if(!name||!name.trim()||!ST.profile)return;
+function toggleNewCommunityForm(){const f=$('new-community-form');f.style.display=f.style.display==='none'?'':'none';}
+function toggleNewInstitutionForm(){const f=$('new-institution-form');f.style.display=f.style.display==='none'?'':'none';}
+
+async function createCommunity(){
+  const name=$('new-community-name').value.trim();if(!name||!ST.profile)return;
   try{
-    await api('communities','','POST',{name:name.trim(),kind:'topic',bucket_id:ST.profile.bucket_id||null,created_by:ST.profile.id});
+    await api('communities','','POST',{name,kind:'topic',bucket_id:ST.profile.bucket_id||null,created_by:ST.profile.id});
+    $('new-community-name').value='';toggleNewCommunityForm();
     await loadForums();
-  }catch(e){alert('Could not create the community — please try again.');}
+    toast('Community created','success');
+  }catch(e){toast('Could not create the community','error');}
 }
 
-async function promptNewInstitutionCommunity(){
+async function createInstitutionCommunity(){
   if(ST.profile?.role!=='admin')return;
-  const institutionName=prompt('Institution name (e.g. "IIT Delhi"):');if(!institutionName||!institutionName.trim())return;
-  const displayName=prompt('Community display name:',institutionName.trim()+' Alumni');if(!displayName||!displayName.trim())return;
+  const institutionName=$('new-institution-name').value.trim(),displayName=$('new-institution-display-name').value.trim();
+  if(!institutionName||!displayName)return;
   try{
-    await api('communities','','POST',{name:displayName.trim(),kind:'institution',institution_name:institutionName.trim(),requires_verification:true,created_by:ST.profile.id});
+    await api('communities','','POST',{name:displayName,kind:'institution',institution_name:institutionName,requires_verification:true,created_by:ST.profile.id});
+    $('new-institution-name').value='';$('new-institution-display-name').value='';toggleNewInstitutionForm();
     await loadForums();
-  }catch(e){alert('Could not create the community — please try again.');}
+    toast('Institution community created','success');
+  }catch(e){toast('Could not create the community','error');}
 }
 
 async function openCommunity(id){
   const c=(ST.communities||[]).find(x=>x.id===id);if(!c)return;
   ST.currentCommunity=c;
   $('community-title').textContent=c.name;
+  $('community-roster').style.display='none';
   goto('community');
   await joinCommunityIfNeeded(c);
-  if(c.requires_verification&&ST.profile?.role==='admin')await loadPendingCommunityMembers(c.id);
+  ST.myCommunityRole=await getMyCommunityRole(id);
+  if(c.requires_verification&&(ST.profile?.role==='admin'||ST.myCommunityRole==='moderator'))await loadPendingCommunityMembers(c.id);
   else $('community-pending-members').innerHTML='';
   await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,image_urls,edited_at`);
+}
+
+async function getMyCommunityRole(communityId){
+  if(!ST.profile)return null;
+  try{
+    const m=await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${ST.profile.id}&select=role`);
+    return (m||[])[0]?.role||null;
+  }catch(e){return null;}
+}
+
+async function toggleCommunityRoster(){
+  const el=$('community-roster');
+  if(el.style.display==='none'){el.style.display='';await loadCommunityRoster();}
+  else el.style.display='none';
+}
+
+async function loadCommunityRoster(){
+  const el=$('community-roster');const c=ST.currentCommunity;if(!c)return;
+  el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  try{
+    const members=await api('community_members',`?community_id=eq.${c.id}&status=eq.active&select=user_id,role`)||[];
+    const ids=members.map(m=>m.user_id);
+    let am={};if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
+    const canManage=ST.profile?.role==='admin'||ST.myCommunityRole==='moderator';
+    const isAdmin=ST.profile?.role==='admin';
+    el.innerHTML=`<div class="section-title" style="margin-bottom:8px">Members (${members.length})</div>`+members.map(m=>{
+      const isMe=m.user_id===ST.profile?.id;
+      const n=esc(dname(am[m.user_id]||{}));
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border2)">
+        <span style="font-size:13px;color:var(--white);font-family:var(--sans)">${n}${m.role==='moderator'?' <span style="color:var(--gold);font-size:10px">· moderator</span>':''}</span>
+        <div style="display:flex;gap:8px">
+          ${isMe?`<button onclick="leaveCommunity('${c.id}')" style="background:none;border:none;cursor:pointer;color:rgba(224,85,85,0.7);font-size:11px;font-family:var(--sans)">Leave</button>`:''}
+          ${(isAdmin&&!isMe)?`<button onclick="toggleCommunityModerator('${c.id}','${m.user_id}','${m.role}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.4);font-size:11px;font-family:var(--sans)">${m.role==='moderator'?'Remove moderator':'Make moderator'}</button>`:''}
+          ${(canManage&&!isMe)?`<button onclick="removeCommunityMember('${c.id}','${m.user_id}')" style="background:none;border:none;cursor:pointer;color:rgba(224,85,85,0.5);font-size:11px;font-family:var(--sans)">Remove</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load members</div></div>';}
+}
+
+async function leaveCommunity(communityId){
+  if(!ST.profile||!confirm('Leave this community?'))return;
+  try{
+    await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${ST.profile.id}`,'DELETE');
+    toast('Left community','success');
+    goto('forums');await loadForums();
+  }catch(e){toast('Could not leave the community','error');}
+}
+
+async function removeCommunityMember(communityId,userId){
+  if(!confirm('Remove this member from the community?'))return;
+  try{await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${userId}`,'DELETE');await loadCommunityRoster();toast('Member removed','success');}
+  catch(e){toast('Could not remove member','error');}
+}
+
+async function toggleCommunityModerator(communityId,userId,currentRole){
+  const newRole=currentRole==='moderator'?'member':'moderator';
+  try{await api('community_members',`?community_id=eq.${communityId}&user_id=eq.${userId}`,'PATCH',{role:newRole});await loadCommunityRoster();toast(newRole==='moderator'?'Promoted to moderator':'Moderator removed','success');}
+  catch(e){toast('Could not update role','error');}
 }
 
 async function loadPendingCommunityMembers(communityId){
