@@ -4569,12 +4569,12 @@ async function markDeletionProcessed(userId){
 async function loadModerationQueue(){
   const el=$('moderation-list');
   try{
-    const reports=await api('post_reports','?status=eq.open&order=created_at.desc&select=id,post_id,reporter_id,reason,detail,created_at')||[];
+    const reports=await api('post_reports','?status=eq.open&order=created_at.desc&select=id,post_id,reporter_id,reason,detail,created_at,source')||[];
     if(!reports.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No open reports.</div></div>';return;}
     const postIds=[...new Set(reports.map(r=>r.post_id))];let pm={};
     try{const p=await api('posts',`?id=in.(${postIds.join(',')})&select=id,body,author_id`);(p||[]).forEach(x=>pm[x.id]=x);}catch(e){}
     el.innerHTML=reports.map(r=>{const p=pm[r.post_id]||{};return`<div class="card" style="margin-bottom:10px">
-      <div style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(r.reason)}</div>
+      <div style="font-size:10px;color:${r.source==='auto'?'rgba(16,30,51,0.4)':'var(--gold)'};font-family:var(--sans);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${r.source==='auto'?'⚙ AUTOMATED · ':''}${esc(r.reason)}</div>
       <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.body?esc(p.body):'(post no longer exists)'}</div>
       ${r.detail?`<div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:10px">"${esc(r.detail)}"</div>`:''}
       <div style="display:flex;gap:8px">
