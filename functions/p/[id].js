@@ -42,7 +42,18 @@ export async function onRequestGet(context) {
   const post = rows[0];
   if (!post) return notFoundPage();
 
-  const authorName = post.author_display_name || post.author_username || 'A MahaYukti member';
+  // A post made "as" an org shows the org's name here too -- the in-app
+  // feed already does this (renderPostCards), this page was the one place
+  // that still fell back to the individual author's name regardless.
+  let authorName = post.author_display_name || post.author_username || 'A MahaYukti member';
+  if (post.posted_as_org_id) {
+    const orgRes = await fetch(
+      `${SB_URL}/rest/v1/organizations?id=eq.${post.posted_as_org_id}&select=name`,
+      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
+    );
+    const org = (orgRes.ok ? await orgRes.json() : [])[0];
+    if (org) authorName = org.name;
+  }
   const title = post.title || `A post by ${authorName} on MahaYukti`;
   const description = (post.body || '').slice(0, 200);
   const image = (post.image_urls && post.image_urls[0]) || post.image_url || null;
