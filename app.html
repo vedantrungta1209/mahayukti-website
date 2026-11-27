@@ -623,8 +623,8 @@ img.avatar{object-fit:cover}
     <div id="home-tier-nudge" style="display:none"></div>
     <div class="card" style="margin-bottom:14px">
       <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
-      <div id="feed-image-preview" style="display:none;margin-top:8px"><img style="max-width:100%;border-radius:4px;max-height:160px;object-fit:cover" id="feed-image-preview-img"><button onclick="clearFeedImage()" style="display:block;margin-top:4px;background:none;border:none;color:rgba(224,85,85,0.7);font-size:11px;cursor:pointer;padding:0">Remove photo</button></div>
-      <input type="file" id="feed-image-input" accept="image/*" style="display:none" onchange="onFeedImageSelected(this)">
+      <div id="feed-image-preview" style="display:none;margin-top:8px;flex-wrap:wrap;gap:6px"></div>
+      <input type="file" id="feed-image-input" accept="image/*" multiple style="display:none" onchange="onFeedImageSelected(this)">
       <select id="feed-audience" style="display:none">
         <option value="sector">My sector only</option>
         <option value="connections">Connections only</option>
@@ -2061,7 +2061,7 @@ async function loadSocialFeed(){
   const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
   const el=$('social-feed');if(!el)return;
   try{
-    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,edited_at`)||[];
+    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at`)||[];
     if(ST.profile&&candidates.length){
       try{
         const muted=await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`);
@@ -2118,7 +2118,7 @@ async function loadMoreFeed(){
   if(ST.feedExhausted||!ST.feedOldestCreatedAt){if(btn)btn.remove();return;}
   // Already-fetched window is used up but the server might have more -- pull the next page by cursoring on created_at.
   try{
-    const more=await api('posts',`?community_id=is.null&${ST.feedAudienceClause||'or=(audience.eq.everyone)'}&created_at=lt.${ST.feedOldestCreatedAt}&order=created_at.desc&limit=30${ST.feedExcludeClause||''}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,edited_at`)||[];
+    const more=await api('posts',`?community_id=is.null&${ST.feedAudienceClause||'or=(audience.eq.everyone)'}&created_at=lt.${ST.feedOldestCreatedAt}&order=created_at.desc&limit=30${ST.feedExcludeClause||''}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at`)||[];
     ST.feedExhausted=more.length<30;
     if(more.length){
       ST.feedOldestCreatedAt=more[more.length-1].created_at;
@@ -2177,7 +2177,7 @@ async function renderPostCards(containerId,posts){
         ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
         <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyMentions(linkifyHashtags(esc(p.body)))}</div>
         </div>
-        ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:280px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
+        ${postImagesHtml(p,280)}
         ${href?`<a href="${href}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${esc(p.link_title)||href} →</a>`:''}
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
           <button onclick="toggleLike('${p.id}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">✓ ${likeCounts[p.id]||0} found this useful</button>
@@ -2271,6 +2271,17 @@ function extractLinkUrl(text){
 // bucket (storage RLS enforces that path prefix) and returns the public
 // URL to store on the row, or null if nothing was ever selected or the
 // upload failed.
+// Renders a single image like before for legacy posts, or a simple grid
+// gallery when a post has multiple images (image_urls). Falls back to
+// image_url so every post ever published still renders exactly as it did.
+function postImagesHtml(p,maxHeight){
+  const urls=(p.image_urls&&p.image_urls.length)?p.image_urls:(p.image_url?[p.image_url]:[]);
+  if(!urls.length)return'';
+  if(urls.length===1)return`<img src="${esc(urls[0])}" style="width:100%;border-radius:4px;max-height:${maxHeight}px;object-fit:cover;margin-bottom:10px" loading="lazy">`;
+  const cols=urls.length===2?2:(urls.length===3?3:2);
+  return`<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px;margin-bottom:10px">${urls.map(u=>`<img src="${esc(u)}" style="width:100%;height:140px;object-fit:cover;border-radius:4px" loading="lazy">`).join('')}</div>`;
+}
+
 async function uploadImage(file){
   if(!file||!ST.user)return null;
   const path=`${ST.user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_')}`;
@@ -2323,15 +2334,25 @@ function setFeedAudience(val){
   $('feed-audience').value=val;
   document.querySelectorAll('#feed-audience-pills .aud-pill').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
 }
-let feedImageFile=null;
+let feedImageFiles=[];
+const MAX_POST_IMAGES=6;
 function onFeedImageSelected(input){
-  const file=input.files?.[0];if(!file)return;
-  feedImageFile=file;
-  const reader=new FileReader();
-  reader.onload=()=>{$('feed-image-preview-img').src=reader.result;$('feed-image-preview').style.display='';};
-  reader.readAsDataURL(file);
+  const files=[...(input.files||[])];if(!files.length)return;
+  feedImageFiles=[...feedImageFiles,...files].slice(0,MAX_POST_IMAGES);
+  renderFeedImagePreview();
+  input.value='';
 }
-function clearFeedImage(){feedImageFile=null;$('feed-image-preview').style.display='none';$('feed-image-input').value='';}
+function removeFeedImage(idx){feedImageFiles.splice(idx,1);renderFeedImagePreview();}
+function renderFeedImagePreview(){
+  const el=$('feed-image-preview');
+  if(!feedImageFiles.length){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='flex';
+  el.innerHTML=feedImageFiles.map((f,i)=>{
+    const u=URL.createObjectURL(f);
+    return`<div style="position:relative;width:72px;height:72px"><img src="${u}" style="width:100%;height:100%;object-fit:cover;border-radius:4px"><button onclick="removeFeedImage(${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1">✕</button></div>`;
+  }).join('');
+}
+function clearFeedImage(){feedImageFiles=[];$('feed-image-preview').style.display='none';$('feed-image-preview').innerHTML='';$('feed-image-input').value='';}
 
 async function createPostWithExtras(fields){
   // Needs the new post's real id back to attach hashtags -- same reasoning
@@ -2362,18 +2383,21 @@ async function submitPost(){
   const body=$('feed-compose').value.trim();if(!body||!ST.profile)return;
   const btn=$('feed-post-btn');
   try{
-    let image_url=null;
-    if(feedImageFile){
+    let image_url=null,image_urls=null;
+    if(feedImageFiles.length){
       btn.disabled=true;btn.textContent='Uploading…';
-      image_url=await uploadImage(feedImageFile);
+      const urls=(await Promise.all(feedImageFiles.map(uploadImage))).filter(Boolean);
       btn.disabled=false;btn.textContent='Post';
+      if(!urls.length){toast('Image upload failed','error');return;}
+      image_url=urls[0];
+      image_urls=urls.length>1?urls:null;
     }
     await createPostWithExtras({
       author_id:ST.profile.id,body,
       bucket_id:ST.profile.bucket_id||null,
       audience:$('feed-audience').value,
       link_url:extractLinkUrl(body),
-      image_url
+      image_url,image_urls
     });
     $('feed-compose').value='';
     clearFeedImage();
@@ -2414,7 +2438,7 @@ async function openHashtag(tag){
     }
     const links=await api('post_hashtags',`?hashtag_id=eq.${hashtagId}&select=post_id`)||[];
     if(!links.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
-    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored,image_url,edited_at`);
+    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored,image_url,image_urls,edited_at`);
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
 
@@ -2438,7 +2462,7 @@ async function submitCommunityPost(){
   try{
     await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.currentCommunity.bucket_id||null,audience:'everyone',community_id:cid});
     $('community-compose').value='';
-    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,edited_at`);
+    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,image_urls,edited_at`);
   }catch(e){alert('Could not post — please try again.');}
 }
 
@@ -2461,7 +2485,7 @@ async function openPostThread(postId){
   $('thread-comments').innerHTML='<div class="loader"><div class="spinner"></div></div>';
   goto('post-thread');
   try{
-    const posts=await api('posts',`?id=eq.${postId}&select=id,body,title,created_at,author_id,image_url`);
+    const posts=await api('posts',`?id=eq.${postId}&select=id,body,title,created_at,author_id,image_url,image_urls`);
     const p=(posts||[])[0];
     if(!p){$('thread-post').innerHTML='<div class="empty-state"><div class="empty-text">Post not found</div></div>';return;}
     let author={};
@@ -2485,7 +2509,7 @@ async function openPostThread(postId){
       </div>
       ${p.title?`<div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
       <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:${p.image_url?'10px':'10px'}">${linkifyMentions(linkifyHashtags(esc(p.body)))}</div>
-      ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:320px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
+      ${postImagesHtml(p,320)}
       <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
         <button onclick="toggleLike('${postId}');openPostThread('${postId}')" style="background:none;border:none;cursor:pointer;color:${liked?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">✓ ${likeCount} found this useful</button>
         <span style="color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">${commentCount} replies</span>
@@ -2943,7 +2967,7 @@ async function openCommunity(id){
   await joinCommunityIfNeeded(c);
   if(c.requires_verification&&ST.profile?.role==='admin')await loadPendingCommunityMembers(c.id);
   else $('community-pending-members').innerHTML='';
-  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,edited_at`);
+  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,image_urls,edited_at`);
 }
 
 async function loadPendingCommunityMembers(communityId){
