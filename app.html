@@ -2901,7 +2901,7 @@ function renderDMBubbles(d){
     const me=m.from_id===ST.profile.id;
     const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     const img=m.image_url?`<img src="${esc(m.image_url)}" style="max-width:220px;border-radius:8px;display:block;margin-bottom:${m.content?'6px':'0'}" loading="lazy">`:'';
-    const seen=(i===lastMineIdx&&m.read)?'<div style="font-size:10px;color:rgba(255,255,255,0.5);text-align:right;margin-top:2px">Seen</div>':'';
+    const seen=(i===lastMineIdx&&m.read)?'<div style="font-size:10px;color:rgba(16,30,51,0.35);text-align:right;margin-top:2px">Seen</div>':'';
     return`<div class="bubble ${me?'me':'them'}">${img}${m.content?esc(m.content):''}<div class="bubble-time">${t}</div></div>${seen}`;
   }).join('');
 }
