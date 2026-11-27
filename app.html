@@ -1414,11 +1414,20 @@ img.avatar{object-fit:cover}
     <div class="page-title">Developer &amp; API Access</div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
-    <p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:16px">Post and read MahaYukti from your own tools — the same way you'd connect Buffer or Zapier to any other network.</p>
+    <p style="font-size:12px;color:var(--muted);font-family:var(--sans);line-height:1.7;margin-bottom:16px">Read MahaYukti from your own tools — the same way you'd connect any other network's public API. 60 requests/minute per key.</p>
     <div id="api-key-area"></div>
     <div class="divider"></div>
     <div class="section-title">This month</div>
-    <div id="api-key-stats" style="font-size:13px;color:var(--muted);font-family:var(--sans)"></div>
+    <div id="api-key-stats" style="font-size:13px;color:var(--muted);font-family:var(--sans);margin-bottom:16px"></div>
+    <div class="section-title">Endpoints</div>
+    <div style="font-family:monospace;font-size:12px;color:var(--muted);line-height:2;background:rgba(16,30,51,0.04);padding:12px;border-radius:4px;margin-bottom:10px">
+GET https://npyoyylrqprawyavnfvv.supabase.co/functions/v1/api-v1/posts<br>
+GET .../api-v1/posts/:id<br>
+GET .../api-v1/organizations<br>
+GET .../api-v1/organizations/:slug<br>
+GET .../api-v1/me <span style="color:rgba(16,30,51,0.3)">(needs read_profile scope)</span>
+    </div>
+    <p style="font-size:11.5px;color:rgba(16,30,51,0.4);font-family:var(--sans);line-height:1.7">Send your key as <code>Authorization: Bearer &lt;key&gt;</code>. This is read-only — posts/orgs are whatever's already public on MahaYukti, now as clean JSON with pagination (<code>?limit=</code>, <code>?before=</code>).</p>
   </div></div>
 </div>
 
