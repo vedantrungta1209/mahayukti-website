@@ -3352,7 +3352,7 @@ async function loadMarketplace(){
       <div style="font-size:14px;color:var(--gold);font-family:var(--sans);font-weight:700;margin-bottom:4px">${esc(x.price_text)}</div>
       <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:8px">${esc(dname(am[x.seller_id]||{}))} · ${esc(x.location)}</div>
       ${x.description?`<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">${esc(x.description)}</div>`:''}
-      ${x.seller_id===ST.profile?.id?'':`<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:12px" onclick="inquireListing('${x.id}')">Message seller</button>`}
+      ${x.seller_id===ST.profile?.id?'':`<button class="btn btn-outline" style="width:auto;padding:8px 16px;font-size:12px" onclick="inquireListing('${x.id}','${x.seller_id}','${esc(x.title).replace(/'/g,"\\'")}')">Message seller</button>`}
     </div>`).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the marketplace</div></div>';}
 }
@@ -3475,10 +3475,17 @@ async function rejectPackageRequest(id){
   catch(e){alert('Could not reject — please try again.');}
 }
 
-async function inquireListing(listingId){
-  const msg=prompt('Message to the seller:');if(!msg||!msg.trim()||!ST.profile)return;
-  try{await api('marketplace_inquiries','','POST',{listing_id:listingId,buyer_id:ST.profile.id,message:msg.trim()});alert('Sent.');}
-  catch(e){alert('Could not send — please try again.');}
+// Previously a prompt() dialog writing into marketplace_inquiries, a
+// separate, disconnected inbox sellers rarely checked -- now opens a real
+// chat with the seller (the same Messages system built this session),
+// pre-filled with a reference to the listing so the conversation has
+// context from the first message.
+async function inquireListing(listingId,sellerId,listingTitle){
+  if(!ST.profile||sellerId===ST.profile.id)return;
+  let seller={};
+  try{const a=await api('member_directory',`?id=eq.${sellerId}&select=id,username,real_name,show_real_name,real_name_approved,domain`);seller=(a||[])[0]||{id:sellerId};}catch(e){seller={id:sellerId};}
+  await openChat(seller);
+  $('chat-inp').value=`Hi, I'm interested in your listing "${listingTitle}" on the Marketplace.`;
 }
 
 async function loadMyListings(){
@@ -3585,9 +3592,11 @@ async function loadBriefDetail(briefId){
   const el=$('bd-content');
   el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
   try{
-    const briefs=await api('exchange_briefs_public',`?id=eq.${briefId}&select=id,brief_type,description,anonymous,author_id,created_at`);
+    const briefs=await api('exchange_briefs_public',`?id=eq.${briefId}&select=id,brief_type,description,anonymous,author_id,created_at,status`);
     const brief=(briefs||[])[0];
     if(!brief){el.innerHTML='<div class="empty-state"><div class="empty-text">This brief is no longer available.</div></div>';return;}
+    let awardedResponseId=null;
+    if(brief.author_id===ST.profile?.id){try{const full=await api('exchange_briefs',`?id=eq.${briefId}&select=awarded_response_id`);awardedResponseId=(full||[])[0]?.awarded_response_id||null;}catch(e){}}
     const isAuthor=brief.author_id===ST.profile?.id;
     const labels=Object.fromEntries(BRIEF_TYPES);
     let authorName='Posted anonymously';
@@ -3597,27 +3606,47 @@ async function loadBriefDetail(briefId){
     if(rids.length){try{const u=await api('member_directory',`?id=in.(${rids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(u||[]).forEach(x=>rm[x.id]=x);}catch(e){}}
     const authorAvatar=brief.anonymous?'':`<div class="avatar avatar-sm" style="width:24px;height:24px;font-size:11px;border-color:rgba(201,148,58,0.3);color:var(--gold);cursor:pointer;display:inline-flex;vertical-align:middle;margin-right:6px" onclick="viewMemberById('${brief.author_id}')">${esc((authorName||'?').charAt(0).toUpperCase())}</div>`;
     el.innerHTML=`
-      <span style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px">${labels[brief.brief_type]||brief.brief_type}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:var(--gold);font-family:var(--sans);font-weight:600;letter-spacing:.3px">${labels[brief.brief_type]||brief.brief_type}</span>
+        ${brief.status!=='open'?`<span style="font-size:10px;color:rgba(16,30,51,0.4);font-family:var(--sans);text-transform:uppercase">${esc(brief.status)}</span>`:''}
+      </div>
       <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin:10px 0 6px">${esc(brief.description)}</div>
       <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-bottom:18px;display:flex;align-items:center">${authorAvatar}<span${brief.anonymous?'':` style="cursor:pointer" onclick="viewMemberById('${brief.author_id}')"`}>${esc(authorName)}</span>&nbsp;· ${new Date(brief.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · ${responses.length} response${responses.length===1?'':'s'}</div>
-      ${isAuthor?'':`<div class="card" style="margin-bottom:18px">
+      ${(isAuthor&&brief.status==='open')?`<button onclick="closeBrief('${briefId}')" style="background:none;border:1px solid var(--border2);border-radius:14px;padding:5px 14px;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans);margin-bottom:18px">Close this brief</button>`:''}
+      ${(!isAuthor&&brief.status==='open')?`<div class="card" style="margin-bottom:18px">
         <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:10px">Respond to this brief</div>
         <textarea id="bd-reply" rows="3" placeholder="Describe how you can help, your availability, and rough fee range..." style="width:100%;box-sizing:border-box;border:1.5px solid rgba(16,30,51,0.08);background:rgba(16,30,51,0.04);border-radius:4px;padding:10px 12px;font-family:var(--sans);font-size:13.5px;color:var(--white);resize:none"></textarea>
         <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="bd-public">Share this response with other members (off = visible only to the brief's author)</label>
         <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="submitBriefResponse('${briefId}')">Send response</button>
-      </div>`}
+      </div>`:''}
       <div style="font-size:11px;font-weight:700;color:rgba(16,30,51,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Responses${isAuthor?'':' visible to you'}</div>
-      <div id="bd-responses">${responses.length?responses.map(r=>{const rn=dname(rm[r.responder_id]||{});return`<div class="card" style="margin-bottom:8px">
+      <div id="bd-responses">${responses.length?responses.map(r=>{const rn=dname(rm[r.responder_id]||{});const isAwarded=awardedResponseId===r.id;return`<div class="card" style="margin-bottom:8px;${isAwarded?'border-color:var(--gold)':''}">
+        ${isAwarded?'<div style="font-size:10px;color:var(--gold);font-weight:700;font-family:var(--sans);margin-bottom:4px">✓ AWARDED</div>':''}
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div class="avatar avatar-sm" style="width:26px;height:26px;font-size:12px;border-color:rgba(201,148,58,0.3);color:var(--gold);cursor:pointer" onclick="viewMemberById('${r.responder_id}')">${esc((rn||'?').charAt(0).toUpperCase())}</div>
           <span style="font-size:12.5px;color:var(--white);font-family:var(--sans);font-weight:600;cursor:pointer" onclick="viewMemberById('${r.responder_id}')">${esc(rn)}</span>
           ${r.private_to_poster?'<span style="font-size:10px;color:rgba(16,30,51,0.35)">· private to you</span>':''}
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6">${esc(r.message)}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:${(isAuthor&&!isAwarded)?'8px':'0'}">${esc(r.message)}</div>
+        ${(isAuthor&&!isAwarded)?`<button onclick="awardBriefResponse('${briefId}','${r.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.4);font-size:11px;font-family:var(--sans)">Award this response</button>`:''}
       </div>`}).join(''):'<p style="font-size:13px;color:var(--muted)">No responses yet.</p>'}</div>
       <div style="background:rgba(201,148,58,0.06);border:1px solid var(--border);border-radius:4px;padding:12px 14px;margin-top:18px;font-size:11.5px;color:var(--muted);line-height:1.6">Reminder: MahaYukti is not a party to this engagement. Agree terms, fees and confidentiality directly with the respondent — see the <a href="javascript:void(0)" onclick="scrollToLegal('legal-marketplace')" style="color:var(--gold)">Exchange &amp; Marketplace Disclaimer</a> in the Legal Center.</div>
     `;
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load this brief</div></div>';}
+}
+
+async function closeBrief(briefId){
+  if(!confirm('Close this brief? Members will no longer be able to respond.'))return;
+  try{await api('exchange_briefs',`?id=eq.${briefId}`,'PATCH',{status:'closed'});toast('Brief closed','success');await loadBriefDetail(briefId);}
+  catch(e){toast('Could not close the brief','error');}
+}
+
+async function awardBriefResponse(briefId,responseId){
+  try{
+    await api('exchange_briefs',`?id=eq.${briefId}`,'PATCH',{status:'matched',awarded_response_id:responseId});
+    toast('Response awarded','success');
+    await loadBriefDetail(briefId);
+  }catch(e){toast('Could not award the response','error');}
 }
 
 async function submitBriefResponse(briefId){
