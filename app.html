@@ -2045,6 +2045,14 @@ async function registerForPushNotifications(){
         catch(e){} // a duplicate token (same device re-registering) is expected, not an error
       });
       PN.addListener('registrationError',()=>{});
+      // Tapping a delivered push (app backgrounded or closed) previously
+      // just opened the app to wherever it last was -- data.link_type/
+      // link_id (set in send-push) let it navigate to the actual post/
+      // profile/chat, same as tapping the equivalent row in the in-app bell.
+      PN.addListener('pushNotificationActionPerformed',(action)=>{
+        const data=action?.notification?.data;
+        if(data?.link_type&&data?.link_id)navigateToNotificationLink({link_type:data.link_type,link_id:data.link_id});
+      });
     }
     await PN.register();
   }catch(e){}
@@ -3886,11 +3894,38 @@ async function loadNotifs(){
     const unread=d.filter(n=>!n.read).length;
     const badge=$('notif-badge');if(unread>0){badge.textContent=unread;badge.style.display='';}else badge.style.display='none';
     const sbadge=$('shell-notif-badge');if(sbadge){if(unread>0){sbadge.textContent=unread;sbadge.style.display='';}else sbadge.style.display='none';}
-    el.innerHTML=d.map(n=>`<div class="card${!n.read?' gold-border':''}" onclick="markNotifRead('${n.id}')" style="cursor:pointer;margin-bottom:10px;position:relative">${!n.read?'<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>':''}<div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:4px;padding-right:20px">${esc(n.title)}</div>${n.body?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">${esc(n.body)}</div>`:''}<div style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(n.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');
+    const enc=n=>JSON.stringify({link_type:n.link_type,link_id:n.link_id}).replace(/"/g,'&quot;');
+    el.innerHTML=d.map(n=>`<div class="card${!n.read?' gold-border':''}" onclick="openNotification('${n.id}',${enc(n)})" style="cursor:pointer;margin-bottom:10px;position:relative">${!n.read?'<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>':''}<div style="font-size:15px;color:var(--white);font-family:var(--sans);font-weight:500;margin-bottom:4px;padding-right:20px">${esc(n.title)}</div>${n.body?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">${esc(n.body)}</div>`:''}<div style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(n.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');
   }catch(e){}
 }
 
 async function markNotifRead(id){try{await api('notifications','?id=eq.'+id,'PATCH',{read:true});await loadNotifs();}catch(e){}}
+
+// Tapping a notification previously only ever marked it read -- it never
+// actually took you to the post/profile/chat it was about, in the bell
+// list or from a tapped push (see navigateToNotificationLink, used by
+// both). link_type/link_id come from the same notify_* triggers that
+// create the row in the first place.
+async function openNotification(id,link){
+  await markNotifRead(id);
+  await navigateToNotificationLink(link);
+}
+async function navigateToNotificationLink(link){
+  if(!link||!link.link_type||!link.link_id)return;
+  // A tap that cold-starts the app (from a terminated state) can fire this
+  // before handleSess()/loadMemberHome() have finished setting up ST.profile
+  // -- wait briefly rather than silently doing nothing in that case.
+  for(let i=0;i<20&&!ST.profile;i++)await new Promise(r=>setTimeout(r,250));
+  if(!ST.profile)return;
+  try{
+    if(link.link_type==='post')await openPostThread(link.link_id);
+    else if(link.link_type==='member')await viewMemberById(link.link_id);
+    else if(link.link_type==='chat'){
+      const a=await api('member_directory',`?id=eq.${link.link_id}&select=id,username,real_name,show_real_name,real_name_approved,domain`);
+      const other=(a||[])[0];if(other)await openChat(other);
+    }
+  }catch(e){}
+}
 
 function setupRT(){
   teardownRTChannel('notifs');

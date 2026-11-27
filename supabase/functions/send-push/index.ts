@@ -103,7 +103,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: notif, error: notifErr } = await admin
     .from("notifications")
-    .select("id, user_id, title, body")
+    .select("id, user_id, title, body, link_type, link_id")
     .eq("id", notification_id)
     .single();
   if (notifErr || !notif) return json({ ok: true, note: "Notification not found (may have been deleted)" });
@@ -140,6 +140,14 @@ Deno.serve(async (req: Request) => {
           message: {
             token: t.token,
             notification: { title: notif.title, body: notif.body },
+            // data lets a tapped notification actually navigate somewhere
+            // (see navigateToNotificationLink / pushNotificationActionPerformed
+            // on the client) instead of just opening the app to Home. FCM
+            // data payload values must all be strings, and both fields must
+            // be present or absent together, same as the DB column pairing.
+            data: notif.link_type && notif.link_id
+              ? { link_type: notif.link_type, link_id: notif.link_id }
+              : {},
             // Both platforms read the plain notification block above for the
             // visible push; these per-platform blocks only add delivery
             // behavior (sound, priority), not duplicate content.
