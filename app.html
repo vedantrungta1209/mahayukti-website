@@ -2736,9 +2736,23 @@ async function viewMemberById(id){
 function viewMember(id){
   const m=ST.members.find(x=>x.id===id);if(!m)return;ST.currentMember=m;
   const n=dname(m);const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(156,135,106,0.3)',council:'rgba(194,176,148,0.3)'};
-  $('mp-av').textContent=n.charAt(0).toUpperCase();$('mp-av').style.borderColor=colors[m.role]||colors.member;
-  $('mp-uname').textContent='@'+m.username;
-  $('mp-rname').textContent=(m.show_real_name&&m.real_name_approved&&m.real_name)?m.real_name:'';
+  // mp-av only ever showed the initials circle, never a member's real photo
+  // even when avatar_url was set -- viewMember() never checked for one.
+  // Inlined (not avatarHtml()) to keep the existing per-role border tint,
+  // same reason the Directory's own member cards inline this instead of
+  // using the shared helper.
+  const mpBorder=colors[m.role]||colors.member;
+  $('mp-av').outerHTML=m.avatar_url
+    ?`<img class="avatar avatar-lg" id="mp-av" style="border-color:${mpBorder}" src="${esc(m.avatar_url)}" alt="">`
+    :`<div class="avatar avatar-lg" id="mp-av" style="border-color:${mpBorder};color:var(--gold)">${esc(n.charAt(0).toUpperCase())}</div>`;
+  // When the member's real name is approved and visible, show it as the
+  // primary heading (matching how a real member profile should read) and
+  // the username as the smaller secondary line underneath -- not the other
+  // way around, which was always showing "@username" as the prominent
+  // heading even when a real name was available and approved to display.
+  const canShowRealName=m.show_real_name&&m.real_name_approved&&m.real_name;
+  $('mp-uname').textContent=canShowRealName?m.real_name:'@'+m.username;
+  $('mp-rname').textContent=canShowRealName?'@'+m.username:'';
   $('mp-founding').style.display=m.founding_member&&m.founding_approved?'':'none';
   $('mp-badge').innerHTML=`<div class="layer-badge ${lbadge(m.role)}">${lbadgeLabel(m.role)}</div>`;
   const tagRow=(label,arr)=>(arr&&arr.length)?`<div style="margin-top:14px"><div class="section-title">${label}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${arr.map(t=>`<span style="padding:3px 10px;border:1px solid var(--border2);border-radius:12px;font-size:11px;color:var(--muted);font-family:var(--sans)">${esc(t)}</span>`).join('')}</div></div>`:'';
