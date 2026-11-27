@@ -2016,6 +2016,38 @@ async function loadMemberHome(){
   loadSocialFeed();
   loadTrendingHashtags();
   setupRT();
+  registerForPushNotifications();
+}
+
+// Real push delivery's other half (see supabase/functions/send-push) --
+// nothing anywhere ever asked for push permission or captured a device
+// token before this, so no notification could ever reach a device, only
+// the in-app bell. Native-only: window.Capacitor is never present in a
+// plain browser tab, same guard used for native Google sign-in elsewhere
+// in this file. Listeners are attached once per app load (not once per
+// login) since loadMemberHome() can run again later in the same session.
+let pushListenersAttached=false;
+async function registerForPushNotifications(){
+  if(!window.Capacitor?.isNativePlatform?.()||!ST.profile)return;
+  const PN=Capacitor.Plugins.PushNotifications;if(!PN)return;
+  try{
+    const perm=await PN.checkPermissions();
+    if(perm.receive!=='granted'){
+      const req=await PN.requestPermissions();
+      if(req.receive!=='granted')return;
+    }
+    if(!pushListenersAttached){
+      pushListenersAttached=true;
+      PN.addListener('registration',async(token)=>{
+        if(!ST.profile||!token?.value)return;
+        const platform=window.Capacitor.getPlatform()==='ios'?'ios':'android';
+        try{await api('push_tokens','','POST',{user_id:ST.profile.id,token:token.value,platform});}
+        catch(e){} // a duplicate token (same device re-registering) is expected, not an error
+      });
+      PN.addListener('registrationError',()=>{});
+    }
+    await PN.register();
+  }catch(e){}
 }
 
 // Desktop-only right rail, per Feed.dc.html -- "Your vertical" (real domain_group) and "On
