@@ -2086,8 +2086,47 @@ async function loadSocialFeed(){
     }
     // One sponsored card near the top, the rest ranked organically underneath.
     const ordered=sponsored.length?[sponsored[0],...organic.slice(0,29),...sponsored.slice(1)]:organic;
-    await renderPostCards('social-feed',ordered.slice(0,30));
+    ST.feedOrdered=ordered;
+    ST.feedShown=Math.min(30,ordered.length);
+    ST.feedExhausted=candidates.length<100; // fewer than the fetch limit came back -- nothing more exists server-side
+    ST.feedOldestCreatedAt=candidates.length?candidates[candidates.length-1].created_at:null;
+    // loadMoreFeed's cursor fetch must apply the exact same visibility rules
+    // as the initial load, or "load more" would leak posts outside the
+    // viewer's real audience/mute/block scope.
+    ST.feedAudienceClause=audienceClause;
+    ST.feedExcludeClause=excludeClause;
+    await renderFeedPage();
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+async function renderFeedPage(){
+  const el=$('social-feed');if(!el)return;
+  await renderPostCards('social-feed',ST.feedOrdered.slice(0,ST.feedShown));
+  const canLoadMore=ST.feedShown<ST.feedOrdered.length||!ST.feedExhausted;
+  if(canLoadMore){
+    el.insertAdjacentHTML('beforeend',`<button id="feed-load-more" onclick="loadMoreFeed()" style="display:block;width:100%;padding:10px;margin-top:6px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--muted);font-size:13px;font-family:var(--sans)">Load more</button>`);
+  }
+}
+
+async function loadMoreFeed(){
+  const btn=$('feed-load-more');if(btn){btn.textContent='Loading…';btn.disabled=true;}
+  if(ST.feedShown<ST.feedOrdered.length){
+    ST.feedShown=Math.min(ST.feedShown+30,ST.feedOrdered.length);
+    await renderFeedPage();
+    return;
+  }
+  if(ST.feedExhausted||!ST.feedOldestCreatedAt){if(btn)btn.remove();return;}
+  // Already-fetched window is used up but the server might have more -- pull the next page by cursoring on created_at.
+  try{
+    const more=await api('posts',`?community_id=is.null&${ST.feedAudienceClause||'or=(audience.eq.everyone)'}&created_at=lt.${ST.feedOldestCreatedAt}&order=created_at.desc&limit=30${ST.feedExcludeClause||''}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,edited_at`)||[];
+    ST.feedExhausted=more.length<30;
+    if(more.length){
+      ST.feedOldestCreatedAt=more[more.length-1].created_at;
+      ST.feedOrdered=[...ST.feedOrdered,...more];
+      ST.feedShown=ST.feedOrdered.length;
+    }
+    await renderFeedPage();
+  }catch(e){if(btn){btn.textContent='Load more';btn.disabled=false;}}
 }
 
 async function renderPostList(containerId,query,weights){
