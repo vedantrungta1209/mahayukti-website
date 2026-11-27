@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -3435,13 +3436,50 @@ async function loadMarketplacePackages(){
   }catch(e){}
 }
 
+// Real payment: creates the pending_payment row (unchanged), then a Supabase
+// Edge Function (razorpay-create-order) creates the actual Razorpay order
+// server-side -- this client only ever sees an order id + amount + the
+// public key_id, never the key_secret. Activation itself happens later,
+// server-side, in razorpay-webhook once Razorpay confirms the payment really
+// captured -- this function's checkout "handler" callback below is just a
+// UI update for a good experience, not the thing that grants access.
 async function requestPackage(packageId){
   if(!ST.profile)return;
   try{
-    await api('seller_package_subscriptions','','POST',{user_id:ST.profile.id,package_id:packageId});
-    alert('Requested — an admin will activate it once payment is confirmed.');
-    await loadMarketplacePackages();
-  }catch(e){alert('Could not submit the request — please try again.');}
+    const inserted=await fetch(`${SB_URL}/rest/v1/seller_package_subscriptions`,{
+      method:'POST',
+      headers:{apikey:SB_KEY,Authorization:'Bearer '+(ST.user?.access_token||SB_KEY),'Content-Type':'application/json',Prefer:'return=representation'},
+      body:JSON.stringify({user_id:ST.profile.id,package_id:packageId})
+    }).then(r=>r.json());
+    const sub=(inserted||[])[0];
+    if(!sub)throw new Error('Could not create the subscription request');
+
+    const orderRes=await fetch(`${SB_URL}/functions/v1/razorpay-create-order`,{
+      method:'POST',
+      headers:{Authorization:'Bearer '+ST.user.access_token,'Content-Type':'application/json'},
+      body:JSON.stringify({subscription_id:sub.id})
+    });
+    const order=await orderRes.json();
+    if(!orderRes.ok)throw new Error(order.error||'Could not start the payment');
+
+    const rzp=new Razorpay({
+      key:order.key_id,
+      amount:order.amount,
+      currency:order.currency,
+      order_id:order.order_id,
+      name:'MahaYukti',
+      description:order.package_name,
+      prefill:{name:selfName(ST.profile),email:ST.user?.email||''},
+      theme:{color:'#C9943A'},
+      handler:function(){
+        toast('Payment received — activating your package…','success');
+        setTimeout(()=>loadMarketplacePackages(),3000);
+      },
+      modal:{ondismiss:function(){toast('Payment cancelled','info');}}
+    });
+    rzp.on('payment.failed',function(resp){toast('Payment failed: '+(resp.error?.description||'please try again'),'error');});
+    rzp.open();
+  }catch(e){toast(e.message||'Could not start the payment — please try again.','error');}
 }
 
 async function loadAdminPackages(){
