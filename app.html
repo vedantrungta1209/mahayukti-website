@@ -2061,7 +2061,7 @@ async function loadSocialFeed(){
   const excludeClause=exclude.length?`&author_id=not.in.(${[...new Set(exclude)].join(',')})`:'';
   const el=$('social-feed');if(!el)return;
   try{
-    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url`)||[];
+    let candidates=await api('posts',`?community_id=is.null&${audienceClause}&order=created_at.desc&limit=100${excludeClause}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,edited_at`)||[];
     if(ST.profile&&candidates.length){
       try{
         const muted=await api('muted_hashtags',`?user_id=eq.${ST.profile.id}&select=hashtag_id`);
@@ -2122,11 +2122,22 @@ async function renderPostCards(containerId,posts){
       const n=esc(dname(am[p.author_id]||{}));
       const liked=likeSet.has(p.id);
       const href=safeHref(p.link_url);
-      return`<div class="card" style="margin-bottom:10px">
-        <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${p.is_sponsored?'Sponsored':n}</div>
-        <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+      const isMine=myId&&p.author_id===myId;
+      const isAdmin=ST.profile?.role==='admin';
+      const encP=JSON.stringify({id:p.id,body:p.body,title:p.title||''}).replace(/"/g,'&quot;');
+      return`<div class="card" id="post-${p.id}" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:2px">${p.is_sponsored?'Sponsored':n}</div>
+          ${(isMine||isAdmin)?`<div style="display:flex;gap:10px">
+            <button onclick="startPostEdit(${encP})" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.35);font-size:11px;font-family:var(--sans)">Edit</button>
+            <button onclick="deletePost('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.35);font-size:11px;font-family:var(--sans)">Delete</button>
+          </div>`:''}
+        </div>
+        <div style="font-size:11px;color:rgba(16,30,51,0.4);margin-bottom:8px">${new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}${p.edited_at?' · edited':''}</div>
+        <div id="post-view-${p.id}">
         ${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}
         <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(esc(p.body))}</div>
+        </div>
         ${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;border-radius:4px;max-height:280px;object-fit:cover;margin-bottom:10px" loading="lazy">`:''}
         ${href?`<a href="${href}" target="_blank" style="display:block;font-size:12px;color:var(--gold);margin-bottom:8px">${esc(p.link_title)||href} →</a>`:''}
         <div style="display:flex;gap:18px;border-top:1px solid var(--border);padding-top:8px">
@@ -2138,6 +2149,51 @@ async function renderPostCards(containerId,posts){
       </div>`;
     }).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+function startPostEdit(p){
+  const el=$('post-view-'+p.id);if(!el)return;
+  el.innerHTML=`
+    <input type="text" id="edit-title-${p.id}" value="${esc(p.title||'')}" placeholder="Title (optional)" style="width:100%;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border2);border-radius:4px;font-size:14px;font-family:var(--serif);font-weight:700">
+    <textarea id="edit-body-${p.id}" style="width:100%;min-height:90px;padding:8px 10px;border:1px solid var(--border2);border-radius:4px;font-size:14px;font-family:var(--sans);resize:vertical">${esc(p.body)}</textarea>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button onclick="savePostEdit('${p.id}')" class="btn btn-gold" style="padding:6px 14px;font-size:12px">Save</button>
+      <button onclick="cancelPostEdit('${p.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans)">Cancel</button>
+    </div>`;
+  $('edit-body-'+p.id).focus();
+}
+function cancelPostEdit(id){
+  // Simplest reliable way back to the formatted view without duplicating
+  // renderPostCards' templating here -- just re-fetch this one post and
+  // let the existing card-building code regenerate its view div.
+  reloadSinglePostView(id);
+}
+async function reloadSinglePostView(id){
+  try{
+    const d=await api('posts',`?id=eq.${id}&select=title,body`);
+    const p=(d||[])[0];if(!p)return;
+    const el=$('post-view-'+id);if(!el)return;
+    el.innerHTML=`${p.title?`<div style="font-size:15px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px">${esc(p.title)}</div>`:''}<div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px">${linkifyHashtags(esc(p.body))}</div>`;
+  }catch(e){}
+}
+async function savePostEdit(id){
+  const body=$('edit-body-'+id).value.trim();
+  const title=$('edit-title-'+id).value.trim();
+  if(!body){toast('Post can\'t be empty','error');return;}
+  try{
+    await api('posts',`?id=eq.${id}`,'PATCH',{body,title:title||null,edited_at:new Date().toISOString()});
+    await reloadSinglePostView(id);
+    toast('Post updated','success');
+  }catch(e){toast('Could not save changes','error');}
+}
+async function deletePost(id){
+  if(!confirm('Delete this post? This can\'t be undone.'))return;
+  try{
+    await api('posts',`?id=eq.${id}`,'DELETE');
+    const el=$('post-'+id);
+    if(el)el.remove();
+    toast('Post deleted','success');
+  }catch(e){toast('Could not delete the post','error');}
 }
 
 async function reportPost(postId){
@@ -2309,7 +2365,7 @@ async function openHashtag(tag){
     }
     const links=await api('post_hashtags',`?hashtag_id=eq.${hashtagId}&select=post_id`)||[];
     if(!links.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts with this tag yet.</div></div>';return;}
-    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored,image_url`);
+    await renderPostList('hashtag-posts',`?id=in.(${links.map(l=>l.post_id).join(',')})&order=created_at.desc&select=id,body,title,created_at,author_id,bucket_id,link_title,link_url,is_sponsored,image_url,edited_at`);
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
 
@@ -2333,7 +2389,7 @@ async function submitCommunityPost(){
   try{
     await api('posts','','POST',{author_id:ST.profile.id,body,bucket_id:ST.currentCommunity.bucket_id||null,audience:'everyone',community_id:cid});
     $('community-compose').value='';
-    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url`);
+    await renderPostList('community-posts',`?community_id=eq.${cid}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,edited_at`);
   }catch(e){alert('Could not post — please try again.');}
 }
 
@@ -2799,7 +2855,7 @@ async function openCommunity(id){
   await joinCommunityIfNeeded(c);
   if(c.requires_verification&&ST.profile?.role==='admin')await loadPendingCommunityMembers(c.id);
   else $('community-pending-members').innerHTML='';
-  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url`);
+  await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,edited_at`);
 }
 
 async function loadPendingCommunityMembers(communityId){
