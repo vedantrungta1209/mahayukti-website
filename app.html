@@ -2733,6 +2733,15 @@ async function viewMemberById(id){
   }catch(e){}
 }
 
+async function approveRealName(memberId){
+  try{
+    await api('users',`?id=eq.${memberId}`,'PATCH',{real_name_approved:true});
+    toast('Real name approved','success');
+    const m=ST.members.find(x=>x.id===memberId);if(m)m.real_name_approved=true;
+    viewMember(memberId);
+  }catch(e){toast('Could not approve — please try again.','error');}
+}
+
 function viewMember(id){
   const m=ST.members.find(x=>x.id===id);if(!m)return;ST.currentMember=m;
   const n=dname(m);const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(156,135,106,0.3)',council:'rgba(194,176,148,0.3)'};
@@ -2756,7 +2765,17 @@ function viewMember(id){
   $('mp-founding').style.display=m.founding_member&&m.founding_approved?'':'none';
   $('mp-badge').innerHTML=`<div class="layer-badge ${lbadge(m.role)}">${lbadgeLabel(m.role)}</div>`;
   const tagRow=(label,arr)=>(arr&&arr.length)?`<div style="margin-top:14px"><div class="section-title">${label}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${arr.map(t=>`<span style="padding:3px 10px;border:1px solid var(--border2);border-radius:12px;font-size:11px;color:var(--muted);font-family:var(--sans)">${esc(t)}</span>`).join('')}</div></div>`:'';
-  $('mp-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(m.domain)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(m.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(m.experience)||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${esc(m.organisation)}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${esc(m.about)}</p></div>`:''}${tagRow('Skills',m.skills)}${tagRow('Open to',m.open_to)}`;
+  // A member can opt to show their real name (show_real_name), but nothing
+  // anywhere ever flips real_name_approved to true -- there was no admin UI
+  // for it at all, so an opted-in real name could never actually display,
+  // no matter what the member did. Surfacing it as a direct admin action
+  // right on the profile, same place an admin is already looking.
+  const needsRealNameApproval=ST.profile?.role==='admin'&&m.show_real_name&&m.real_name&&!m.real_name_approved;
+  const realNameApprovalRow=needsRealNameApproval?`<div class="card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:12.5px;color:var(--muted);font-family:var(--sans)">Opted in to show real name "${esc(m.real_name)}" — not yet approved to display</span>
+    <button class="btn btn-gold" style="width:auto;padding:6px 14px;font-size:11.5px" onclick="approveRealName('${m.id}')">Approve</button>
+  </div>`:'';
+  $('mp-info').innerHTML=realNameApprovalRow+`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(m.domain)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(m.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(m.experience)||'—'}</div></div>${m.show_organisation&&m.organisation?`<div class="info-row"><div class="info-label">Organisation</div><div class="info-value">${esc(m.organisation)}</div></div>`:''} ${m.about?`<div style="margin-top:16px"><div class="section-title">About</div><p style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.75">${esc(m.about)}</p></div>`:''}${tagRow('Skills',m.skills)}${tagRow('Open to',m.open_to)}`;
   const isSelf=m.id===ST.profile?.id;
   $('mp-msg-btn').style.display=isSelf?'none':'';
   $('mp-connect-btn').style.display=isSelf?'none':'';
