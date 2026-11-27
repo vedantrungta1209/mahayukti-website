@@ -872,6 +872,14 @@ img.avatar{object-fit:cover}
       <span style="padding:6px 13px;border-radius:999px;border:1px dashed var(--border2);color:var(--muted);font-size:11.5px;font-weight:600;font-family:var(--sans)">MY Consultancy · planned</span>
       <span style="padding:6px 13px;border-radius:999px;border:1px dashed var(--border2);color:var(--muted);font-size:11.5px;font-weight:600;font-family:var(--sans)">MY Concierge · planned</span>
     </div>
+    <div class="search-bar" style="margin-bottom:10px"><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.3);fill:none;stroke-width:2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search MY Help..." id="help-search" oninput="filterHelp()" autocapitalize="none" autocomplete="off"></div>
+    <div class="chips" id="help-chips" style="margin-bottom:12px">
+      <div class="chip active" data-val="" onclick="setHelpTypeFilter('')">All</div>
+      <div class="chip" data-val="question" onclick="setHelpTypeFilter('question')">Question</div>
+      <div class="chip" data-val="request" onclick="setHelpTypeFilter('request')">Request</div>
+      <div class="chip" data-val="offer" onclick="setHelpTypeFilter('offer')">Offer</div>
+      <div class="chip" data-val="advice" onclick="setHelpTypeFilter('advice')">Advice sought</div>
+    </div>
     <div id="help-list"><div class="loader"><div class="spinner"></div></div></div>
   </div></div>
   <div class="nav-bar">
@@ -1468,6 +1476,12 @@ img.avatar{object-fit:cover}
     <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:16px">Post to MY Help</div>
     <div class="field"><label>Title *</label><input type="text" id="help-title" placeholder="What do you need help with?" autocapitalize="sentences"></div>
     <div class="field"><label>Details *</label><textarea id="help-content" placeholder="Describe your question or request..." rows="4"></textarea></div>
+    <div class="field"><label>Category</label><select id="help-type">
+      <option value="question">Question</option>
+      <option value="request">Request</option>
+      <option value="offer">Offer</option>
+      <option value="advice">Advice sought</option>
+    </select></div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-outline" onclick="document.getElementById('modal-help').classList.remove('open')" style="flex:1">Cancel</button>
       <button class="btn btn-gold" onclick="submitHelp()" style="flex:2">Post to Community</button>
@@ -3022,20 +3036,35 @@ async function sendGC(){
   catch(e){toast('Failed to send','error');}
 }
 
+function setHelpTypeFilter(t){ST.helpTypeFilter=t;
+  document.querySelectorAll('#help-chips .chip').forEach(c=>c.classList.toggle('active',c.dataset.val===t));
+  filterHelp();
+}
+
 async function loadHelp(){
   try{
     const d=await api('help_posts','?order=created_at.desc&select=id,title,content,type,reply_count,created_at,author_id&limit=50');
-    const el=$('help-list');
-    if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet. Ask the first question.</div></div>';return;}
+    if(!d||!d.length){ST.helpPosts=[];$('help-list').innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts yet. Ask the first question.</div></div>';return;}
     const ids=[...new Set(d.map(p=>p.author_id))];
     let am={};try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved,domain`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}
     // reply_count on help_posts is never incremented by anything -- showing
     // a real live count from help_replies instead of that stale stored value.
-    let replyCounts={};
+    let replyCounts={},voteCounts={};
     try{const r=await api('help_replies',`?help_post_id=in.(${d.map(p=>p.id).join(',')})&select=help_post_id`);(r||[]).forEach(x=>replyCounts[x.help_post_id]=(replyCounts[x.help_post_id]||0)+1);}catch(e){}
-    ST.helpPosts=d;
-    el.innerHTML=d.map(p=>{const n=esc(dname(am[p.author_id]||{username:'Member'}));return`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openHelpPost('${p.id}')"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${esc(p.title)}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.content)}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${esc(am[p.author_id]?.domain)}</span><span style="font-size:11px;color:var(--gold)">${replyCounts[p.id]||0} replies</span></div></div>`;}).join('');
+    try{const v=await api('help_post_votes',`?help_post_id=in.(${d.map(p=>p.id).join(',')})&select=help_post_id`);(v||[]).forEach(x=>voteCounts[x.help_post_id]=(voteCounts[x.help_post_id]||0)+1);}catch(e){}
+    ST.helpPosts=d;ST.helpAuthors=am;ST.helpReplyCounts=replyCounts;ST.helpVoteCounts=voteCounts;
+    filterHelp();
   }catch(e){$('help-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+function filterHelp(){
+  const q=($('help-search')?.value||'').trim().toLowerCase();
+  const type=ST.helpTypeFilter||'';
+  const am=ST.helpAuthors||{},replyCounts=ST.helpReplyCounts||{},voteCounts=ST.helpVoteCounts||{};
+  const list=(ST.helpPosts||[]).filter(p=>(!type||p.type===type)&&(!q||p.title.toLowerCase().includes(q)||p.content.toLowerCase().includes(q)));
+  const el=$('help-list');
+  if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No posts found</div></div>';return;}
+  el.innerHTML=list.map(p=>{const n=esc(dname(am[p.author_id]||{username:'Member'}));return`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openHelpPost('${p.id}')"><div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:.2px;font-family:var(--sans);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div><div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:6px;line-height:1.3">${esc(p.title)}</div><div style="font-size:13px;color:var(--muted);font-family:var(--sans);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.content)}</div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:rgba(16,30,51,0.28)">${n} · ${esc(am[p.author_id]?.domain)}</span><span style="font-size:11px;color:var(--gold)">${voteCounts[p.id]||0} upvotes · ${replyCounts[p.id]||0} replies</span></div></div>`;}).join('');
 }
 
 async function openHelpPost(id){
@@ -3044,26 +3073,77 @@ async function openHelpPost(id){
   goto('help-post');
   let author={};
   try{const a=await api('member_directory',`?id=eq.${p.author_id}&select=id,username,real_name,show_real_name,real_name_approved,domain`);author=(a||[])[0]||{};}catch(e){}
+  let voteCount=0,voted=false;
+  try{const v=await api('help_post_votes',`?help_post_id=eq.${id}&select=user_id`)||[];voteCount=v.length;voted=ST.profile&&v.some(x=>x.user_id===ST.profile.id);}catch(e){}
   $('help-post-body').innerHTML=`<div class="card">
     <div style="background:rgba(201,148,58,0.08);border:1px solid var(--border);padding:2px 8px;font-size:9px;font-weight:600;color:var(--gold);display:inline-block;margin-bottom:8px">${esc(p.type)||'question'}</div>
     <div style="font-size:18px;color:var(--white);font-family:var(--serif);font-weight:700;margin-bottom:8px;line-height:1.3">${esc(p.title)}</div>
     <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px">${esc(p.content)}</div>
-    <div style="font-size:11px;color:rgba(16,30,51,0.3)">${esc(dname(author))} · ${esc(author.domain)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:11px;color:rgba(16,30,51,0.3)">${esc(dname(author))} · ${esc(author.domain)}</div>
+      <button onclick="toggleHelpPostVote('${id}')" style="background:none;border:1px solid var(--border2);border-radius:14px;padding:4px 12px;cursor:pointer;color:${voted?'var(--gold)':'rgba(16,30,51,0.5)'};font-size:12px;font-family:var(--sans)">✓ ${voteCount} upvote${voteCount===1?'':'s'}</button>
+    </div>
   </div>`;
   await loadHelpReplies(id);
+}
+
+async function toggleHelpPostVote(id){
+  if(!ST.profile)return;
+  try{
+    const mine=await api('help_post_votes',`?help_post_id=eq.${id}&user_id=eq.${ST.profile.id}&select=help_post_id`);
+    if(mine&&mine.length)await api('help_post_votes',`?help_post_id=eq.${id}&user_id=eq.${ST.profile.id}`,'DELETE');
+    else await api('help_post_votes','','POST',{help_post_id:id,user_id:ST.profile.id});
+    await openHelpPost(id);
+  }catch(e){}
+}
+
+async function toggleHelpReplyVote(replyId){
+  if(!ST.profile)return;
+  try{
+    const mine=await api('help_reply_votes',`?help_reply_id=eq.${replyId}&user_id=eq.${ST.profile.id}&select=help_reply_id`);
+    if(mine&&mine.length)await api('help_reply_votes',`?help_reply_id=eq.${replyId}&user_id=eq.${ST.profile.id}`,'DELETE');
+    else await api('help_reply_votes','','POST',{help_reply_id:replyId,user_id:ST.profile.id});
+    await loadHelpReplies(ST.currentHelpPostId);
+  }catch(e){}
+}
+
+async function markBestAnswer(helpPostId,replyId){
+  try{
+    await api('help_posts',`?id=eq.${helpPostId}`,'PATCH',{best_reply_id:replyId});
+    toast('Marked as best answer','success');
+    await loadHelpReplies(helpPostId);
+  }catch(e){toast('Could not mark best answer','error');}
 }
 
 async function loadHelpReplies(helpPostId){
   const el=$('help-post-replies');
   try{
+    const p=(ST.helpPosts||[]).find(x=>x.id===helpPostId);
+    let bestReplyId=p?.best_reply_id;
+    // ST.helpPosts' cached row predates best_reply_id ever being set in this
+    // session -- re-check the live value so marking a best answer reflects
+    // immediately without needing a full list reload.
+    try{const fresh=await api('help_posts',`?id=eq.${helpPostId}&select=best_reply_id`);bestReplyId=(fresh||[])[0]?.best_reply_id||null;if(p)p.best_reply_id=bestReplyId;}catch(e){}
     const replies=await api('help_replies',`?help_post_id=eq.${helpPostId}&order=created_at.asc&select=id,content,created_at,author_id`)||[];
     if(!replies.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No replies yet.</div></div>';return;}
     const ids=[...new Set(replies.map(r=>r.author_id))];let am={};
     if(ids.length){try{const a=await api('member_directory',`?id=in.(${ids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);(a||[]).forEach(u=>am[u.id]=u);}catch(e){}}
-    el.innerHTML=replies.map(r=>`<div class="card" style="margin-bottom:8px">
+    const rids=replies.map(r=>r.id);
+    let voteCounts={},votedSet=new Set();
+    try{const v=await api('help_reply_votes',`?help_reply_id=in.(${rids.join(',')})&select=help_reply_id,user_id`)||[];v.forEach(x=>{voteCounts[x.help_reply_id]=(voteCounts[x.help_reply_id]||0)+1;if(ST.profile&&x.user_id===ST.profile.id)votedSet.add(x.help_reply_id);});}catch(e){}
+    const isOwnQuestion=ST.profile&&p&&p.author_id===ST.profile.id;
+    el.innerHTML=replies.map(r=>{
+      const isBest=bestReplyId===r.id;
+      const voted=votedSet.has(r.id);
+      return`<div class="card" style="margin-bottom:8px;${isBest?'border-color:var(--gold)':''}">
+      ${isBest?'<div style="font-size:10px;color:var(--gold);font-weight:700;font-family:var(--sans);margin-bottom:4px">✓ BEST ANSWER</div>':''}
       <div style="font-size:12px;color:var(--gold);font-family:var(--sans);font-weight:600">${esc(dname(am[r.author_id]||{}))}</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px">${esc(r.content)}</div>
-    </div>`).join('');
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:3px;margin-bottom:8px">${esc(r.content)}</div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button onclick="toggleHelpReplyVote('${r.id}')" style="background:none;border:none;cursor:pointer;color:${voted?'var(--gold)':'rgba(16,30,51,0.4)'};font-size:11px;font-family:var(--sans)">✓ ${voteCounts[r.id]||0}</button>
+        ${(isOwnQuestion&&!isBest)?`<button onclick="markBestAnswer('${helpPostId}','${r.id}')" style="background:none;border:none;cursor:pointer;color:rgba(16,30,51,0.4);font-size:11px;font-family:var(--sans)">Mark as best answer</button>`:''}
+      </div>
+    </div>`}).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load replies</div></div>';}
 }
 
@@ -3078,10 +3158,10 @@ async function submitHelpReply(){
 }
 
 async function submitHelp(){
-  const t=$('help-title').value.trim(),c=$('help-content').value.trim();
+  const t=$('help-title').value.trim(),c=$('help-content').value.trim(),type=$('help-type').value;
   if(!t||!c){toast('Please fill in all fields','error');return;}
   try{
-    await api('help_posts','','POST',{author_id:ST.profile.id,title:t,content:c,type:'question'});
+    await api('help_posts','','POST',{author_id:ST.profile.id,title:t,content:c,type});
     $('help-title').value='';$('help-content').value='';
     $('modal-help').classList.remove('open');
     toast('Posted to MY Help','success');await loadHelp();
