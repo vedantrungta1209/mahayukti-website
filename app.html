@@ -1230,6 +1230,8 @@ img.avatar{object-fit:cover}
     <div id="blocked-list" style="margin-bottom:16px"><div class="loader"><div class="spinner"></div></div></div>
     <div class="card" onclick="goto('feed-preferences')" style="cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Feed Preferences</span><span style="color:var(--gold)">→</span></div>
     <div class="card" onclick="goto('organizations')" style="cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Organizations</span><span style="color:var(--gold)">→</span></div>
+    <div style="font-size:11.5px;color:rgba(16,30,51,0.4);font-family:var(--sans);margin:16px 0 6px">Notifications</div>
+    <div id="notif-pref-list" style="margin-bottom:16px"><div class="loader"><div class="spinner"></div></div></div>
     <button class="btn btn-outline btn-full" onclick="downloadMyData()" style="margin-bottom:8px">Download my data</button>
     <div class="card" onclick="goto('app-support')" style="cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">FAQs &amp; Support</span><span style="color:var(--gold)">→</span></div>
     <div class="card" onclick="goto('legal')" style="cursor:pointer;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--white);font-family:var(--sans)">Trust &amp; Legal Center</span><span style="color:var(--gold)">→</span></div>
@@ -2337,6 +2339,31 @@ async function renderPostCards(containerId,posts){
       </div>`;
     }).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load the feed</div></div>';}
+}
+
+const NOTIF_CATEGORIES=[['mention','Mentions'],['comment','Comments on your posts'],['connection','Connection requests & acceptances'],['follower','New followers'],['message','Direct messages']];
+
+async function loadNotificationPreferences(){
+  if(!ST.profile)return;
+  const el=$('notif-pref-list');if(!el)return;
+  try{
+    const rows=await api('notification_preferences',`?user_id=eq.${ST.profile.id}&select=disabled_categories`);
+    const disabled=new Set((rows||[])[0]?.disabled_categories||[]);
+    el.innerHTML=NOTIF_CATEGORIES.map(([key,label])=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13px;color:var(--white);font-family:var(--sans)"><input type="checkbox" data-cat="${key}" ${disabled.has(key)?'':'checked'} onchange="toggleNotifCategory('${key}',this.checked)">${label}</label>`).join('');
+  }catch(e){el.innerHTML='';}
+}
+
+async function toggleNotifCategory(category,enabled){
+  if(!ST.profile)return;
+  try{
+    const rows=await api('notification_preferences',`?user_id=eq.${ST.profile.id}&select=disabled_categories`);
+    let disabled=new Set((rows||[])[0]?.disabled_categories||[]);
+    if(enabled)disabled.delete(category);else disabled.add(category);
+    const payload={user_id:ST.profile.id,disabled_categories:[...disabled],updated_at:new Date().toISOString()};
+    if(rows&&rows.length)await api('notification_preferences',`?user_id=eq.${ST.profile.id}`,'PATCH',payload);
+    else await api('notification_preferences','','POST',payload);
+    toast('Saved','success');
+  }catch(e){toast('Could not save — please try again.','error');}
 }
 
 function slugify(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60);}
@@ -4048,6 +4075,7 @@ function setupRT(){
 
 function renderProfile(){
   const p=ST.profile;if(!p)return;const n=selfName(p);
+  loadNotificationPreferences();
   $('my-av').outerHTML=avatarHtml(p,n,'avatar-lg','id="my-av"');
   $('my-uname').textContent='@'+p.username;
   $('my-rname').textContent=(p.show_real_name&&p.real_name)?p.real_name:'';
