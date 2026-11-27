@@ -2145,7 +2145,7 @@ async function loadMoreFeed(){
   if(ST.feedExhausted||!ST.feedOldestCreatedAt){if(btn)btn.remove();return;}
   // Already-fetched window is used up but the server might have more -- pull the next page by cursoring on created_at.
   try{
-    const more=await api('posts',`?community_id=is.null&${ST.feedAudienceClause||'or=(audience.eq.everyone)'}&created_at=lt.${ST.feedOldestCreatedAt}&order=created_at.desc&limit=30${ST.feedExcludeClause||''}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at`)||[];
+    const more=await api('posts',`?community_id=is.null&${ST.feedAudienceClause||'or=(audience.eq.everyone)'}&created_at=lt.${encodeURIComponent(ST.feedOldestCreatedAt)}&order=created_at.desc&limit=30${ST.feedExcludeClause||''}&select=id,body,title,created_at,author_id,bucket_id,audience,audience_bucket_ids,link_title,link_url,is_sponsored,image_url,image_urls,edited_at`)||[];
     ST.feedExhausted=more.length<30;
     if(more.length){
       ST.feedOldestCreatedAt=more[more.length-1].created_at;
@@ -2932,7 +2932,7 @@ async function loadEarlierDMs(){
   const btn=$('dm-load-earlier');if(btn){btn.textContent='Loading…';btn.disabled=true;}
   if(!ST.dmOldestCreatedAt)return;
   try{
-    const more=await api('messages',`?${dmPairClause()}&created_at=lt.${ST.dmOldestCreatedAt}&order=created_at.desc&limit=${DM_PAGE_SIZE}&select=*`)||[];
+    const more=await api('messages',`?${dmPairClause()}&created_at=lt.${encodeURIComponent(ST.dmOldestCreatedAt)}&order=created_at.desc&limit=${DM_PAGE_SIZE}&select=*`)||[];
     more.reverse();
     ST.dmExhausted=more.length<DM_PAGE_SIZE;
     if(more.length)ST.dmOldestCreatedAt=more[0].created_at;
