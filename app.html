@@ -811,7 +811,10 @@ img.avatar{object-fit:cover}
     </div>
   </div>
   <div class="scroll" id="chat-scroll"><div class="bubble-wrap" id="chat-msgs"></div></div>
+  <div id="chat-image-preview" style="display:none;padding:0 16px 8px"></div>
+  <input type="file" id="chat-image-input" accept="image/*" style="display:none" onchange="onChatImageSelected(this)">
   <div class="chat-input-row">
+    <button onclick="document.getElementById('chat-image-input').click()" style="background:none;border:none;cursor:pointer;flex-shrink:0;padding:0 4px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></button>
     <textarea class="chat-input" id="chat-inp" placeholder="Type a message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDM()}"></textarea>
     <button class="chat-send" onclick="sendDM()"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2;transform:rotate(45deg)" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button>
   </div>
@@ -821,7 +824,17 @@ img.avatar{object-fit:cover}
 <div class="screen" id="screen-group-chats">
   <div class="page-header gradient">
     <button class="back-btn" onclick="goto('messages')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <div class="page-title">Group Chats</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="page-title">Group Chats</div>
+      <button onclick="toggleNewGCForm()" style="background:var(--gold);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg style="width:18px;height:18px;stroke:var(--navy);fill:none;stroke-width:2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+    </div>
+  </div>
+  <div style="padding:0 20px;flex-shrink:0">
+    <div class="card" id="new-gc-form" style="display:none;margin-bottom:10px">
+      <input type="text" id="new-gc-name" placeholder="Group name" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border2);border-radius:4px;font-size:14px;font-family:var(--sans)">
+      <input type="text" id="new-gc-desc" placeholder="Description (optional)" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border2);border-radius:4px;font-size:13px;font-family:var(--sans)">
+      <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="createGroupChat()">Create</button>
+    </div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav" id="gc-list"><div class="loader"><div class="spinner"></div></div></div></div>
 </div>
@@ -2868,29 +2881,89 @@ async function loadConvos(){
   }catch(e){$('convos-list').innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
 }
 
+const DM_PAGE_SIZE=40;
 async function openChat(m){
   ST.currentChat=m;const n=dname(m);
   $('chat-av').textContent=n.charAt(0).toUpperCase();$('chat-name').textContent=n;$('chat-domain').textContent=m.domain||'';
   $('chat-msgs').innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  clearChatImage();
+  ST.dmOldestCreatedAt=null;ST.dmExhausted=false;
   goto('chat');await loadDMs();setupChatRT();
+}
+
+function dmPairClause(){
+  return`or=(and(from_id.eq.${ST.profile.id},to_id.eq.${ST.currentChat.id}),and(from_id.eq.${ST.currentChat.id},to_id.eq.${ST.profile.id}))`;
+}
+
+function renderDMBubbles(d){
+  let lastMineIdx=-1;d.forEach((m,i)=>{if(m.from_id===ST.profile.id)lastMineIdx=i;});
+  return d.map((m,i)=>{
+    const me=m.from_id===ST.profile.id;
+    const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const img=m.image_url?`<img src="${esc(m.image_url)}" style="max-width:220px;border-radius:8px;display:block;margin-bottom:${m.content?'6px':'0'}" loading="lazy">`:'';
+    const seen=(i===lastMineIdx&&m.read)?'<div style="font-size:10px;color:rgba(255,255,255,0.5);text-align:right;margin-top:2px">Seen</div>':'';
+    return`<div class="bubble ${me?'me':'them'}">${img}${m.content?esc(m.content):''}<div class="bubble-time">${t}</div></div>${seen}`;
+  }).join('');
+}
+
+function renderDMThread(){
+  const el=$('chat-msgs');
+  if(!ST.dmAll.length){el.innerHTML='<div class="empty-state" style="padding:40px 20px"><div class="empty-text">No messages yet. Say hello.</div></div>';return;}
+  const loadMoreBtn=ST.dmExhausted?'':`<button id="dm-load-earlier" onclick="loadEarlierDMs()" style="display:block;width:100%;padding:8px;margin-bottom:8px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--muted);font-size:12px;font-family:var(--sans)">Load earlier messages</button>`;
+  el.innerHTML=loadMoreBtn+renderDMBubbles(ST.dmAll);
 }
 
 async function loadDMs(){
   if(!ST.profile||!ST.currentChat)return;
   try{
-    const d=await api('messages',`?or=(and(from_id.eq.${ST.profile.id},to_id.eq.${ST.currentChat.id}),and(from_id.eq.${ST.currentChat.id},to_id.eq.${ST.profile.id}))&order=created_at.asc&select=*`);
-    const el=$('chat-msgs');
-    if(!d||!d.length){el.innerHTML='<div class="empty-state" style="padding:40px 20px"><div class="empty-text">No messages yet. Say hello.</div></div>';return;}
-    el.innerHTML=d.map(m=>{const me=m.from_id===ST.profile.id;const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div>`;}).join('');
+    const d=await api('messages',`?${dmPairClause()}&order=created_at.desc&limit=${DM_PAGE_SIZE}&select=*`)||[];
+    d.reverse();
+    ST.dmAll=d;
+    ST.dmOldestCreatedAt=d.length?d[0].created_at:null;
+    ST.dmExhausted=d.length<DM_PAGE_SIZE;
+    renderDMThread();
     const sc=$('chat-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
+    // Mark everything they sent me as read now that I've actually opened the thread.
+    try{await api('messages',`?from_id=eq.${ST.currentChat.id}&to_id=eq.${ST.profile.id}&read=eq.false`,'PATCH',{read:true});}catch(e){}
   }catch(e){}
 }
 
+async function loadEarlierDMs(){
+  const btn=$('dm-load-earlier');if(btn){btn.textContent='Loading…';btn.disabled=true;}
+  if(!ST.dmOldestCreatedAt)return;
+  try{
+    const more=await api('messages',`?${dmPairClause()}&created_at=lt.${ST.dmOldestCreatedAt}&order=created_at.desc&limit=${DM_PAGE_SIZE}&select=*`)||[];
+    more.reverse();
+    ST.dmExhausted=more.length<DM_PAGE_SIZE;
+    if(more.length)ST.dmOldestCreatedAt=more[0].created_at;
+    const sc=$('chat-scroll');const prevHeight=sc.scrollHeight;
+    ST.dmAll=[...more,...ST.dmAll];
+    renderDMThread();
+    sc.scrollTop=sc.scrollHeight-prevHeight;
+  }catch(e){if(btn){btn.textContent='Load earlier messages';btn.disabled=false;}}
+}
+
+let chatImageFile=null;
+function onChatImageSelected(input){
+  const file=input.files?.[0];if(!file)return;
+  chatImageFile=file;
+  const u=URL.createObjectURL(file);
+  $('chat-image-preview').style.display='';
+  $('chat-image-preview').innerHTML=`<div style="position:relative;width:60px;height:60px"><img src="${u}" style="width:100%;height:100%;object-fit:cover;border-radius:4px"><button onclick="clearChatImage()" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1">✕</button></div>`;
+}
+function clearChatImage(){chatImageFile=null;$('chat-image-preview').style.display='none';$('chat-image-preview').innerHTML='';$('chat-image-input').value='';}
+
 async function sendDM(){
   const inp=$('chat-inp'),c=inp.value.trim();
-  if(!c||!ST.profile||!ST.currentChat)return;
+  if((!c&&!chatImageFile)||!ST.profile||!ST.currentChat)return;
   inp.value='';
-  try{await api('messages','','POST',{from_id:ST.profile.id,to_id:ST.currentChat.id,content:c});await loadDMs();}
+  const file=chatImageFile;clearChatImage();
+  try{
+    let image_url=null;
+    if(file)image_url=await uploadImage(file);
+    await api('messages','','POST',{from_id:ST.profile.id,to_id:ST.currentChat.id,content:c||'',image_url});
+    await loadDMs();
+  }
   catch(e){toast('Failed to send','error');}
 }
 
@@ -2898,6 +2971,21 @@ function setupChatRT(){
   teardownRTChannel('chat');
   if(!ST.profile)return;
   ST.realtimeChannels.chat=sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`to_id=eq.${ST.profile.id}`},()=>loadDMs()).subscribe();
+}
+
+function toggleNewGCForm(){
+  const f=$('new-gc-form');f.style.display=f.style.display==='none'?'':'none';
+}
+async function createGroupChat(){
+  const name=$('new-gc-name').value.trim(),description=$('new-gc-desc').value.trim();
+  if(!name||!ST.profile)return;
+  try{
+    await api('group_chats','','POST',{name,description:description||null,type:'general',created_by:ST.profile.id});
+    $('new-gc-name').value='';$('new-gc-desc').value='';
+    toggleNewGCForm();
+    await loadGCs();
+    toast('Group created','success');
+  }catch(e){toast('Could not create group','error');}
 }
 
 async function loadGCs(){
