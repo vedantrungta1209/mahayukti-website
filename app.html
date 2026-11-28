@@ -1549,6 +1549,27 @@ GET .../api-v1/me <span style="color:rgba(16,30,51,0.3)">(needs read_profile sco
   </div>
 </div>
 
+<!-- MODAL: REPORT POST -->
+<div class="modal-overlay" id="modal-report-post">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:16px">Report this post</div>
+    <div class="field"><label>Reason *</label><select id="report-reason">
+      <option value="">Select a reason</option>
+      <option value="Misleading information">Misleading information</option>
+      <option value="Harassment">Harassment</option>
+      <option value="Spam">Spam</option>
+      <option value="Fake identity">Fake identity</option>
+      <option value="Other">Other</option>
+    </select></div>
+    <div class="field"><label>Additional details (optional)</label><textarea id="report-details" placeholder="Anything else our moderation team should know..." rows="3"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" onclick="closeReportPostModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="report-post-submit" onclick="submitPostReport()" style="flex:2">Submit report</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: SHARE TO LINKEDIN -->
 <div class="modal-overlay" id="modal-li-share">
   <div class="modal">
@@ -2483,12 +2504,36 @@ async function deletePost(id){
   }catch(e){toast('Could not delete the post','error');}
 }
 
-async function reportPost(postId){
+// Real form instead of a blocking prompt() -- same reasoning as the brief-
+// response and community-creation modals built earlier this session.
+function reportPost(postId){
   if(!ST.profile)return;
-  const reason=prompt('Why are you reporting this post? (e.g. Misleading information, Harassment, Spam, Fake identity)');
-  if(!reason||!reason.trim())return;
-  try{await api('post_reports','','POST',{post_id:postId,reporter_id:ST.profile.id,reason:reason.trim()});alert('Reported — our moderation team will review it.');}
-  catch(e){alert('Could not submit the report — please try again.');}
+  ST.reportingPostId=postId;
+  const sel=$('report-reason');if(sel)sel.value='';
+  const det=$('report-details');if(det)det.value='';
+  $('modal-report-post').classList.add('open');
+}
+function closeReportPostModal(){
+  $('modal-report-post').classList.remove('open');
+  ST.reportingPostId=null;
+}
+async function submitPostReport(){
+  const postId=ST.reportingPostId;
+  if(!postId||!ST.profile)return;
+  const reasonSel=($('report-reason')?.value||'').trim();
+  if(!reasonSel){toast('Please select a reason','error');return;}
+  const details=($('report-details')?.value||'').trim();
+  const reason=details?`${reasonSel} — ${details}`:reasonSel;
+  const btn=$('report-post-submit');if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+  try{
+    await api('post_reports','','POST',{post_id:postId,reporter_id:ST.profile.id,reason});
+    closeReportPostModal();
+    toast('Reported — our moderation team will review it.','success');
+  }catch(e){
+    toast('Could not submit the report — please try again.','error');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Submit report';}
+  }
 }
 
 function extractHashtags(text){
@@ -5129,7 +5174,16 @@ async function loadAdmBriefs(tab){
     const d=await api('client_briefs',`?status=eq.${curBriefTab}&select=*&order=created_at.desc`);
     const el=$('adm-briefs-list');
     if(!d||!d.length){el.innerHTML='<div class="empty-state"><div class="empty-text">No '+curBriefTab+' briefs</div></div>';return;}
-    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${esc(b.urgency)}</div><div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">${esc(b.confidentiality)}</div></div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(b.domain_needed)}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(b.description)}</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px"><button onclick="updBrief('${b.id}','reviewing')" style="background:none;border:1px solid var(--border2);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Review</button><button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button></div></div></div>`).join('');
+    // Button set depends on the brief's current stage -- "assigned" previously
+    // had no way to ever reach "completed" at all, a dead end in the lifecycle
+    // (the Done tab existed but nothing could ever land there).
+    const actionsFor=(b)=>{
+      if(b.status==='pending')return `<button onclick="updBrief('${b.id}','reviewing')" style="background:none;border:1px solid var(--border2);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Review</button><button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button>`;
+      if(b.status==='reviewing')return `<button onclick="updBrief('${b.id}','assigned')" style="background:rgba(201,148,58,0.08);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:10px;color:var(--gold);cursor:pointer">Assign →</button>`;
+      if(b.status==='assigned')return `<button onclick="updBrief('${b.id}','completed')" style="background:rgba(62,207,142,0.08);border:1px solid rgba(62,207,142,0.4);border-radius:0;padding:4px 10px;font-size:10px;color:var(--green);cursor:pointer">Mark complete ✓</button>`;
+      return '';
+    };
+    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${esc(b.urgency)}</div>${b.confidentiality?`<div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">${esc(b.confidentiality)}</div>`:''}</div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(b.domain_needed)}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(b.description)}</div>${b.contact_name?`<div style="font-size:12px;color:rgba(16,30,51,0.5);margin-bottom:8px;line-height:1.6">${esc(b.contact_name)}${b.company?' · '+esc(b.company):''}<br>${esc(b.contact_email||'')}${b.contact_phone?' · '+esc(b.contact_phone):''}</div>`:''}<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px">${actionsFor(b)}</div></div></div>`).join('');
   }catch(e){}
 }
 

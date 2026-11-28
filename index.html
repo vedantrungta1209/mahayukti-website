@@ -173,6 +173,28 @@ a{color:inherit;text-decoration:none}
 .prin-body{font-size:14.5px;color:var(--muted);line-height:1.65}
 @media (max-width:700px){.prin-grid{grid-template-columns:1fr}}
 
+/* ============================================================
+   CLIENT INTAKE FORM ("Get expert help" -- the non-membership path)
+   ============================================================ */
+#get-help{background:var(--paper)}
+.intake-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.intake-form{background:var(--white);border:1px solid var(--line);border-radius:6px;padding:28px}
+.ifield{margin-bottom:16px}
+.ifield label{display:block;font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:6px}
+.ifield input,.ifield select,.ifield textarea{
+  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:4px;
+  font-family:var(--sans);font-size:14.5px;color:var(--ink);background:var(--white);
+}
+.ifield textarea{resize:vertical;min-height:90px}
+.ifield input:focus,.ifield select:focus,.ifield textarea:focus{outline:2px solid var(--navy);outline-offset:1px}
+.iform-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.iform-note{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.6}
+.iform-status{font-size:14px;margin-top:14px;display:none}
+.iform-status.show{display:block}
+.iform-status.ok{color:var(--navy)}
+.iform-status.err{color:#A53C3C}
+@media (max-width:760px){.intake-grid{grid-template-columns:1fr}.iform-row{grid-template-columns:1fr}}
+
 /* icon marks — small bordered glyph, reused everywhere a feature/vertical needs one.
    Deliberately plain line-icons (currentColor, 1.6px stroke) rather than stock imagery or
    emoji, so the whole set reads as one system instead of mismatched clipart. */
@@ -269,6 +291,7 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
         <a class="nav-link" href="#about">About</a>
         <a class="nav-link" href="#inside">Inside</a>
         <a class="nav-link" href="#buckets">Verticals</a>
+        <a class="nav-link" href="#get-help">Get Expert Help</a>
         <a class="nav-link" href="#contact">Contact</a>
       </div>
       <div class="nav-actions">
@@ -290,8 +313,9 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
         <p class="hero-sub">Law, finance, technology, and more — built so members help each other directly, with nothing taken off what they earn together.</p>
         <div class="hero-ctas">
           <a class="btn btn-gold btn-lg" href="app.html#apply">Apply for Membership</a>
-          <a class="nav-link" href="#about" style="color:var(--navy);font-weight:600">See how it works →</a>
+          <a class="btn btn-outline btn-lg" href="#get-help">Need expert help now →</a>
         </div>
+        <div style="margin-top:14px"><a class="nav-link" href="#about" style="color:var(--navy);font-weight:600">See how it works →</a></div>
       </div>
       <div class="hero-aside">
         <!-- Live product preview, replacing the abstract dot diagram -- per the build
@@ -498,6 +522,94 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
     </div>
   </section>
 
+  <!-- GET HELP (the non-membership path -- a client with an urgent problem
+       doesn't need to become a verified professional member to describe it
+       and get matched. Feeds the existing Admin > Client Briefs triage
+       queue, which previously had no real way for an inbound request to
+       ever arrive -- client_briefs had admin read/triage built but no
+       insert path anywhere (see client-intake Edge Function + migration). -->
+  <section id="get-help" class="section">
+    <div class="wrap">
+      <div class="intake-grid">
+        <div>
+          <div class="section-kicker">For clients, not members</div>
+          <h2 class="section-title">Have an urgent problem? Get matched with a vetted expert.</h2>
+          <p class="section-body">You don't need to join the register to get help. Describe what you need, and our team personally matches you with the right verified member — confidentially, with no platform fee ever added on top of what you agree with them.</p>
+          <p class="iform-note" style="margin-top:22px">Prefer to submit by email instead? Write to <a href="mailto:help@mahayukti.com?subject=Request for expert help" style="color:var(--navy);font-weight:600;text-decoration:underline">help@mahayukti.com</a>.</p>
+        </div>
+        <form class="intake-form" id="intake-form">
+          <div class="iform-row">
+            <div class="ifield">
+              <label for="in-name">Your name *</label>
+              <input type="text" id="in-name" required autocomplete="name">
+            </div>
+            <div class="ifield">
+              <label for="in-company">Company (optional)</label>
+              <input type="text" id="in-company" autocomplete="organization">
+            </div>
+          </div>
+          <div class="iform-row">
+            <div class="ifield">
+              <label for="in-email">Email *</label>
+              <input type="email" id="in-email" required autocomplete="email">
+            </div>
+            <div class="ifield">
+              <label for="in-phone">Phone (optional)</label>
+              <input type="tel" id="in-phone" autocomplete="tel">
+            </div>
+          </div>
+          <div class="iform-row">
+            <div class="ifield">
+              <label for="in-domain">Which area do you need help in? *</label>
+              <select id="in-domain" required>
+                <option value="">Select one</option>
+                <option>Legal</option>
+                <option>Accounting &amp; Audit</option>
+                <option>Technology &amp; Cybersecurity</option>
+                <option>Capital &amp; Funding</option>
+                <option>Business &amp; Industry</option>
+                <option>Government &amp; Public Affairs</option>
+                <option>Defence &amp; Security</option>
+                <option>Culture &amp; Public Influence</option>
+                <option>Trades &amp; Craft</option>
+                <option>Science &amp; Deep-Tech</option>
+                <option>Healthcare &amp; Medicine</option>
+                <option>Real Estate &amp; Infrastructure</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="ifield">
+              <label for="in-urgency">How urgent is this? *</label>
+              <select id="in-urgency" required>
+                <option value="normal">Normal — within a couple of weeks</option>
+                <option value="urgent">Urgent — within a few days</option>
+                <option value="critical">Critical — immediate</option>
+              </select>
+            </div>
+          </div>
+          <div class="ifield">
+            <label for="in-description">What do you need help with? *</label>
+            <textarea id="in-description" required placeholder="A sentence or two is enough — our team will reach out to understand the detail."></textarea>
+          </div>
+          <div class="ifield">
+            <label for="in-confidentiality">Confidentiality needs (optional)</label>
+            <input type="text" id="in-confidentiality" placeholder="e.g. Keep my company name confidential until a match is made">
+          </div>
+          <!-- Honeypot -- hidden from real visitors via CSS, invisible to
+               screen readers via aria-hidden, but a form-filling bot will
+               often fill every field it sees. Caught server-side in the
+               client-intake function, not relied on alone. -->
+          <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
+            <label for="in-website">Website</label>
+            <input type="text" id="in-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-gold" style="width:100%" id="intake-submit">Request a match</button>
+          <div class="iform-status" id="intake-status"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
   <!-- CTA -->
   <section id="cta">
     <div class="wrap">
@@ -531,6 +643,57 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
     </div>
   </div>
 </footer>
+
+<script>
+// Client intake form -- the non-membership path. Posts to a public Edge
+// Function (not a direct table insert) so this static marketing page never
+// needs anything beyond the anon key, and server-side validation/rate
+// limiting happens in one place regardless of what a client might try to
+// send directly to the endpoint.
+(function(){
+  const SB_URL='https://npyoyylrqprawyavnfvv.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5weW95eWxycXByYXd5YXZuZnZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2NTQ4NTgsImV4cCI6MjExMDIzMDg1OH0.K56AWim0w16YuL0r7AZMmkE_gj9MGb3tlRucPoy3gx8';
+  const form=document.getElementById('intake-form');
+  if(!form)return;
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    const btn=document.getElementById('intake-submit');
+    const status=document.getElementById('intake-status');
+    status.className='iform-status';status.textContent='';
+    const payload={
+      contact_name:document.getElementById('in-name').value.trim(),
+      contact_email:document.getElementById('in-email').value.trim(),
+      contact_phone:document.getElementById('in-phone').value.trim(),
+      company:document.getElementById('in-company').value.trim(),
+      domain_needed:document.getElementById('in-domain').value,
+      urgency:document.getElementById('in-urgency').value,
+      description:document.getElementById('in-description').value.trim(),
+      confidentiality:document.getElementById('in-confidentiality').value.trim(),
+      website:document.getElementById('in-website').value // honeypot
+    };
+    if(!payload.contact_name||!payload.contact_email||!payload.domain_needed||!payload.description){
+      status.className='iform-status show err';status.textContent='Please fill in all required fields.';return;
+    }
+    btn.disabled=true;btn.textContent='Sending…';
+    try{
+      const r=await fetch(SB_URL+'/functions/v1/client-intake',{
+        method:'POST',
+        headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      form.reset();
+      status.className='iform-status show ok';
+      status.textContent="Received — our team will reach out within one business day, usually sooner for critical requests.";
+    }catch(err){
+      status.className='iform-status show err';
+      status.textContent='Something went wrong — please try again, or email help@mahayukti.com directly.';
+    }finally{
+      btn.disabled=false;btn.textContent='Request a match';
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
