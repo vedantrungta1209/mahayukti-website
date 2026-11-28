@@ -3573,7 +3573,13 @@ async function sendDM(){
     await api('messages','','POST',{from_id:ST.profile.id,to_id:ST.currentChat.id,content:c||'',image_url});
     await loadDMs();
   }
-  catch(e){toast('Failed to send','error');}
+  catch(e){
+    // Restore what they typed -- previously lost on any send failure, which
+    // barely mattered when failures were rare/network-only, but now the cold
+    // outreach cap below is an expected, foreseeable rejection path.
+    inp.value=c;
+    toast(e.message==='cold_outreach_cap_reached'?"You've reached this week's limit for messaging new, unconnected members -- try again next week.":'Failed to send','error');
+  }
 }
 
 function setupChatRT(){
