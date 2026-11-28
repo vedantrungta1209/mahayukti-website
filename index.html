@@ -216,6 +216,7 @@ a{color:inherit;text-decoration:none}
 
 /* hero illustration — an inline constellation of connected nodes standing in for "a
    professional register, networked" instead of stock photography */
+.hero-preview-label{font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;font-weight:600}
 .hero-preview{background:var(--navy);border-radius:16px;padding:16px;box-shadow:0 24px 60px rgba(19,51,94,0.22)}
 .hero-preview-post{background:var(--white);border-radius:12px;overflow:hidden}
 .hero-preview-post-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
@@ -320,7 +321,11 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
       <div class="hero-aside">
         <!-- Live product preview, replacing the abstract dot diagram -- per the build
              spec's Main.dc.html, a real feed-post + Exchange-card mockup reads as "a real
-             product exists" far more than an abstract network graph does. -->
+             product exists" far more than an abstract network graph does. Labeled as an
+             illustrative example (2026-11-28 honesty-pass fix) -- it was previously
+             unlabeled, so a visitor had no way to tell it apart from real register
+             activity, and the register has none yet. -->
+        <div class="hero-preview-label">Example — what a post looks like</div>
         <div class="hero-preview">
           <div class="hero-preview-post">
             <div class="hero-preview-post-head">
