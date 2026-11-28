@@ -756,6 +756,7 @@ img.avatar{object-fit:cover}
         <button class="btn btn-gold" id="mp-connect-btn" onclick="connectWithCurrent()">+ Connect</button>
         <button class="btn btn-outline" id="mp-follow-btn" onclick="followWithCurrent()">+ Follow</button>
         <button class="btn btn-outline" id="mp-msg-btn" onclick="chatWithCurrent()"><svg style="width:16px;height:16px;stroke:var(--navy);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message</button>
+        <button class="btn btn-outline" id="mp-vouch-btn" onclick="vouchForCurrent()">Vouch for this member</button>
       </div>
     </div>
     <div style="font-size:11px;color:rgba(16,30,51,0.4);text-align:center;margin:4px 0 16px;line-height:1.6" class="mp-connect-hint">Connect if you know each other — needs their acceptance. Follow just to see their posts — no acceptance needed.</div>
@@ -769,6 +770,7 @@ img.avatar{object-fit:cover}
           <div style="font-size:11px;font-weight:700;color:rgba(16,30,51,0.4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;font-family:var(--sans)">Vertical</div>
           <span id="mp-vertical-tag" style="display:inline-block;padding:6px 12px;border-radius:3px;background:var(--navy);color:#fff;font-size:12px;font-weight:600;font-family:var(--sans)"></span>
         </div>
+        <div class="card" id="mp-vouch-card" style="display:none"></div>
       </div>
     </div>
     <div style="display:flex;justify-content:center;gap:16px;margin-top:16px" id="mp-safety-actions">
@@ -3015,6 +3017,7 @@ function viewMember(id){
   if(m.domain_group){$('mp-vertical-card').style.display='';$('mp-vertical-tag').textContent=m.domain_group;}
   else $('mp-vertical-card').style.display='none';
   loadMemberRecentActivity(m.id);
+  loadVouchStatus(m.id);
   if(!isSelf){
     refreshConnectState(m.id);
     checkBlockedEitherWay(m.id);
@@ -3022,6 +3025,51 @@ function viewMember(id){
     loadMutualConnectionNames(m.id);
   }
   goto('member-profile');
+}
+
+// "Endorsed by" + the vouch button on a profile -- vouches are public (any
+// signed-in member can see who endorsed whom, same as LinkedIn), the button
+// itself is hidden on your own profile and disabled once you've already
+// vouched for this person. See 20261128099000_member_vouches.sql for the
+// 5-vouch-per-member cap and RLS this relies on.
+async function loadVouchStatus(memberId){
+  const card=$('mp-vouch-card');const btn=$('mp-vouch-btn');
+  if(!card||!btn)return;
+  try{
+    const vouches=await api('member_vouches','?vouchee_id=eq.'+memberId+'&select=voucher_id');
+    const voucherIds=[...new Set((vouches||[]).map(v=>v.voucher_id))];
+    let vm={};
+    if(voucherIds.length){
+      const vs=await api('member_directory','?id=in.('+voucherIds.join(',')+')&select=id,username,real_name,show_real_name,real_name_approved');
+      (vs||[]).forEach(u=>vm[u.id]=u);
+    }
+    if(voucherIds.length){
+      card.style.display='';
+      card.innerHTML=`<div style="font-size:11px;font-weight:700;color:rgba(16,30,51,0.4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;font-family:var(--sans)">Endorsed by</div><div style="display:flex;flex-wrap:wrap;gap:6px">${voucherIds.map(id=>{const u=vm[id];if(!u)return'';const nm=(u.show_real_name&&u.real_name_approved&&u.real_name)?u.real_name:'@'+u.username;return `<span style="padding:3px 10px;border:1px solid var(--border2);border-radius:12px;font-size:11px;color:var(--muted);font-family:var(--sans);cursor:pointer" onclick="viewMemberById('${u.id}')">${esc(nm)}</span>`;}).join('')}</div>`;
+    }else{
+      card.style.display='none';
+    }
+    const isSelfVouch=memberId===ST.profile?.id;
+    if(isSelfVouch||ST.profile?.status!=='active'){btn.style.display='none';return;}
+    btn.style.display='';
+    if(voucherIds.includes(ST.profile?.id)){
+      btn.textContent='Vouched ✓';btn.disabled=true;btn.style.opacity='0.55';
+    }else{
+      btn.textContent='Vouch for this member';btn.disabled=false;btn.style.opacity='1';
+    }
+  }catch(e){card.style.display='none';}
+}
+
+async function vouchForCurrent(){
+  const m=ST.currentMember;if(!m)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/member_vouches`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+ST.user.access_token,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({voucher_id:ST.profile.id,vouchee_id:m.id})});
+    if(!r.ok){const t=await r.text();throw new Error(t);}
+    toast('Vouch sent','success');
+    loadVouchStatus(m.id);
+  }catch(e){
+    toast((e.message||'').includes('5 of your vouches')?"You've used all 5 of your vouches":'Could not send vouch','error');
+  }
 }
 
 // Per the build spec's PublicProfile canvas: "N connections · M mutual". Both numbers come
@@ -4154,9 +4202,10 @@ function renderProfile(){
 // Supabase) is the only source of truth on eligibility; this just shows a friendly, always-
 // visible preview of the real criteria (see 20261123100000_update_participant_criteria_to_
 // 90_days_full_profile.sql) so the tier is a legible checklist, not a hidden badge, per the
-// build spec's Account screen design -- and a third criterion, verified referrals, is shown
-// as a disclosed but not-yet-built signal rather than silently omitted.
-function renderUpgradeCard(p){
+// build spec's Account screen design -- and the third criterion, a verified peer vouch, is now
+// real (see loadVouchStatus/vouchForCurrent and 20261128099000_member_vouches.sql), no longer
+// a disclosed-but-not-yet-built placeholder.
+async function renderUpgradeCard(p){
   const box=$('my-upgrade');if(!box)return;
   box.style.display='';
   if(p.role!=='member'){
@@ -4165,14 +4214,16 @@ function renderUpgradeCard(p){
         <div class="section-title" style="margin:0">Membership tier</div>
         <span class="layer-badge ${lbadge(p.role)}" style="font-size:11px;padding:3px 10px;border-radius:999px;display:inline-block">${lbadgeLabel(p.role)}</span>
       </div>
-      <div style="font-size:12.5px;color:var(--muted);line-height:1.6">Earned automatically through account age, a complete profile, and (once built) verified peer referrals — never applied for, never bought.</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.6">Earned automatically through account age, a complete profile, and a verified peer vouch — never applied for, never bought.</div>
     </div>`;
     return;
   }
   const daysOld=Math.floor((Date.now()-new Date(p.created_at).getTime())/86400000);
   const complete=(f)=>!!(p[f]&&String(p[f]).trim());
   const profileComplete=complete('about')&&complete('domain')&&complete('domain_group')&&complete('city')&&complete('experience');
-  const eligible=daysOld>=90&&profileComplete;
+  let hasVouch=false;
+  try{const vs=await api('member_vouches','?vouchee_id=eq.'+p.id+'&select=id&limit=1');hasVouch=!!(vs&&vs.length);}catch(e){}
+  const eligible=daysOld>=90&&profileComplete&&hasVouch;
   box.innerHTML=`<div class="card" style="margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="section-title" style="margin:0">Membership tier</div>
@@ -4182,7 +4233,7 @@ function renderUpgradeCard(p){
     <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;margin-bottom:${eligible?'12':'0'}px">
       <div style="color:${daysOld>=90?'var(--navy)':'rgba(16,30,51,0.4)'}">${daysOld>=90?'✓':'○'} Account age 90+ days (you: ${daysOld})</div>
       <div style="color:${profileComplete?'var(--navy)':'rgba(16,30,51,0.4)'}">${profileComplete?'✓':'○'} Profile 100% complete${profileComplete?'':' — finish Professional Info and About below'}</div>
-      <div style="color:rgba(16,30,51,0.35)">○ 1 verified referral from another member — not yet built</div>
+      <div style="color:${hasVouch?'var(--navy)':'rgba(16,30,51,0.4)'}">${hasVouch?'✓':'○'} 1 verified vouch from another member${hasVouch?'':' — ask a verified peer to vouch for you from your profile'}</div>
     </div>
     ${eligible?`<button class="btn btn-gold btn-full" onclick="requestParticipantUpgrade()">Apply to become a Participant</button>`:''}
   </div>`;
@@ -4193,13 +4244,15 @@ function renderUpgradeCard(p){
 // Membership tier card on Account -- made visible so the tier isn't a hidden badge, but kept
 // out of the way (collapses entirely once there's nothing left to work toward) so it doesn't
 // compete with the feed itself.
-function renderHomeTierNudge(p){
+async function renderHomeTierNudge(p){
   const box=$('home-tier-nudge');if(!box)return;
   if(p.role!=='member'){box.style.display='none';return;}
   const daysOld=Math.floor((Date.now()-new Date(p.created_at).getTime())/86400000);
   const complete=(f)=>!!(p[f]&&String(p[f]).trim());
   const profileComplete=complete('about')&&complete('domain')&&complete('domain_group')&&complete('city')&&complete('experience');
-  const met=(daysOld>=90?1:0)+(profileComplete?1:0);
+  let hasVouch=false;
+  try{const vs=await api('member_vouches','?vouchee_id=eq.'+p.id+'&select=id&limit=1');hasVouch=!!(vs&&vs.length);}catch(e){}
+  const met=(daysOld>=90?1:0)+(profileComplete?1:0)+(hasVouch?1:0);
   const pct=Math.round((met/3)*100);
   box.style.display='';
   box.innerHTML=`<div class="card" style="margin-bottom:14px;display:flex;align-items:center;gap:14px">
@@ -4208,7 +4261,7 @@ function renderHomeTierNudge(p){
     </div>
     <div style="flex:1;min-width:0">
       <div style="font-size:13px;font-weight:700;color:var(--white)">On your way to Participant tier</div>
-      <div style="font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5">Earned automatically, never applied for. Account age 90+ days ${daysOld>=90?'✓':'○'}, profile 100% complete ${profileComplete?'✓':'○'}, 1 verified referral — in progress.</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5">Earned automatically, never applied for. Account age 90+ days ${daysOld>=90?'✓':'○'}, profile 100% complete ${profileComplete?'✓':'○'}, 1 verified vouch ${hasVouch?'✓':'○'}.</div>
     </div>
     <button onclick="gotoTab('profile')" style="flex:none;background:none;border:none;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">Details →</button>
   </div>`;
