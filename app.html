@@ -5208,9 +5208,9 @@ async function loadAdminHome(){
   // "Admin Panel" card, qa-admin-profile);
   // this function only ever populates the screen's own elements.
   try{
-    const[apps,briefs,members]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100'),api('users','?status=eq.active&role=neq.admin&select=id')]);
-    const pc=(apps||[]).length,bc=(briefs||[]).length,mc=(members||[]).length;
-    $('admin-stats').innerHTML=[{l:'Pending Applications',v:pc,u:pc>0,s:'admin-applications'},{l:'Client Briefs',v:bc,u:bc>0,s:'admin-briefs'},{l:'Network Members',v:mc,u:false,s:'directory'},{l:'Blog Posts Live',v:ST.blogPosts.length||'—',u:false,s:'admin-applications'}].map(s=>`<div class="alert-card${s.u?' urgent':''}" onclick="goto('${s.s}')"><div class="alert-val${s.u?' gold':''}">${s.v}</div><div class="alert-lbl">${s.l}</div></div>`).join('');
+    const[apps,briefs,members,blogPosts]=await Promise.all([api('users','?status=eq.pending&select=id,real_name,username,email,domain,city,experience,created_at,submission_id,phone,state,role,qualification,organisation,about,linkedin,domain_group&order=created_at.desc'),api('client_briefs','?status=eq.pending&select=id&limit=100'),api('users','?status=eq.active&role=neq.admin&select=id'),api('blog_posts','?status=eq.published&select=id')]);
+    const pc=(apps||[]).length,bc=(briefs||[]).length,mc=(members||[]).length,blc=(blogPosts||[]).length;
+    $('admin-stats').innerHTML=[{l:'Pending Applications',v:pc,u:pc>0,s:'admin-applications'},{l:'Client Briefs',v:bc,u:bc>0,s:'admin-briefs'},{l:'Network Members',v:mc,u:false,s:'directory'},{l:'Blog Posts Live',v:blc,u:false,s:'admin-publish-update'}].map(s=>`<div class="alert-card${s.u?' urgent':''}" onclick="goto('${s.s}')"><div class="alert-val${s.u?' gold':''}">${s.v}</div><div class="alert-lbl">${s.l}</div></div>`).join('');
     // Was `return`-ing here on an empty application list, which -- since
     // this is a bare return, not a continue past just this block --
     // skipped every try block written after it, including both badge
