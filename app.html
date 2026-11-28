@@ -777,6 +777,10 @@ img.avatar{object-fit:cover}
     <div style="display:flex;justify-content:center;gap:16px;margin-top:16px" id="mp-safety-actions">
       <button onclick="muteCurrentMember()" style="background:none;border:none;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);cursor:pointer">Mute</button>
       <button onclick="blockCurrentMember()" style="background:none;border:none;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);cursor:pointer">Block</button>
+      <button onclick="openReportMemberModal()" style="background:none;border:none;color:rgba(16,30,51,0.3);font-size:12px;font-family:var(--sans);cursor:pointer">Report</button>
+    </div>
+    <div id="mp-admin-shield-row" style="display:none;justify-content:center;margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:rgba(16,30,51,0.4);font-family:var(--sans);cursor:pointer"><input type="checkbox" id="mp-shield-toggle" onchange="toggleMemberShield(this.checked)">Shield from report-volume escalation (admin only)</label>
     </div>
   </div></div>
 </div>
@@ -1096,6 +1100,9 @@ img.avatar{object-fit:cover}
   </div>
   <div class="scroll"><div class="scroll-content">
     <div class="chips" id="brief-type-chips"></div>
+    <div class="field" style="margin-top:14px"><label>Sector</label><select id="nb-sector-l1" onchange="onSectorPickerChange(1,'nb')"><option value="">Select a sector</option></select></div>
+    <div class="field" id="nb-sector-l2-field" style="display:none"><label>Specialisation</label><select id="nb-sector-l2" onchange="onSectorPickerChange(2,'nb')"></select></div>
+    <div class="field" id="nb-sector-l3-field" style="display:none"><label>Micro-domain (optional)</label><select id="nb-sector-l3" onchange="onSectorPickerChange(3,'nb')"></select></div>
     <div class="field" style="margin-top:14px"><label>Describe what you need</label><textarea id="nb-desc" rows="4"></textarea></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:13px;color:var(--muted);font-family:var(--sans)"><input type="checkbox" id="nb-anon">Post anonymously</label>
     <button class="btn btn-gold btn-full" style="margin-top:16px" onclick="submitBrief()">Post brief</button>
@@ -1288,7 +1295,7 @@ img.avatar{object-fit:cover}
     <div class="card" onclick="openAdminDetail('partners')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Platform Partners</span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;margin-left:auto" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <div class="card" onclick="openAdminDetail('packages')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Marketplace Package Requests</span><span id="pkg-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
     <div class="card" onclick="openAdminDetail('deletions')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Account Deletion Requests</span><span id="del-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-    <div class="card" onclick="openAdminDetail('suspensions')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Suspended Accounts</span><span id="susp-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    <div class="card" onclick="openAdminDetail('flagged')" style="display:flex;align-items:center;gap:12px;cursor:pointer"><svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg><span style="font-size:14px;color:rgba(16,30,51,0.6);font-family:var(--sans)">Reported Accounts</span><span id="flagged-badge" style="font-size:11px;color:var(--gold);margin-left:auto;margin-right:8px"></span><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
   </div></div>
   <div class="nav-bar">
     <button class="nav-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
@@ -1364,7 +1371,7 @@ img.avatar{object-fit:cover}
       <button class="tab-btn" data-tab="partners" onclick="setAdminDetailTab('partners')">Platform Partners</button>
       <button class="tab-btn" data-tab="packages" onclick="setAdminDetailTab('packages')">Package Requests</button>
       <button class="tab-btn" data-tab="deletions" onclick="setAdminDetailTab('deletions')">Deletion Requests</button>
-      <button class="tab-btn" data-tab="suspensions" onclick="setAdminDetailTab('suspensions')">Suspended Accounts</button>
+      <button class="tab-btn" data-tab="flagged" onclick="setAdminDetailTab('flagged')">Reported Accounts</button>
     </div>
   </div>
   <div class="scroll"><div class="scroll-content-no-nav">
@@ -1373,7 +1380,7 @@ img.avatar{object-fit:cover}
     <div id="admin-detail-partners" class="admin-detail-pane" style="display:none"><div id="admin-partners-list"><div class="loader"><div class="spinner"></div></div></div></div>
     <div id="admin-detail-packages" class="admin-detail-pane" style="display:none"><div id="admin-packages-list"><div class="loader"><div class="spinner"></div></div></div></div>
     <div id="admin-detail-deletions" class="admin-detail-pane" style="display:none"><div id="admin-deletions-list"><div class="loader"><div class="spinner"></div></div></div></div>
-    <div id="admin-detail-suspensions" class="admin-detail-pane" style="display:none"><div id="admin-suspensions-list"><div class="loader"><div class="spinner"></div></div></div></div>
+    <div id="admin-detail-flagged" class="admin-detail-pane" style="display:none"><div id="admin-flagged-list"><div class="loader"><div class="spinner"></div></div></div></div>
   </div></div>
 </div>
 
@@ -1569,6 +1576,28 @@ GET .../api-v1/me <span style="color:rgba(16,30,51,0.3)">(needs read_profile sco
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-outline" onclick="closeReportPostModal()" style="flex:1">Cancel</button>
       <button class="btn btn-gold" id="report-post-submit" onclick="submitPostReport()" style="flex:2">Submit report</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REPORT MEMBER -->
+<div class="modal-overlay" id="modal-report-member">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:22px;font-family:var(--serif);font-weight:700;color:var(--white);margin-bottom:16px">Report this member</div>
+    <div class="field"><label>Reason *</label><select id="report-member-reason">
+      <option value="">Select a reason</option>
+      <option value="Unprofessional conduct">Unprofessional conduct</option>
+      <option value="Harassment">Harassment</option>
+      <option value="Confidentiality breach">Confidentiality breach</option>
+      <option value="Impersonation / fake identity">Impersonation / fake identity</option>
+      <option value="Spam or scam">Spam or scam</option>
+      <option value="Other">Other</option>
+    </select></div>
+    <div class="field"><label>Additional details (optional)</label><textarea id="report-member-note" placeholder="Anything else our moderation team should know..." rows="3"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" onclick="closeReportMemberModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="report-member-submit" onclick="submitMemberReport()" style="flex:2">Submit report</button>
     </div>
   </div>
 </div>
@@ -1821,7 +1850,11 @@ function renderPendingScreen(status,note){
   }else if(status==='suspended'){
     $('pending-icon').textContent='—';
     $('pending-title').textContent='Account suspended';
-    $('pending-text').textContent=note?('Your account was suspended pending review of a reported Exchange outcome. '+note):'Your account was suspended pending review of a reported Exchange outcome. An admin will review this shortly.';
+    $('pending-text').textContent=note?('This account was suspended by an admin. '+note):'This account was suspended by an admin. Contact an admin for details.';
+  }else if(status==='expelled'){
+    $('pending-icon').textContent='—';
+    $('pending-title').textContent='Account removed from the register';
+    $('pending-text').textContent=note?('This account was permanently removed from the register by an admin. '+note):'This account was permanently removed from the register by an admin. Contact an admin if you believe this is in error.';
   }else{
     $('pending-icon').textContent='◈';
     $('pending-title').textContent='Account under review';
@@ -1854,7 +1887,7 @@ async function handleSess(s){
     // logging back in afterward found no status check here at all and landed on the normal
     // member home, fully restoring access. deactivated now routes to the same pending-style
     // status screen as pending/rejected instead of silently proceeding.
-    if(ST.profile.status==='pending'||ST.profile.status==='rejected'||ST.profile.status==='deactivated'||ST.profile.status==='suspended'){renderPendingScreen(ST.profile.status,ST.profile.status==='suspended'?ST.profile.suspension_reason:ST.profile.admin_notes);goto('pending');return;}
+    if(['pending','rejected','deactivated','suspended','expelled'].includes(ST.profile.status)){renderPendingScreen(ST.profile.status,(ST.profile.status==='suspended'||ST.profile.status==='expelled')?ST.profile.suspension_reason:ST.profile.admin_notes);goto('pending');return;}
     // Always land on the member home, admin included -- an admin reaches the Admin Panel
     // on demand from the "Admin Panel" quick-action card loadMemberHome() reveals for them,
     // not by being forced straight into it on every login.
@@ -3141,6 +3174,8 @@ function viewMember(id){
   else $('mp-vertical-card').style.display='none';
   loadMemberRecentActivity(m.id);
   loadVouchStatus(m.id);
+  if(ST.profile?.role==='admin'&&!isSelf){loadAdminShieldToggle(m.id);}
+  else{const sr=$('mp-admin-shield-row');if(sr)sr.style.display='none';}
   if(!isSelf){
     refreshConnectState(m.id);
     checkBlockedEitherWay(m.id);
@@ -3329,6 +3364,65 @@ async function blockCurrentMember(){
     ]);
     goto('directory');
   }catch(e){alert('Could not block — please try again.');}
+}
+
+// General account-level reporting -- see 20261128103000_manual_moderation_
+// review.sql. Not gated behind any prior relationship (unlike a brief
+// outcome rating): any active member can report any other active member,
+// for any reason. Lands in the same admin review surface as brief "No"
+// ratings -- never changes anything about the reported account by itself.
+function openReportMemberModal(){
+  const m=ST.currentMember;if(!m||!ST.profile||m.id===ST.profile.id)return;
+  $('report-member-reason').value='';
+  $('report-member-note').value='';
+  $('modal-report-member').classList.add('open');
+}
+function closeReportMemberModal(){$('modal-report-member').classList.remove('open');}
+async function submitMemberReport(){
+  const m=ST.currentMember;if(!m||!ST.profile)return;
+  const reason=($('report-member-reason')?.value||'').trim();
+  if(!reason){toast('Please select a reason','error');return;}
+  const note=($('report-member-note')?.value||'').trim()||null;
+  const btn=$('report-member-submit');if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+  try{
+    await api('member_reports','','POST',{reporter_id:ST.profile.id,reported_id:m.id,reason,note});
+    closeReportMemberModal();
+    toast('Reported — our moderation team will review it.','success');
+  }catch(e){
+    toast('Could not submit the report — please try again.','error');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Submit report';}
+  }
+}
+
+// Admin-only -- not exposed via member_directory (unnecessary exposure of
+// an admin-only moderation flag to every member), so a dedicated privileged
+// fetch on the admin's own authenticated session (users_select_admin_all
+// RLS) rather than folding it into the broad directory view.
+async function loadAdminShieldToggle(memberId){
+  const row=$('mp-admin-shield-row');if(!row)return;
+  row.style.display='flex';
+  try{
+    const u=await api('users',`?id=eq.${memberId}&select=shielded_from_report_escalation`);
+    $('mp-shield-toggle').checked=!!(u&&u[0]&&u[0].shielded_from_report_escalation);
+  }catch(e){}
+}
+
+// Admin-only, per-account toggle: reports can still be filed against a
+// shielded account (never silently blocked), but it's excluded from the
+// review queue's volume-based "needs attention" escalation -- for a
+// prominent/polarizing member who'd otherwise be a disproportionate target
+// for coordinated or bad-faith reports.
+async function toggleMemberShield(checked){
+  const m=ST.currentMember;if(!m||ST.profile?.role!=='admin')return;
+  try{
+    await api('users',`?id=eq.${m.id}`,'PATCH',{shielded_from_report_escalation:checked});
+    m.shielded_from_report_escalation=checked;
+    toast(checked?'Shielded from report escalation':'Shield removed','success');
+  }catch(e){
+    $('mp-shield-toggle').checked=!checked;
+    toast('Could not update — please try again.','error');
+  }
 }
 
 async function loadConvos(){
@@ -4015,8 +4109,58 @@ const BRIEF_TYPES=[['service_request','Service request'],['strategy_team','Strat
 function initBriefTypeChips(){
   ST.briefType=ST.briefType||'service_request';
   $('brief-type-chips').innerHTML=BRIEF_TYPES.map(([v,l])=>`<div class="chip${v===ST.briefType?' active':''}" onclick="setBriefType('${v}')">${l}</div>`).join('');
+  initSectorPicker('nb');
 }
 function setBriefType(v){ST.briefType=v;initBriefTypeChips();}
+
+// Multi-tier sector taxonomy (Level 1 -> Level 2 -> Level 3) -- additive,
+// parallel to the flat buckets/domain_group system used for member
+// profiles and Directory filtering, which this never touches. Degrades
+// gracefully to L1-only for sectors with no L2/L3 depth yet (most of
+// them, for now) -- see 20261128102000_sector_taxonomy_and_repeat_offense_
+// review.sql for what's actually seeded. Shared between the brief
+// composer ('nb' prefix) and any other screen that needs the same picker.
+let SECTOR_TAGS_CACHE=null;
+async function loadSectorTagsCache(){
+  if(SECTOR_TAGS_CACHE)return SECTOR_TAGS_CACHE;
+  try{SECTOR_TAGS_CACHE=await api('sector_tags','?select=id,parent_id,level,name&order=sort_order.asc')||[];}
+  catch(e){SECTOR_TAGS_CACHE=[];}
+  return SECTOR_TAGS_CACHE;
+}
+async function initSectorPicker(prefix){
+  const tags=await loadSectorTagsCache();
+  const sel=$(prefix+'-sector-l1');if(!sel)return;
+  const l1=tags.filter(t=>t.level===1);
+  sel.innerHTML='<option value="">Select a sector</option>'+l1.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  const f2=$(prefix+'-sector-l2-field'),f3=$(prefix+'-sector-l3-field');
+  if(f2)f2.style.display='none';
+  if(f3)f3.style.display='none';
+}
+async function onSectorPickerChange(level,prefix){
+  const tags=await loadSectorTagsCache();
+  if(level===1){
+    const parentId=$(prefix+'-sector-l1').value;
+    const children=tags.filter(t=>t.level===2&&t.parent_id===parentId);
+    const f2=$(prefix+'-sector-l2-field'),f3=$(prefix+'-sector-l3-field');
+    if(parentId&&children.length){
+      $(prefix+'-sector-l2').innerHTML='<option value="">Select a specialisation (optional)</option>'+children.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+      f2.style.display='';
+    }else if(f2)f2.style.display='none';
+    if(f3)f3.style.display='none';
+  }else if(level===2){
+    const parentId=$(prefix+'-sector-l2').value;
+    const children=tags.filter(t=>t.level===3&&t.parent_id===parentId);
+    const f3=$(prefix+'-sector-l3-field');
+    if(parentId&&children.length){
+      $(prefix+'-sector-l3').innerHTML='<option value="">Select a micro-domain (optional)</option>'+children.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+      f3.style.display='';
+    }else if(f3)f3.style.display='none';
+  }
+}
+function getSelectedSectorTagId(prefix){
+  // Most specific non-empty selection wins.
+  return $(prefix+'-sector-l3')?.value||$(prefix+'-sector-l2')?.value||$(prefix+'-sector-l1')?.value||null;
+}
 
 async function loadExchange(){
   const el=$('exchange-list');
@@ -4047,9 +4191,11 @@ async function submitBrief(){
       brief_type:ST.briefType||'service_request',
       description,
       bucket_id:ST.profile.bucket_id||null,
+      sector_tag_id:getSelectedSectorTagId('nb'),
       anonymous:$('nb-anon').checked
     });
     $('nb-desc').value='';$('nb-anon').checked=false;
+    initSectorPicker('nb');
     goto('exchange');
   }catch(e){alert('Could not post the brief — please try again.');}
 }
@@ -4112,7 +4258,7 @@ async function loadBriefDetail(briefId){
       ${(isAuthor&&(brief.status==='open'||brief.status==='matched'))?`<button onclick="closeBrief('${briefId}')" style="background:none;border:1px solid var(--border2);border-radius:14px;padding:5px 14px;cursor:pointer;color:rgba(16,30,51,0.5);font-size:12px;font-family:var(--sans);margin-bottom:18px">Close this brief</button>`:''}
       ${isCounterparty?(myOutcome?`<div class="card" style="margin-bottom:18px;border-color:${myOutcome.deliverable_met?'rgba(62,207,142,0.3)':'rgba(224,85,85,0.3)'}"><div style="font-size:12.5px;color:var(--muted);font-family:var(--sans)">You reported this engagement as <strong style="color:var(--white)">${myOutcome.deliverable_met?'delivered as agreed':'not delivered as agreed'}</strong>.</div></div>`:`<div class="card" style="margin-bottom:18px">
         <div style="font-size:13px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:8px">Did ${esc(otherPartyName||'the other party')} deliver as agreed?</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">This is a real, binary signal -- MahaYukti never sees the money, but a verified "no" immediately suspends the account pending admin review.</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">This is a real, binary signal -- MahaYukti never sees the money, but a "no" is reviewed by an admin, who decides what action (if any) to take.</div>
         <textarea id="bo-note-${briefId}" rows="2" placeholder="Optional note for the admin reviewing this..." style="width:100%;box-sizing:border-box;border:1.5px solid rgba(16,30,51,0.08);background:rgba(16,30,51,0.04);border-radius:4px;padding:8px 10px;font-family:var(--sans);font-size:12.5px;color:var(--white);resize:none;margin-bottom:10px"></textarea>
         <div style="display:flex;gap:10px">
           <button class="btn btn-gold" style="flex:1" onclick="submitBriefOutcome('${briefId}','${otherPartyId}',true,'bo-note-${briefId}')">Yes, delivered</button>
@@ -4155,16 +4301,20 @@ async function awardBriefResponse(briefId,responseId){
   }catch(e){toast('Could not award the response','error');}
 }
 
-// The accountability loop -- see 20261128101000_brief_accountability_loop.sql.
-// A "No" is real: it immediately suspends the ratee's account (RLS trigger),
-// not just a queued report with no teeth, pending a real admin's review.
+// The accountability loop -- see 20261128101000_brief_accountability_loop.sql
+// and 20261128103000_manual_moderation_review.sql. A "No" no longer auto-
+// suspends anyone (that was reconsidered: two people motivated to target an
+// account, especially a prominent one, could manufacture two trivial real
+// engagements to trigger an automatic consequence with zero actual
+// non-delivery involved). It's a real signal an admin reviews -- suspend/
+// ban is now always a deliberate, manual admin decision.
 async function submitBriefOutcome(briefId,otherPartyId,met,noteFieldId){
   if(!ST.profile||!otherPartyId)return;
-  if(!met&&!confirm("Report that this wasn't delivered as agreed? This immediately suspends the other member's account pending admin review."))return;
+  if(!met&&!confirm("Report that this wasn't delivered as agreed? An admin will review this and decide what action to take."))return;
   const note=($(noteFieldId)?.value||'').trim()||null;
   try{
     await api('brief_outcomes','','POST',{brief_id:briefId,rater_id:ST.profile.id,ratee_id:otherPartyId,deliverable_met:met,note});
-    toast(met?'Thanks for confirming':'Reported — the account has been suspended pending admin review','success');
+    toast(met?'Thanks for confirming':'Reported — an admin will review this','success');
     await loadBriefDetail(briefId);
   }catch(e){toast('Could not submit — please try again.','error');}
 }
@@ -4762,7 +4912,7 @@ function renderAbout(){
 // package requests, deletions) consolidated into one screen with a tab bar, instead of
 // 5 separate full screens each needing a trip back to the Admin Panel menu. Each tab's
 // content container and load function are untouched -- only the screen chrome changed.
-const ADMIN_DETAIL_LOADERS={moderation:loadModerationQueue,ads:loadAdminAds,partners:loadAdminPartners,packages:loadAdminPackages,deletions:loadAdminDeletions,suspensions:loadAdminSuspensions};
+const ADMIN_DETAIL_LOADERS={moderation:loadModerationQueue,ads:loadAdminAds,partners:loadAdminPartners,packages:loadAdminPackages,deletions:loadAdminDeletions,flagged:loadAdminFlagged};
 function openAdminDetail(tab){
   goto('admin-detail');
   setAdminDetailTab(tab);
@@ -4811,34 +4961,64 @@ async function loadAdminHome(){
     const b=$('del-badge');if(b)b.textContent=n>0?n+' pending':'';
   }catch(e){}
   try{
-    const susp=await api('users','?status=eq.suspended&select=id');
-    const n=(susp||[]).length;
-    const b=$('susp-badge');if(b)b.textContent=n>0?n+' pending':'';
+    const flagged=await api('admin_flagged_members','?select=user_id');
+    const n=(flagged||[]).length;
+    const b=$('flagged-badge');if(b)b.textContent=n>0?n+' pending':'';
   }catch(e){}
 }
 
-// Admin side of the accountability loop (20261128101000_brief_accountability_loop.sql) --
-// a "No" rating already immediately suspended the account via the DB trigger; this is where
-// an admin reviews the real case and either reinstates (false alarm / resolved) or leaves it
-// suspended. Same PATCH pattern as every other admin action in this app -- no special RPC
-// needed, users_update_admin_all already covers it.
-async function loadAdminSuspensions(){
-  const el=$('admin-suspensions-list');
+// Admin review queue -- see 20261128103000_manual_moderation_review.sql.
+// Every account report (member_reports) and every brief "not delivered"
+// rating (brief_outcomes) lands here, combined, per account. NOTHING here
+// is automatic: suspend/ban/dismiss are always a deliberate admin click,
+// never a threshold a trigger crosses on its own. Shielded accounts still
+// show (reports are never hidden from admin), just not specially flagged.
+async function loadAdminFlagged(){
+  const el=$('admin-flagged-list');
   try{
-    const d=await api('users','?status=eq.suspended&order=created_at.desc&select=id,real_name,username,email,suspension_reason')||[];
-    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No suspended accounts.</div></div>';return;}
-    el.innerHTML=d.map(u=>`<div class="card" style="margin-bottom:10px;border-color:rgba(224,85,85,0.3)">
+    const d=await api('admin_flagged_members','?order=open_reports.desc,brief_no_count.desc&select=user_id,real_name,username,email,status,shielded_from_report_escalation,open_reports,brief_no_count')||[];
+    if(!d.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No reported accounts.</div></div>';return;}
+    el.innerHTML=d.map(u=>{
+      const signals=[u.open_reports>0?`${u.open_reports} open report${u.open_reports===1?'':'s'}`:'',u.brief_no_count>0?`${u.brief_no_count} "not delivered" rating${u.brief_no_count===1?'':'s'}`:''].filter(Boolean).join(' · ');
+      return `<div class="card" style="margin-bottom:10px;border-color:${u.status==='expelled'?'rgba(224,85,85,0.5)':'rgba(224,85,85,0.25)'}">
+      ${u.status==='expelled'?'<div style="font-size:10px;color:var(--red);font-weight:700;font-family:var(--sans);margin-bottom:6px">⛔ PERMANENTLY EXPELLED</div>':u.status==='suspended'?'<div style="font-size:10px;color:var(--gold);font-weight:700;font-family:var(--sans);margin-bottom:6px">SUSPENDED</div>':''}
+      ${u.shielded_from_report_escalation?'<div style="font-size:10px;color:rgba(16,30,51,0.4);font-family:var(--sans);margin-bottom:6px">🛡 Shielded from escalation</div>':''}
       <div style="font-size:14px;color:var(--white);font-family:var(--sans);font-weight:600;margin-bottom:4px">${esc(u.real_name||u.username)}</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${esc(u.email)}</div>
-      <div style="font-size:12.5px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:10px">${esc(u.suspension_reason||'')}</div>
-      <button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="reinstateSuspendedUser('${u.id}')">Reinstate account</button>
-    </div>`).join('');
+      <div style="font-size:12.5px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:10px">${signals}</div>
+      <textarea id="flag-reason-${u.user_id}" rows="2" placeholder="Reason (shown to the member if you suspend or ban)..." style="width:100%;box-sizing:border-box;border:1.5px solid rgba(16,30,51,0.08);background:rgba(16,30,51,0.04);border-radius:4px;padding:8px 10px;font-family:var(--sans);font-size:12.5px;color:var(--white);resize:none;margin-bottom:10px"></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="dismissFlaggedReports('${u.user_id}')">Dismiss reports</button>
+        ${u.status!=='suspended'?`<button class="btn btn-gold" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="adminSuspendUser('${u.user_id}')">Suspend</button>`:''}
+        ${u.status!=='expelled'?`<button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px;border-color:var(--red);color:var(--red)" onclick="adminExpelUser('${u.user_id}')">Ban permanently</button>`:''}
+        ${(u.status==='suspended'||u.status==='expelled')?`<button class="btn btn-outline" style="width:auto;padding:7px 13px;font-size:11.5px" onclick="reinstateSuspendedUser('${u.user_id}')">Reinstate</button>`:''}
+      </div>
+    </div>`;}).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load</div></div>';}
+}
+
+async function dismissFlaggedReports(userId){
+  try{await api('member_reports',`?reported_id=eq.${userId}&status=eq.open`,'PATCH',{status:'reviewed'});toast('Reports dismissed','success');await loadAdminFlagged();}
+  catch(e){toast('Could not update — please try again.','error');}
+}
+
+async function adminSuspendUser(userId){
+  if(!confirm('Suspend this account?'))return;
+  const reason=($('flag-reason-'+userId)?.value||'').trim()||'Suspended by an admin pending further review.';
+  try{await api('users',`?id=eq.${userId}`,'PATCH',{status:'suspended',suspension_reason:reason});toast('Suspended','success');await loadAdminFlagged();}
+  catch(e){toast('Could not update — please try again.','error');}
+}
+
+async function adminExpelUser(userId){
+  if(!confirm('Permanently ban this account from the register? This is a deliberate, serious action -- make sure you\'ve actually reviewed the reports, not just the count.'))return;
+  const reason=($('flag-reason-'+userId)?.value||'').trim()||'Permanently removed from the register by an admin.';
+  try{await api('users',`?id=eq.${userId}`,'PATCH',{status:'expelled',suspension_reason:reason});toast('Banned','success');await loadAdminFlagged();}
+  catch(e){toast('Could not update — please try again.','error');}
 }
 
 async function reinstateSuspendedUser(userId){
   if(!confirm('Reinstate this account? It will immediately regain full access.'))return;
-  try{await api('users',`?id=eq.${userId}`,'PATCH',{status:'active',suspension_reason:null});toast('Reinstated','success');await loadAdminSuspensions();}
+  try{await api('users',`?id=eq.${userId}`,'PATCH',{status:'active',suspension_reason:null});toast('Reinstated','success');await loadAdminFlagged();}
   catch(e){toast('Could not update — please try again.','error');}
 }
 

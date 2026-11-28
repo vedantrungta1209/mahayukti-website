@@ -61,6 +61,13 @@ Deno.serve(async (req: Request) => {
   const urgency = VALID_URGENCY.includes(String(body.urgency)) ? String(body.urgency) : "normal";
   const description = String(body.description || "").trim().slice(0, 4000);
   const confidentiality = String(body.confidentiality || "").trim().slice(0, 500);
+  // Optional structured tag alongside the free-text label above -- loosely
+  // validated (just a real-looking UUID) since it's match-quality metadata,
+  // not a security-sensitive field; a bad value just fails the FK silently
+  // null-safe rather than ever blocking a real submission over it.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const sectorTagIdRaw = String(body.sector_tag_id || "");
+  const sectorTagId = UUID_RE.test(sectorTagIdRaw) ? sectorTagIdRaw : null;
 
   if (!contactName || !contactEmail || !domainNeeded || !description) {
     return json({ error: "Missing required fields" }, 400);
@@ -90,6 +97,7 @@ Deno.serve(async (req: Request) => {
     contact_phone: contactPhone || null,
     company: company || null,
     domain_needed: domainNeeded,
+    sector_tag_id: sectorTagId,
     urgency,
     description,
     confidentiality: confidentiality || null,

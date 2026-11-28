@@ -560,23 +560,8 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
           </div>
           <div class="iform-row">
             <div class="ifield">
-              <label for="in-domain">Which area do you need help in? *</label>
-              <select id="in-domain" required>
-                <option value="">Select one</option>
-                <option>Legal</option>
-                <option>Accounting &amp; Audit</option>
-                <option>Technology &amp; Cybersecurity</option>
-                <option>Capital &amp; Funding</option>
-                <option>Business &amp; Industry</option>
-                <option>Government &amp; Public Affairs</option>
-                <option>Defence &amp; Security</option>
-                <option>Culture &amp; Public Influence</option>
-                <option>Trades &amp; Craft</option>
-                <option>Science &amp; Deep-Tech</option>
-                <option>Healthcare &amp; Medicine</option>
-                <option>Real Estate &amp; Infrastructure</option>
-                <option>Other</option>
-              </select>
+              <label for="in-sector-l1">Which area do you need help in? *</label>
+              <select id="in-sector-l1" required onchange="onIntakeSectorChange(1)"><option value="">Select one</option></select>
             </div>
             <div class="ifield">
               <label for="in-urgency">How urgent is this? *</label>
@@ -585,6 +570,16 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
                 <option value="urgent">Urgent — within a few days</option>
                 <option value="critical">Critical — immediate</option>
               </select>
+            </div>
+          </div>
+          <div class="iform-row">
+            <div class="ifield" id="in-sector-l2-field" style="display:none">
+              <label for="in-sector-l2">Specialisation (optional)</label>
+              <select id="in-sector-l2" onchange="onIntakeSectorChange(2)"></select>
+            </div>
+            <div class="ifield" id="in-sector-l3-field" style="display:none">
+              <label for="in-sector-l3">Micro-domain (optional)</label>
+              <select id="in-sector-l3"></select>
             </div>
           </div>
           <div class="ifield">
@@ -655,6 +650,57 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5weW95eWxycXByYXd5YXZuZnZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2NTQ4NTgsImV4cCI6MjExMDIzMDg1OH0.K56AWim0w16YuL0r7AZMmkE_gj9MGb3tlRucPoy3gx8';
   const form=document.getElementById('intake-form');
   if(!form)return;
+
+  // Multi-tier sector taxonomy, same tree the member-side brief composer
+  // uses (sector_tags, readable by anon specifically so this unauthenticated
+  // public form can use it too) -- not a separate hardcoded list that could
+  // drift from the real taxonomy.
+  let sectorTags=null;
+  async function loadSectorTags(){
+    if(sectorTags)return sectorTags;
+    try{
+      const r=await fetch(SB_URL+'/rest/v1/sector_tags?select=id,parent_id,level,name&order=sort_order.asc',{headers:{apikey:SB_KEY}});
+      sectorTags=r.ok?await r.json():[];
+    }catch(e){sectorTags=[];}
+    return sectorTags;
+  }
+  window.onIntakeSectorChange=async function(level){
+    const tags=await loadSectorTags();
+    if(level===1){
+      const parentId=document.getElementById('in-sector-l1').value;
+      const children=tags.filter(t=>t.level===2&&t.parent_id===parentId);
+      const f2=document.getElementById('in-sector-l2-field'),f3=document.getElementById('in-sector-l3-field');
+      if(parentId&&children.length){
+        document.getElementById('in-sector-l2').innerHTML='<option value="">Select one</option>'+children.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+        f2.style.display='';
+      }else{f2.style.display='none';}
+      f3.style.display='none';
+    }else if(level===2){
+      const parentId=document.getElementById('in-sector-l2').value;
+      const children=tags.filter(t=>t.level===3&&t.parent_id===parentId);
+      const f3=document.getElementById('in-sector-l3-field');
+      if(parentId&&children.length){
+        document.getElementById('in-sector-l3').innerHTML='<option value="">Select one</option>'+children.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+        f3.style.display='';
+      }else{f3.style.display='none';}
+    }
+  };
+  loadSectorTags().then(tags=>{
+    const l1=tags.filter(t=>t.level===1);
+    document.getElementById('in-sector-l1').innerHTML='<option value="">Select one</option>'+l1.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  });
+  function selectedSectorLabel(){
+    const l3=document.getElementById('in-sector-l3'),l2=document.getElementById('in-sector-l2'),l1=document.getElementById('in-sector-l1');
+    if(l3&&l3.value)return l3.options[l3.selectedIndex].text;
+    if(l2&&l2.value)return l2.options[l2.selectedIndex].text;
+    if(l1&&l1.value)return l1.options[l1.selectedIndex].text;
+    return '';
+  }
+  function selectedSectorTagId(){
+    const l3=document.getElementById('in-sector-l3'),l2=document.getElementById('in-sector-l2'),l1=document.getElementById('in-sector-l1');
+    return (l3&&l3.value)||(l2&&l2.value)||(l1&&l1.value)||null;
+  }
+
   form.addEventListener('submit',async function(e){
     e.preventDefault();
     const btn=document.getElementById('intake-submit');
@@ -665,7 +711,8 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
       contact_email:document.getElementById('in-email').value.trim(),
       contact_phone:document.getElementById('in-phone').value.trim(),
       company:document.getElementById('in-company').value.trim(),
-      domain_needed:document.getElementById('in-domain').value,
+      domain_needed:selectedSectorLabel(),
+      sector_tag_id:selectedSectorTagId(),
       urgency:document.getElementById('in-urgency').value,
       description:document.getElementById('in-description').value.trim(),
       confidentiality:document.getElementById('in-confidentiality').value.trim(),
@@ -683,6 +730,8 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
       });
       if(!r.ok)throw new Error('HTTP '+r.status);
       form.reset();
+      document.getElementById('in-sector-l2-field').style.display='none';
+      document.getElementById('in-sector-l3-field').style.display='none';
       status.className='iform-status show ok';
       status.textContent="Received — our team will reach out within one business day, usually sooner for critical requests.";
     }catch(err){
