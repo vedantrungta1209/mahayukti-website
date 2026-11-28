@@ -622,8 +622,9 @@ img.avatar{object-fit:cover}
     Communities/Marketplace/Exchange/Events) and the rest now follow the feed instead of
     leading it; see renderShellNav() for the desktop sidebar that covers the same ground. -->
     <div id="home-tier-nudge" style="display:none"></div>
-    <div class="card" style="margin-bottom:14px">
-      <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
+    <div class="card" style="margin-bottom:14px;position:relative">
+      <textarea id="feed-compose" rows="2" placeholder="Share an update with the register… (#hashtags, @mentions and links work)" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none" oninput="onFeedComposeInput(this)" onkeydown="onFeedComposeKeydown(event)" onblur="setTimeout(hideFeedMentionDropdown,150)"></textarea>
+      <div id="feed-mention-dropdown" style="display:none;position:absolute;z-index:50;left:16px;max-width:260px;background:var(--bg-alt);border:1px solid var(--border2);border-radius:6px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.3)"></div>
       <div id="feed-image-preview" style="display:none;margin-top:8px;flex-wrap:wrap;gap:6px"></div>
       <input type="file" id="feed-image-input" accept="image/*" multiple style="display:none" onchange="onFeedImageSelected(this)">
       <select id="feed-audience" style="display:none">
@@ -2608,6 +2609,56 @@ function renderFeedImagePreview(){
 }
 function clearFeedImage(){feedImageFiles=[];$('feed-image-preview').style.display='none';$('feed-image-preview').innerHTML='';$('feed-image-input').value='';}
 
+// @mentions in the composer -- notify_mentions and linkifyMentions already
+// worked once a correct "@username" was typed by hand; this is the missing
+// half, a real type-ahead so a member doesn't have to already know someone's
+// exact username. Deliberately scoped to the main feed composer only (where
+// the plan's gap was), not every comment box.
+let feedMentionState={active:false,start:-1,query:''};
+let feedMentionSeq=0;
+function onFeedComposeInput(ta){
+  const val=ta.value;const pos=ta.selectionStart;
+  let i=pos-1;
+  while(i>=0&&/[A-Za-z0-9_]/.test(val[i]))i--;
+  if(i>=0&&val[i]==='@'&&(i===0||/\s/.test(val[i-1]))){
+    feedMentionState={active:true,start:i,query:val.slice(i+1,pos)};
+    searchMentionCandidates(feedMentionState.query,ta);
+  }else{
+    hideFeedMentionDropdown();
+  }
+}
+function onFeedComposeKeydown(e){if(e.key==='Escape')hideFeedMentionDropdown();}
+async function searchMentionCandidates(query,ta){
+  const seq=++feedMentionSeq;
+  const dd=$('feed-mention-dropdown');if(!dd)return;
+  try{
+    const rows=await api('member_directory','?username=ilike.'+encodeURIComponent(query+'%')+'&select=id,username,real_name,show_real_name,real_name_approved&order=username.asc&limit=6');
+    if(seq!==feedMentionSeq||!feedMentionState.active)return;
+    if(!rows||!rows.length){dd.style.display='none';return;}
+    dd.innerHTML=rows.map(u=>{
+      const nm=(u.show_real_name&&u.real_name_approved&&u.real_name)?u.real_name:'';
+      return `<div style="padding:8px 12px;cursor:pointer;font-size:13px;font-family:var(--sans);color:var(--white)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='none'" onmousedown="event.preventDefault();insertFeedMention('${esc(u.username)}')">@${esc(u.username)}${nm?' · '+esc(nm):''}</div>`;
+    }).join('');
+    dd.style.top=(ta.offsetTop+ta.offsetHeight+4)+'px';
+    dd.style.display='block';
+  }catch(e){dd.style.display='none';}
+}
+function insertFeedMention(username){
+  const ta=$('feed-compose');
+  if(!ta||!feedMentionState.active)return;
+  const val=ta.value;
+  const end=feedMentionState.start+1+feedMentionState.query.length;
+  const newVal=val.slice(0,feedMentionState.start)+'@'+username+' '+val.slice(end);
+  ta.value=newVal;
+  const newPos=feedMentionState.start+username.length+2;
+  ta.focus();ta.setSelectionRange(newPos,newPos);
+  hideFeedMentionDropdown();
+}
+function hideFeedMentionDropdown(){
+  feedMentionState={active:false,start:-1,query:''};
+  const dd=$('feed-mention-dropdown');if(dd)dd.style.display='none';
+}
+
 async function createPostWithExtras(fields){
   // Needs the new post's real id back to attach hashtags -- same reasoning
   // as approveAd: the shared api() helper deliberately doesn't request a
@@ -2908,7 +2959,8 @@ function renderMemberCards(containerId,list,opts){
   const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(156,135,106,0.3)',council:'rgba(194,176,148,0.3)'};
   el.innerHTML=list.map(m=>{const n=esc(dname(m));const bc=colors[m.role]||colors.member;const av=m.avatar_url?`<img class="avatar avatar-md" style="border-color:${bc}" src="${esc(m.avatar_url)}" alt="">`:`<div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${esc(dname(m).charAt(0).toUpperCase())}</div>`;return`<div class="member-card" onclick="viewMember('${m.id}')">${av}<div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${esc(m.domain)}</div><div class="member-city">${esc(m.city)}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
   if(opts&&opts.loadMore){
-    el.insertAdjacentHTML('beforeend',`<button id="dir-load-more" onclick="loadMoreDir()" style="display:block;width:100%;padding:10px;margin-top:6px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--muted);font-size:13px;font-family:var(--sans)">Load more</button>`);
+    const fn=opts.loadMoreFn||'loadMoreDir';
+    el.insertAdjacentHTML('beforeend',`<button id="dir-load-more" onclick="${fn}()" style="display:block;width:100%;padding:10px;margin-top:6px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--muted);font-size:13px;font-family:var(--sans)">Load more</button>`);
   }
 }
 
@@ -2924,18 +2976,37 @@ async function filterDir(){
   }
   // Any real filter searches the server directly, not just whatever page
   // happens to be cached client-side -- otherwise a filter could silently
-  // miss matching members who haven't been paginated in yet.
+  // miss matching members who haven't been paginated in yet. Filtered
+  // results get their own real page/offset state (ST.dirFilter*) rather than
+  // a single hard limit=200 with no way past it, same as the unfiltered list.
   const parts=['status=eq.active','role=neq.admin'];
   if(ST.dirFilter&&ST.dirFilter!=='All')parts.push(`domain_group=eq.${encodeURIComponent(ST.dirFilter)}`);
   if(city)parts.push(`city=ilike.*${encodeURIComponent(city)}*`);
   if(experience)parts.push(`experience=ilike.*${encodeURIComponent(experience)}*`);
   if(role)parts.push(`role=eq.${encodeURIComponent(role)}`);
   if(q)parts.push(`or=(username.ilike.*${encodeURIComponent(q)}*,domain.ilike.*${encodeURIComponent(q)}*,city.ilike.*${encodeURIComponent(q)}*)`);
+  ST.dirFilterParts=parts.join('&');
+  ST.dirFilterOffset=0;ST.dirFilterExhausted=false;ST.dirFilterResults=[];
   try{
-    const results=await api('member_directory',`?${parts.join('&')}&select=${DIR_SELECT}&order=created_at.desc&limit=200`)||[];
+    const results=await api('member_directory',`?${ST.dirFilterParts}&select=${DIR_SELECT}&order=created_at.desc&limit=${DIR_PAGE_SIZE}`)||[];
+    ST.dirFilterResults=results;
+    ST.dirFilterOffset=results.length;
+    ST.dirFilterExhausted=results.length<DIR_PAGE_SIZE;
     results.forEach(m=>{if(!ST.members.find(x=>x.id===m.id))ST.members.push(m);});
-    renderMemberCards('dir-list',results,{loadMore:false});
+    renderMemberCards('dir-list',results,{loadMore:!ST.dirFilterExhausted,loadMoreFn:'loadMoreFilteredDir'});
   }catch(e){renderMemberCards('dir-list',[],{});}
+}
+
+async function loadMoreFilteredDir(){
+  const btn=$('dir-load-more');if(btn){btn.textContent='Loading…';btn.disabled=true;}
+  try{
+    const more=await api('member_directory',`?${ST.dirFilterParts}&select=${DIR_SELECT}&order=created_at.desc&limit=${DIR_PAGE_SIZE}&offset=${ST.dirFilterOffset}`)||[];
+    ST.dirFilterOffset+=more.length;
+    ST.dirFilterExhausted=more.length<DIR_PAGE_SIZE;
+    ST.dirFilterResults=[...ST.dirFilterResults,...more];
+    more.forEach(m=>{if(!ST.members.find(x=>x.id===m.id))ST.members.push(m);});
+    renderMemberCards('dir-list',ST.dirFilterResults,{loadMore:!ST.dirFilterExhausted,loadMoreFn:'loadMoreFilteredDir'});
+  }catch(e){if(btn){btn.textContent='Load more';btn.disabled=false;}}
 }
 
 async function loadMoreDir(){
