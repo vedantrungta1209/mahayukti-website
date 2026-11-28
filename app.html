@@ -2103,7 +2103,11 @@ async function submitOAuthComplete(){
   if(!dg){toast('Please select your vertical','error');return;}
   const btn=$('oc-submit');btn.disabled=true;btn.textContent='Joining…';
   const email=(ST.user?.email||'').toLowerCase();
-  const username=name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20)+Math.floor(1000+Math.random()*9000);
+  // Username is just the name, first-come-first-served -- users_username_key's own unique
+  // constraint enforces that (see the manual apply form's doApply(), which dropped the
+  // same random-number suffix for the same reason: unnecessary given the DB already
+  // guarantees uniqueness).
+  const username=name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20);
   // role/status are forced server-side (trg_enforce_self_signup_defaults) regardless of
   // what's sent here -- every self-signup becomes an active Member immediately, same as
   // the manual apply form.
@@ -2120,6 +2124,10 @@ async function submitOAuthComplete(){
       toast('Looks like you already have a MahaYukti account — refreshing…','error');
       setTimeout(()=>window.location.reload(),1500);
       return;
+    }
+    if(/username/i.test(e.message||'')){
+      toast('Someone with that name already has this username. Try adding a middle name or initial above and submit again.','error');
+      btn.disabled=false;btn.textContent='Join MahaYukti';return;
     }
     toast('Could not save your profile: '+(e.message||'unknown error'),'error');
     btn.disabled=false;btn.textContent='Join MahaYukti';return;
