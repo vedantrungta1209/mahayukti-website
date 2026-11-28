@@ -558,6 +558,10 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
               <input type="tel" id="in-phone" autocomplete="tel">
             </div>
           </div>
+          <div class="ifield">
+            <label for="in-title">Problem title *</label>
+            <input type="text" id="in-title" required maxlength="140" placeholder="e.g. Customs clearance bottleneck at Mumbai port">
+          </div>
           <div class="iform-row">
             <div class="ifield">
               <label for="in-sector-l1">Which area do you need help in? *</label>
@@ -707,6 +711,7 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
     const status=document.getElementById('intake-status');
     status.className='iform-status';status.textContent='';
     const payload={
+      title:document.getElementById('in-title').value.trim(),
       contact_name:document.getElementById('in-name').value.trim(),
       contact_email:document.getElementById('in-email').value.trim(),
       contact_phone:document.getElementById('in-phone').value.trim(),
@@ -718,7 +723,7 @@ footer{padding:48px 0 36px;border-top:1px solid var(--line)}
       confidentiality:document.getElementById('in-confidentiality').value.trim(),
       website:document.getElementById('in-website').value // honeypot
     };
-    if(!payload.contact_name||!payload.contact_email||!payload.domain_needed||!payload.description){
+    if(!payload.title||!payload.contact_name||!payload.contact_email||!payload.domain_needed||!payload.description){
       status.className='iform-status show err';status.textContent='Please fill in all required fields.';return;
     }
     btn.disabled=true;btn.textContent='Sending…';

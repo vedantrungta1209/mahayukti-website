@@ -53,6 +53,7 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true });
   }
 
+  const title = String(body.title || "").trim().slice(0, 140);
   const contactName = String(body.contact_name || "").trim().slice(0, 200);
   const contactEmail = String(body.contact_email || "").trim().slice(0, 200);
   const contactPhone = String(body.contact_phone || "").trim().slice(0, 40);
@@ -69,7 +70,7 @@ Deno.serve(async (req: Request) => {
   const sectorTagIdRaw = String(body.sector_tag_id || "");
   const sectorTagId = UUID_RE.test(sectorTagIdRaw) ? sectorTagIdRaw : null;
 
-  if (!contactName || !contactEmail || !domainNeeded || !description) {
+  if (!title || !contactName || !contactEmail || !domainNeeded || !description) {
     return json({ error: "Missing required fields" }, 400);
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
@@ -92,6 +93,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const { error } = await admin.from("client_briefs").insert({
+    title,
     contact_name: contactName,
     contact_email: contactEmail,
     contact_phone: contactPhone || null,

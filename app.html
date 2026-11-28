@@ -646,6 +646,10 @@ img.avatar{object-fit:cover}
         </div>
       </div>
     </div>
+    <div class="card" onclick="goto('insights')" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:14px;border-left:3px solid var(--gold)">
+      <svg style="width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;flex-shrink:0" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <div><div style="font-size:14px;font-weight:700;color:var(--white);font-family:var(--sans)">Flash Intelligence</div><div style="font-size:12px;color:var(--muted);font-family:var(--sans)">Real-time sector analysis from the register →</div></div>
+    </div>
     <div id="trending-hashtags" style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px"></div>
     <div id="social-feed"><div class="loader"><div class="spinner"></div></div></div>
     <div class="section-title" style="margin-top:20px">Official Updates</div>
@@ -674,6 +678,42 @@ img.avatar{object-fit:cover}
     <button class="nav-item" onclick="gotoTab('messages')" id="nt-messages"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
     <button class="nav-item" onclick="gotoTab('help')" id="nt-help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
     <button class="nav-item" onclick="gotoTab('profile')" id="nt-profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
+  </div>
+</div>
+
+<!-- FLASH INTELLIGENCE (Micro-Insights) -->
+<div class="screen" id="screen-insights">
+  <div class="page-header gradient">
+    <button class="back-btn" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+    <div class="page-title">Flash Intelligence</div>
+    <div class="page-subtitle">Rapid-fire professional analysis, 500 characters or less -- no links, no media</div>
+  </div>
+  <div style="padding:10px 20px 0;flex-shrink:0">
+    <div class="tab-row" style="margin-bottom:10px">
+      <button class="tab-btn active" id="ins-tab-global" onclick="setInsightsScope('global')">Global Pulse</button>
+      <button class="tab-btn" id="ins-tab-sector" onclick="setInsightsScope('sector')">My Sector</button>
+    </div>
+  </div>
+  <div class="scroll"><div class="scroll-content">
+    <div class="card" style="margin-bottom:14px">
+      <textarea id="ins-compose" rows="2" maxlength="500" placeholder="A rapid take on a sudden policy shift, a market signal, anything high-signal and text-only…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none" oninput="onInsightComposeInput()"></textarea>
+      <select id="ins-sector-l1" onchange="onSectorPickerChange(1,'ins')" style="width:100%;margin-top:8px;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select>
+      <div id="ins-sector-l2-field" style="display:none;margin-top:6px"><select id="ins-sector-l2" onchange="onSectorPickerChange(2,'ins')" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select></div>
+      <div id="ins-sector-l3-field" style="display:none;margin-top:6px"><select id="ins-sector-l3" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <span id="ins-char-count" style="font-size:11px;color:var(--muted);font-family:var(--sans)">500 left</span>
+        <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitInsight()">Post</button>
+      </div>
+    </div>
+    <div id="insights-list"><div class="loader"><div class="spinner"></div></div></div>
+  </div></div>
+  <div class="nav-bar">
+    <button class="nav-item" onclick="gotoTab('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg><span>Home</span></button>
+    <button class="nav-item" onclick="gotoTab('directory')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Directory</span></button>
+    <button class="nav-item" onclick="gotoTab('exchange')"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Exchange</span></button>
+    <button class="nav-item" onclick="gotoTab('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
+    <button class="nav-item" onclick="gotoTab('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg><span>MY Help</span></button>
+    <button class="nav-item" onclick="gotoTab('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
   </div>
 </div>
 
@@ -1209,6 +1249,11 @@ img.avatar{object-fit:cover}
     <div id="my-info-edit" style="display:none">
       <div class="field"><label>Domain / Role</label><input type="text" id="info-domain" placeholder="e.g. Senior Advocate, CTO"></div>
       <div class="field"><label>Your vertical</label><select id="info-domain-group"></select></div>
+      <div class="field"><label>Primary Sector (used to filter Flash Intelligence)</label>
+        <select id="psec-sector-l1" onchange="onSectorPickerChange(1,'psec')"></select>
+        <div id="psec-sector-l2-field" style="display:none;margin-top:6px"><select id="psec-sector-l2" onchange="onSectorPickerChange(2,'psec')"></select></div>
+        <div id="psec-sector-l3-field" style="display:none;margin-top:6px"><select id="psec-sector-l3"></select></div>
+      </div>
       <div class="field"><label>City</label><input type="text" id="info-city"></div>
       <div class="field"><label>Experience</label><input type="text" id="info-experience" placeholder="e.g. 8 years"></div>
       <div class="field"><label>Skills (comma separated)</label><input type="text" id="info-skills" placeholder="e.g. Litigation, Contract drafting"></div>
@@ -1724,7 +1769,7 @@ function toast(m,t=''){const el=$('toast');el.textContent=m;el.className='show'+
 function goto(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const s=$('screen-'+n);if(s){s.classList.add('active','fade-in');setTimeout(()=>s.classList.remove('fade-in'),400);}
-  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'developer-settings':loadDeveloperSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs,organizations:loadMyOrgs};
+  const loads={directory:loadDir,messages:loadConvos,'group-chats':loadGCs,help:loadHelp,forums:loadForums,notifications:loadNotifs,profile:renderProfile,'admin-home':loadAdminHome,'admin-applications':loadAdmApps,'admin-briefs':()=>loadAdmBriefs(),'member-profile':()=>{},marketplace:loadMarketplace,exchange:loadExchange,events:loadEventsList,'new-brief':initBriefTypeChips,'developer-settings':loadDeveloperSettings,'feed-preferences':loadFeedPreferences,advertise:loadMyAdCampaigns,'marketplace-packages':loadMarketplacePackages,'new-listing':loadNewListingNote,'my-listings':loadMyListings,'my-briefs':loadMyBriefs,organizations:loadMyOrgs,insights:loadInsightsScreen};
   if(loads[n])loads[n]();
   // Desktop sidebar active-state highlight -- a no-op unless the shell is actually showing
   // (body.in-app, set in loadMemberHome()/loadAdminHome()), so this never touches anything
@@ -4161,6 +4206,97 @@ function getSelectedSectorTagId(prefix){
   // Most specific non-empty selection wins.
   return $(prefix+'-sector-l3')?.value||$(prefix+'-sector-l2')?.value||$(prefix+'-sector-l1')?.value||null;
 }
+// Preselects an existing sector_tag_id on a cascading picker built by initSectorPicker --
+// needed for Profile settings (editing an already-set primary sector), unlike the brief
+// composer / intake form pickers which always start blank.
+async function selectSectorPickerValue(prefix,tagId){
+  if(!tagId)return;
+  const tags=await loadSectorTagsCache();
+  const node=tags.find(t=>t.id===tagId);if(!node)return;
+  let l1id=null,l2id=null,l3id=null;
+  if(node.level===1)l1id=node.id;
+  else if(node.level===2){l2id=node.id;l1id=node.parent_id;}
+  else if(node.level===3){l3id=node.id;const l2=tags.find(t=>t.id===node.parent_id);l2id=l2?.id||null;l1id=l2?.parent_id||null;}
+  const l1sel=$(prefix+'-sector-l1');
+  if(l1sel&&l1id){
+    l1sel.value=l1id;
+    await onSectorPickerChange(1,prefix);
+    if(l2id){const l2sel=$(prefix+'-sector-l2');if(l2sel){l2sel.value=l2id;await onSectorPickerChange(2,prefix);if(l3id){const l3sel=$(prefix+'-sector-l3');if(l3sel)l3sel.value=l3id;}}}
+  }
+}
+// All ids in a sector's own subtree (itself + every descendant) -- lets "My Sector" on
+// Flash Intelligence match a member's broad L1 sector against insights tagged more
+// specifically at L2/L3, and vice versa were a member's own sector set deeper.
+function sectorDescendantIds(rootId){
+  if(!rootId||!SECTOR_TAGS_CACHE)return rootId?[rootId]:[];
+  const ids=[rootId];let frontier=[rootId];
+  while(frontier.length){
+    const next=SECTOR_TAGS_CACHE.filter(t=>frontier.includes(t.parent_id)).map(t=>t.id);
+    if(!next.length)break;
+    ids.push(...next);frontier=next;
+  }
+  return ids;
+}
+
+// --- Flash Intelligence (member_insights) -----------------------------------------------
+function onInsightComposeInput(){
+  const v=$('ins-compose').value;
+  $('ins-char-count').textContent=(500-v.length)+' left';
+}
+async function loadInsightsScreen(){
+  await loadSectorTagsCache();
+  await initSectorPicker('ins');
+  setInsightsScope(ST.insightsScope||'global');
+}
+function setInsightsScope(scope){
+  ST.insightsScope=scope;
+  $('ins-tab-global').classList.toggle('active',scope==='global');
+  $('ins-tab-sector').classList.toggle('active',scope==='sector');
+  loadInsights(scope);
+}
+async function loadInsights(scope){
+  const el=$('insights-list');if(!el)return;
+  el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  try{
+    let url='?order=created_at.desc&limit=50&select=id,content,sector_tag_id,created_at,author_id';
+    if(scope==='sector'){
+      const myTagId=ST.profile?.sector_tag_id;
+      if(!myTagId){el.innerHTML='<p class="muted-text" style="text-align:center;padding:20px">Set your primary sector in Account settings to see this view.</p>';return;}
+      url+=`&sector_tag_id=in.(${sectorDescendantIds(myTagId).join(',')})`;
+    }
+    const rows=await api('member_insights',url)||[];
+    if(!rows.length){el.innerHTML='<p class="muted-text" style="text-align:center;padding:20px">Nothing here yet — be the first to post.</p>';return;}
+    const authorIds=[...new Set(rows.map(r=>r.author_id))];
+    const authors=await api('users',`?id=in.(${authorIds.join(',')})&select=id,username,real_name,show_real_name,avatar_url`)||[];
+    const aMap={};authors.forEach(a=>aMap[a.id]=a);
+    const tags=await loadSectorTagsCache();const tagMap={};tags.forEach(t=>tagMap[t.id]=t.name);
+    el.innerHTML=rows.map(r=>{
+      const a=aMap[r.author_id]||{};
+      const tagName=r.sector_tag_id?tagMap[r.sector_tag_id]:null;
+      return `<div class="card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:700;color:var(--white);font-family:var(--sans)">${esc(selfName(a))}</div>
+          <div style="font-size:11px;color:rgba(16,30,51,0.4);font-family:var(--sans)">${new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+        </div>
+        <div style="font-size:14px;color:var(--white);font-family:var(--sans);line-height:1.5;white-space:pre-wrap">${esc(r.content)}</div>
+        ${tagName?`<div style="margin-top:8px"><span style="padding:3px 10px;border:1px solid var(--border2);border-radius:12px;font-size:11px;color:var(--gold);font-family:var(--sans)">${esc(tagName)}</span></div>`:''}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<p class="muted-text" style="text-align:center;padding:20px">Could not load.</p>';}
+}
+async function submitInsight(){
+  const content=$('ins-compose').value.trim();
+  if(!content){toast('Write something first','error');return;}
+  if(content.length>500){toast('Keep it under 500 characters','error');return;}
+  if(/https?:\/\/|www\.[a-z0-9-]+\.[a-z]{2,}/i.test(content)){toast("Links aren't allowed here -- text-only, high-signal channel",'error');return;}
+  try{
+    await api('member_insights','','POST',{author_id:ST.profile.id,content,sector_tag_id:getSelectedSectorTagId('ins')||null});
+    $('ins-compose').value='';onInsightComposeInput();
+    await initSectorPicker('ins');
+    toast('Posted','success');
+    loadInsights(ST.insightsScope||'global');
+  }catch(e){toast('Could not post -- check it has no links and is under 500 characters','error');}
+}
 
 async function loadExchange(){
   const el=$('exchange-list');
@@ -4492,7 +4628,8 @@ function renderProfile(){
   $('my-founding').style.display=p.founding_member&&p.founding_approved?'':'none';
   $('my-badge').innerHTML=`<div class="layer-badge ${lbadge(p.role)}">${lbadgeLabel(p.role)}</div>`;
   const myTagRow=(label,arr)=>(arr&&arr.length)?`<div style="margin-top:10px"><div class="info-label">${label}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${arr.map(t=>`<span style="padding:3px 10px;border:1px solid var(--border2);border-radius:12px;font-size:11px;color:var(--muted);font-family:var(--sans)">${esc(t)}</span>`).join('')}</div></div>`:'';
-  $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(p.domain)||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${esc(p.domain_group)||'—'}</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(p.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(p.experience)||'—'}</div></div>${myTagRow('Skills',p.skills)}${myTagRow('Open to',p.open_to)}`;
+  $('my-info').innerHTML=`<div class="info-row"><div class="info-label">Domain</div><div class="info-value">${esc(p.domain)||'—'}</div></div><div class="info-row"><div class="info-label">Domain Group</div><div class="info-value">${esc(p.domain_group)||'—'}</div></div><div class="info-row"><div class="info-label">Primary Sector</div><div class="info-value" id="my-info-sector">—</div></div><div class="info-row"><div class="info-label">City</div><div class="info-value">${esc(p.city)||'—'}</div></div><div class="info-row"><div class="info-label">Experience</div><div class="info-value">${esc(p.experience)||'—'}</div></div>${myTagRow('Skills',p.skills)}${myTagRow('Open to',p.open_to)}`;
+  if(p.sector_tag_id){loadSectorTagsCache().then(tags=>{const t=tags.find(x=>x.id===p.sector_tag_id);const el=$('my-info-sector');if(el&&t)el.textContent=t.name;});}
   const dgSel=$('info-domain-group');
   if(dgSel&&!dgSel.options.length)dgSel.innerHTML=BUCKETS.map(b=>`<option value="${b}">${b}</option>`).join('');
   if(dgSel)dgSel.value=p.domain_group||'Other';
@@ -4678,7 +4815,10 @@ function toggleAboutEdit(){
 // user this should be freely self-editable, same as About.
 function toggleInfoEdit(){
   const e=$('my-info-edit'),v=$('my-info'),b=$('info-edit-btn');
-  if(e.style.display==='none'){e.style.display='';v.style.display='none';b.textContent='Cancel';}
+  if(e.style.display==='none'){
+    e.style.display='';v.style.display='none';b.textContent='Cancel';
+    initSectorPicker('psec').then(()=>selectSectorPickerValue('psec',ST.profile?.sector_tag_id));
+  }
   else{e.style.display='none';v.style.display='';b.textContent='Edit';}
 }
 
@@ -4686,9 +4826,10 @@ function parseTagInput(v){return v.split(',').map(s=>s.trim()).filter(Boolean);}
 async function saveProfileInfo(){
   const domain=$('info-domain').value.trim(),domain_group=$('info-domain-group').value,city=$('info-city').value.trim(),experience=$('info-experience').value.trim();
   const skills=parseTagInput($('info-skills').value),open_to=parseTagInput($('info-open-to').value);
+  const sector_tag_id=getSelectedSectorTagId('psec')||null;
   try{
-    await api('users','?id=eq.'+ST.profile.id,'PATCH',{domain,domain_group,city,experience,skills,open_to});
-    Object.assign(ST.profile,{domain,domain_group,city,experience,skills,open_to});
+    await api('users','?id=eq.'+ST.profile.id,'PATCH',{domain,domain_group,city,experience,skills,open_to,sector_tag_id});
+    Object.assign(ST.profile,{domain,domain_group,city,experience,skills,open_to,sector_tag_id});
     toggleInfoEdit();renderProfile();toast('Updated','success');
   }catch(e){toast('Failed','error');}
 }
@@ -5440,7 +5581,7 @@ async function loadAdmBriefs(tab){
       if(b.status==='assigned')return `<button onclick="updBrief('${b.id}','completed')" style="background:rgba(62,207,142,0.08);border:1px solid rgba(62,207,142,0.4);border-radius:0;padding:4px 10px;font-size:10px;color:var(--green);cursor:pointer">Mark complete ✓</button>`;
       return '';
     };
-    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${esc(b.urgency)}</div>${b.confidentiality?`<div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">${esc(b.confidentiality)}</div>`:''}</div><div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(b.domain_needed)}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(b.description)}</div>${b.contact_name?`<div style="font-size:12px;color:rgba(16,30,51,0.5);margin-bottom:8px;line-height:1.6">${esc(b.contact_name)}${b.company?' · '+esc(b.company):''}<br>${esc(b.contact_email||'')}${b.contact_phone?' · '+esc(b.contact_phone):''}</div>`:''}<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px">${actionsFor(b)}</div></div></div>`).join('');
+    el.innerHTML=d.map(b=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;margin-bottom:8px"><div style="border:1px solid ${b.urgency==='critical'?'rgba(224,85,85,0.4)':b.urgency==='urgent'?'rgba(201,148,58,0.4)':'rgba(62,207,142,0.4)'};color:${b.urgency==='critical'?'var(--red)':b.urgency==='urgent'?'var(--gold)':'var(--green)'};border-radius:0;padding:2px 8px;font-size:9px;font-weight:600">${esc(b.urgency)}</div>${b.confidentiality?`<div style="border:1px solid rgba(16,30,51,0.1);border-radius:0;padding:2px 8px;font-size:9px;color:rgba(16,30,51,0.4)">${esc(b.confidentiality)}</div>`:''}</div>${b.title?`<div style="font-size:15px;font-weight:700;color:rgba(16,30,51,0.85);margin-bottom:4px">${esc(b.title)}</div>`:''}<div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.3px;margin-bottom:6px">${esc(b.domain_needed)}</div><div style="font-size:14px;color:rgba(16,30,51,0.6);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(b.description)}</div>${b.contact_name?`<div style="font-size:12px;color:rgba(16,30,51,0.5);margin-bottom:8px;line-height:1.6">${esc(b.contact_name)}${b.company?' · '+esc(b.company):''}<br>${esc(b.contact_email||'')}${b.contact_phone?' · '+esc(b.contact_phone):''}</div>`:''}<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:rgba(16,30,51,0.25)">${new Date(b.created_at).toLocaleDateString('en-IN')}</span><div style="display:flex;gap:8px">${actionsFor(b)}</div></div></div>`).join('');
   }catch(e){}
 }
 
