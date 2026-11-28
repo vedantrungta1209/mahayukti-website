@@ -5086,7 +5086,11 @@ async function doApply(){
   }
 
   // 2) Create the pending profile row in the `users` table
-  const username=(fname+lname).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20)+Math.floor(1000+Math.random()*9000);
+  // Username is just the name, first-come-first-served -- username_key's own unique
+  // constraint on `users` is what actually enforces that. No random-number suffix: it's
+  // unnecessary complexity for the common case (an unclaimed name) and only the rare
+  // real collision below needs any special handling at all.
+  const username=(fname+lname).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20);
   // role/status are forced server-side (trg_enforce_self_signup_defaults) regardless of
   // what's sent here -- every self-signup becomes an active Member immediately.
   const userRow={auth_id:signData.user.id,username,real_name:fullName,email,phone:$('a-phone').value.trim(),city:$('a-city').value.trim(),domain,domain_group:dg,about,source:'manual',submission_id:sid};
@@ -5095,6 +5099,9 @@ async function doApply(){
     const ires=await fetch(`${SB_URL}/rest/v1/users`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(userRow)});
     if(!ires.ok){
       const eb=await ires.json().catch(()=>({}));
+      if(eb.code==='23505'||/username/i.test(eb.message||'')){
+        throw new Error('Someone with that name already has this username. Try adding a middle name or initial to your first/last name above and submit again.');
+      }
       throw new Error(eb.message||eb.hint||('HTTP '+ires.status));
     }
     const inserted=(await ires.json())[0];
@@ -5103,7 +5110,7 @@ async function doApply(){
     ST.manualApplyInFlight=false;
   }catch(e){
     ST.manualApplyInFlight=false;
-    toast('Account created, but the profile could not be saved: '+(e.message||'unknown error'),'error');
+    toast(e.message||'Account created, but the profile could not be saved.','error');
     btn.disabled=false;btn.textContent='Submit Application';return;
   }
 
