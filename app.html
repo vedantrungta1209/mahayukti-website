@@ -760,6 +760,11 @@ img.avatar{object-fit:cover}
         <option value="council">Council</option>
       </select>
     </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <select id="dirsec-sector-l1" onchange="onDirSectorChange(1)" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select>
+      <div id="dirsec-sector-l2-field" style="display:none;flex:1;min-width:120px"><select id="dirsec-sector-l2" onchange="onDirSectorChange(2)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select></div>
+      <div id="dirsec-sector-l3-field" style="display:none;flex:1;min-width:120px"><select id="dirsec-sector-l3" onchange="filterDir()" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select></div>
+    </div>
   </div>
   <div class="scroll"><div style="padding:0 20px;padding-bottom:calc(80px + var(--safe-bottom))">
     <div id="suggested-connections" style="margin-bottom:14px"></div>
@@ -800,6 +805,7 @@ img.avatar{object-fit:cover}
         <button class="btn btn-outline" id="mp-vouch-btn" onclick="vouchForCurrent()">Vouch for this member</button>
       </div>
     </div>
+    <div id="mp-outreach-token-note" style="display:none;font-size:11px;text-align:center;margin:-4px 0 10px;font-family:var(--sans)"></div>
     <div style="font-size:11px;color:rgba(16,30,51,0.4);text-align:center;margin:4px 0 16px;line-height:1.6" class="mp-connect-hint">Connect if you know each other — needs their acceptance. Follow just to see their posts — no acceptance needed.</div>
     <div class="mp-body-grid">
       <div class="mp-col-main">
@@ -985,6 +991,10 @@ img.avatar{object-fit:cover}
     <a href="javascript:void(0)" onclick="toggleNewCommunityForm()" style="display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px dashed var(--gold);border-radius:4px;color:var(--gold);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create a community</a>
     <div class="card" id="new-community-form" style="display:none;margin-top:10px">
       <input type="text" id="new-community-name" placeholder="Community name, e.g. Early-Stage Capital" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border2);border-radius:4px;font-size:14px;font-family:var(--sans)">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-family:var(--sans)">Optional: lock this hub to a sector -- only members whose own primary sector matches can join, post, or read it.</div>
+      <select id="newcomm-sector-l1" onchange="onSectorPickerChange(1,'newcomm')" style="width:100%;margin-bottom:6px;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select>
+      <div id="newcomm-sector-l2-field" style="display:none;margin-bottom:6px"><select id="newcomm-sector-l2" onchange="onSectorPickerChange(2,'newcomm')" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select></div>
+      <div id="newcomm-sector-l3-field" style="display:none;margin-bottom:8px"><select id="newcomm-sector-l3" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:4px;font-size:12px;font-family:var(--sans)"></select></div>
       <button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="createCommunity()">Create</button>
     </div>
     <a href="javascript:void(0)" id="create-institution-link" onclick="toggleNewInstitutionForm()" style="display:none;align-items:center;justify-content:center;padding:14px;border:1.5px dashed rgba(16,30,51,0.2);border-radius:4px;color:rgba(16,30,51,0.5);font-family:var(--sans);font-weight:600;font-size:13px;margin-top:10px;text-decoration:none">+ Create an institution-verified community (admin)</a>
@@ -1007,7 +1017,8 @@ img.avatar{object-fit:cover}
   </div>
   <div class="scroll"><div class="scroll-content">
     <div class="card" id="community-roster" style="display:none;margin-bottom:14px"></div>
-    <div class="card" style="margin-bottom:14px">
+    <div class="card" id="community-restricted-notice" style="display:none;margin-bottom:14px;text-align:center;color:var(--muted);font-size:13px;font-family:var(--sans)"></div>
+    <div class="card" id="community-compose-card" style="margin-bottom:14px">
       <textarea id="community-compose" rows="2" placeholder="Post in this community…" style="width:100%;box-sizing:border-box;border:none;background:none;color:var(--white);font-family:var(--sans);font-size:14px;resize:none;outline:none"></textarea>
       <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-gold" style="padding:8px 18px;font-size:12px;width:auto" onclick="submitCommunityPost()">Post</button></div>
     </div>
@@ -3025,7 +3036,7 @@ async function submitComment(parentId){
   }catch(e){alert('Could not post comment — please try again.');}
 }
 
-const DIR_SELECT='id,username,real_name,show_real_name,real_name_approved,city,domain,domain_group,role,founding_member,founding_approved,experience,organisation,show_organisation,about,avatar_url,skills,open_to';
+const DIR_SELECT='id,username,real_name,show_real_name,real_name_approved,city,domain,domain_group,role,founding_member,founding_approved,experience,organisation,show_organisation,about,avatar_url,skills,open_to,sector_tag_id';
 const DIR_PAGE_SIZE=50;
 
 async function loadDir(){
@@ -3038,8 +3049,17 @@ async function loadDir(){
     }catch(e){ST.members=[];}
   }
   $('dir-chips').innerHTML=DG.slice(0,8).map(g=>`<div class="chip${g===ST.dirFilter?' active':''}" onclick="setDirFilter('${g}')">${g}</div>`).join('');
+  initSectorPicker('dirsec');
   filterDir();
   loadSuggestedConnections();
+}
+
+// Mirrors onSectorPickerChange but also re-runs the Directory filter once the
+// cascade updates -- the brief composer / intake form pickers don't need
+// this since they're one-shot form fields, not a live filter.
+async function onDirSectorChange(level){
+  await onSectorPickerChange(level,'dirsec');
+  filterDir();
 }
 
 // "People you may know" -- Directory had no discovery mechanism beyond
@@ -3087,7 +3107,8 @@ function renderMemberCards(containerId,list,opts){
   const el=$(containerId);
   if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No members found</div></div>';return;}
   const colors={member:'rgba(62,207,142,0.3)',participant:'rgba(201,148,58,0.3)',acg:'rgba(156,135,106,0.3)',council:'rgba(194,176,148,0.3)'};
-  el.innerHTML=list.map(m=>{const n=esc(dname(m));const bc=colors[m.role]||colors.member;const av=m.avatar_url?`<img class="avatar avatar-md" style="border-color:${bc}" src="${esc(m.avatar_url)}" alt="">`:`<div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${esc(dname(m).charAt(0).toUpperCase())}</div>`;return`<div class="member-card" onclick="viewMember('${m.id}')">${av}<div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${esc(m.domain)}</div><div class="member-city">${esc(m.city)}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
+  const sectorName=id=>id&&(SECTOR_TAGS_CACHE||[]).find(t=>t.id===id)?.name;
+  el.innerHTML=list.map(m=>{const n=esc(dname(m));const bc=colors[m.role]||colors.member;const av=m.avatar_url?`<img class="avatar avatar-md" style="border-color:${bc}" src="${esc(m.avatar_url)}" alt="">`:`<div class="avatar avatar-md" style="border-color:${bc};color:var(--gold)">${esc(dname(m).charAt(0).toUpperCase())}</div>`;const sn=sectorName(m.sector_tag_id);return`<div class="member-card" onclick="viewMember('${m.id}')">${av}<div class="member-info"><div class="member-name">${n}${m.founding_member&&m.founding_approved?'<span class="badge-founding" style="font-size:8px;padding:1px 5px;margin-left:6px">F</span>':''}</div><div class="member-domain">${esc(m.domain)}</div><div class="member-city">${esc(m.city)}${sn?` · <span style="color:var(--gold)">${esc(sn)}</span>`:''}</div></div><svg style="width:16px;height:16px;stroke:rgba(16,30,51,0.2);fill:none;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>`}).join('');
   if(opts&&opts.loadMore){
     const fn=opts.loadMoreFn||'loadMoreDir';
     el.insertAdjacentHTML('beforeend',`<button id="dir-load-more" onclick="${fn}()" style="display:block;width:100%;padding:10px;margin-top:6px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--muted);font-size:13px;font-family:var(--sans)">Load more</button>`);
@@ -3099,7 +3120,8 @@ async function filterDir(){
   const city=($('dir-filter-city')?.value||'').trim();
   const experience=($('dir-filter-experience')?.value||'').trim();
   const role=$('dir-filter-role')?.value||'';
-  const hasFilter=(ST.dirFilter&&ST.dirFilter!=='All')||q||city||experience||role;
+  const sectorTagId=getSelectedSectorTagId('dirsec');
+  const hasFilter=(ST.dirFilter&&ST.dirFilter!=='All')||q||city||experience||role||sectorTagId;
   if(!hasFilter){
     renderMemberCards('dir-list',ST.members,{loadMore:!ST.dirExhausted});
     return;
@@ -3115,6 +3137,11 @@ async function filterDir(){
   if(experience)parts.push(`experience=ilike.*${encodeURIComponent(experience)}*`);
   if(role)parts.push(`role=eq.${encodeURIComponent(role)}`);
   if(q)parts.push(`or=(username.ilike.*${encodeURIComponent(q)}*,domain.ilike.*${encodeURIComponent(q)}*,city.ilike.*${encodeURIComponent(q)}*)`);
+  // Picking a broad L1 sector matches anyone tagged anywhere in its subtree
+  // (down to a specific L3 leaf); picking an L3 leaf directly matches only
+  // that exact micro-specialism -- sectorDescendantIds(id) returns just
+  // [id] when the tag has no children, so this one call covers both cases.
+  if(sectorTagId)parts.push(`sector_tag_id=in.(${sectorDescendantIds(sectorTagId).join(',')})`);
   ST.dirFilterParts=parts.join('&');
   ST.dirFilterOffset=0;ST.dirFilterExhausted=false;ST.dirFilterResults=[];
   try{
@@ -3226,8 +3253,47 @@ function viewMember(id){
     checkBlockedEitherWay(m.id);
     loadConnectionStats(m.id);
     loadMutualConnectionNames(m.id);
+    loadOutreachTokenNote(m.id);
   }
   goto('member-profile');
+}
+
+// Outreach Token Tracker: surfaces the cold-outreach weekly cap (see
+// 20261128109000_cold_outreach_rate_limit.sql) BEFORE a member taps Message,
+// not just as a toast after a rejected send. Only shown when this would
+// actually be a "cold" contact -- already connected, or any prior message
+// either direction, means unlimited (matches the trigger's own bypass
+// rules exactly). OUTREACH_WEEKLY_CAP must stay in sync with the trigger's
+// own v_cap constant; it's informational only, the DB is what enforces it.
+const OUTREACH_WEEKLY_CAP=5;
+async function loadOutreachTokenNote(memberId){
+  const note=$('mp-outreach-token-note');if(!note)return;
+  note.style.display='none';note.textContent='';
+  if(!ST.profile||memberId===ST.profile.id||ST.profile.role==='admin')return;
+  try{
+    const[conn,priorA,priorB]=await Promise.all([
+      api('member_connections',`?status=eq.accepted&or=(and(requester_id.eq.${ST.profile.id},addressee_id.eq.${memberId}),and(requester_id.eq.${memberId},addressee_id.eq.${ST.profile.id}))&select=requester_id`),
+      api('messages',`?from_id=eq.${ST.profile.id}&to_id=eq.${memberId}&select=id&limit=1`),
+      api('messages',`?from_id=eq.${memberId}&to_id=eq.${ST.profile.id}&select=id&limit=1`)
+    ]);
+    if((conn&&conn.length)||(priorA&&priorA.length)||(priorB&&priorB.length))return;
+    const rl=await api('member_rate_limits',`?member_id=eq.${ST.profile.id}&select=cold_messages_sent_this_week,last_reset_at`);
+    const row=(rl||[])[0];
+    let used=0;
+    if(row){
+      const resetDue=(Date.now()-new Date(row.last_reset_at).getTime())>=7*24*60*60*1000;
+      used=resetDue?0:row.cold_messages_sent_this_week;
+    }
+    const remaining=Math.max(0,OUTREACH_WEEKLY_CAP-used);
+    note.style.display='';
+    if(remaining>0){
+      note.style.color='var(--muted)';
+      note.textContent=`This message will use 1 of your ${remaining} remaining weekly outreach token${remaining===1?'':'s'}.`;
+    }else{
+      note.style.color='var(--red)';
+      note.textContent="You've reached this week's limit for messaging new, unconnected members -- try again next week.";
+    }
+  }catch(e){}
 }
 
 // "Endorsed by" + the vouch button on a profile -- vouches are public (any
@@ -3773,28 +3839,33 @@ async function loadForums(){
   const el=$('forum-list');
   const il=$('create-institution-link');if(il)il.style.display=ST.profile?.role==='admin'?'flex':'none';
   try{
-    const communities=await api('communities','?order=created_at.asc&select=id,name,kind,bucket_id,institution_name,requires_verification,created_by')||[];
+    const[communities]=await Promise.all([
+      api('communities','?order=created_at.asc&select=id,name,kind,bucket_id,sector_tag_id,institution_name,requires_verification,created_by')||[],
+      loadSectorTagsCache()
+    ]);
     if(!communities.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No communities yet — start one.</div></div>';return;}
     const counts={};
     try{const cm=await api('community_members',`?community_id=in.(${communities.map(c=>c.id).join(',')})&status=eq.active&select=community_id`);(cm||[]).forEach(r=>counts[r.community_id]=(counts[r.community_id]||0)+1);}catch(e){}
     ST.communities=communities;
-    el.innerHTML=communities.map(c=>`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openCommunity('${c.id}')">
+    el.innerHTML=communities.map(c=>{
+      const sectorName=c.sector_tag_id?(SECTOR_TAGS_CACHE||[]).find(t=>t.id===c.sector_tag_id)?.name:null;
+      return`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openCommunity('${c.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div style="font-size:16px;color:var(--white);font-family:var(--serif);font-weight:700;line-height:1.3">${esc(c.name)}</div>
         ${c.kind==='institution'?'<div class="layer-badge" style="flex-shrink:0;margin-left:8px">Institution-verified</div>':''}
       </div>
-      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-top:6px">${counts[c.id]||0} members</div>
-    </div>`).join('');
+      <div style="font-size:12px;color:rgba(16,30,51,0.4);margin-top:6px">${counts[c.id]||0} members${sectorName?` · 🔒 ${esc(sectorName)} specialists only`:''}</div>
+    </div>`;}).join('');
   }catch(e){el.innerHTML='<div class="empty-state"><div class="empty-text">Unable to load communities</div></div>';}
 }
 
-function toggleNewCommunityForm(){const f=$('new-community-form');f.style.display=f.style.display==='none'?'':'none';}
+function toggleNewCommunityForm(){const f=$('new-community-form');const opening=f.style.display==='none';f.style.display=opening?'':'none';if(opening)initSectorPicker('newcomm');}
 function toggleNewInstitutionForm(){const f=$('new-institution-form');f.style.display=f.style.display==='none'?'':'none';}
 
 async function createCommunity(){
   const name=$('new-community-name').value.trim();if(!name||!ST.profile)return;
   try{
-    await api('communities','','POST',{name,kind:'topic',bucket_id:ST.profile.bucket_id||null,created_by:ST.profile.id});
+    await api('communities','','POST',{name,kind:'topic',bucket_id:ST.profile.bucket_id||null,sector_tag_id:getSelectedSectorTagId('newcomm')||null,created_by:ST.profile.id});
     $('new-community-name').value='';toggleNewCommunityForm();
     await loadForums();
     toast('Community created','success');
@@ -3821,8 +3892,26 @@ async function openCommunity(id){
   goto('community');
   await joinCommunityIfNeeded(c);
   ST.myCommunityRole=await getMyCommunityRole(id);
+  // Sector-locked hub + no membership row = joinCommunityIfNeeded's own
+  // self-join attempt was silently rejected by community_members_insert_own
+  // (20261128110000) as sector-incompatible, not a transient error. Hide the
+  // composer and explain why, rather than showing an empty post box the
+  // member can type into but can never actually submit (posts_insert_own
+  // requires that same active membership row).
+  const restricted=!!(c.sector_tag_id&&!ST.myCommunityRole&&ST.profile?.role!=='admin');
+  const notice=$('community-restricted-notice');
+  if(restricted){
+    await loadSectorTagsCache();
+    const sectorName=(SECTOR_TAGS_CACHE||[]).find(t=>t.id===c.sector_tag_id)?.name||'a specific sector';
+    notice.style.display='';
+    notice.textContent=`This hub is reserved for ${sectorName} specialists -- set your primary sector in Account settings if this matches your expertise.`;
+  }else{
+    notice.style.display='none';
+  }
+  $('community-compose-card').style.display=restricted?'none':'';
   if(c.requires_verification&&(ST.profile?.role==='admin'||ST.myCommunityRole==='moderator'))await loadPendingCommunityMembers(c.id);
   else $('community-pending-members').innerHTML='';
+  if(restricted){$('community-posts').innerHTML='';return;}
   await renderPostList('community-posts',`?community_id=eq.${id}&order=pinned.desc,created_at.desc&limit=50&select=id,body,title,created_at,author_id,link_title,link_url,is_sponsored,pinned,image_url,image_urls,edited_at`);
 }
 
