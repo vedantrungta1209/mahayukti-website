@@ -309,7 +309,7 @@ img.avatar{object-fit:cover}
     <div style="width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"></div>
     <div style="font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:400;line-height:1.8;text-align:center;max-width:300px">India's first private cross-domain professional network.</div>
     <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">
-      <button class="btn btn-gold btn-full" onclick="startManualApply()">Apply for Membership</button>
+      <button class="btn btn-gold btn-full" onclick="startManualApply()">Register Now</button>
       <button class="btn btn-outline btn-full" onclick="goto('login')">Member Login</button>
     </div>
     <div style="display:flex;gap:16px;align-items:center">
@@ -403,7 +403,7 @@ img.avatar{object-fit:cover}
     <div class="section-title">Network Structure</div>
     <div id="about-layers"></div>
     <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-gold btn-full" onclick="startManualApply()">Apply for Membership</button>
+      <button class="btn btn-gold btn-full" onclick="startManualApply()">Register Now</button>
       <button class="btn btn-outline btn-full" onclick="goto('concierge')">Submit a Client Brief</button>
     </div>
   </div></div>
@@ -507,7 +507,7 @@ img.avatar{object-fit:cover}
 <div class="screen" id="screen-apply">
   <div class="page-header gradient">
     <button class="back-btn" onclick="applyBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
-    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="eyebrow">Apply for Membership</div>
+    <a href="index.html" class="home-logo-link">Maha<span>Yukti</span></a><div class="eyebrow">Register Now</div>
     <div class="page-title" id="apply-title">Your details</div>
     <div class="apply-subtitle">Member tier is free and instant on a complete application — no review queue. Higher tiers are earned later and can't be applied for.</div>
     <div class="progress-bar"><div class="progress-fill" id="apply-prog" style="width:50%"></div></div>
@@ -1799,7 +1799,7 @@ function gotoTab(n){
   const el=$('nt-'+n);if(el)el.classList.add('active');
 }
 // Lets index.html deep-link straight into a screen, e.g. app.html#apply or
-// app.html#login, so the homepage's "Apply for Membership" / "Login" buttons land in the
+// app.html#login, so the homepage's "Register Now" / "Login" buttons land in the
 // right place instead of the splash screen. Only honoured for a logged-out visitor — once
 // handleSess() has placed a signed-in member on 'home'/'pending', a stale hash is ignored.
 function scrollToLegal(id){goto('legal');setTimeout(()=>{document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});},60);}
@@ -1861,7 +1861,7 @@ async function init(){
     // routeInitialHash() call right after jumped to whatever screen the
     // homepage's #login/#apply link actually asked for -- so a visitor who
     // had already chosen "Login" on the homepage landed on the splash
-    // screen's OWN "Member Login" / "Apply for Membership" choice for a
+    // screen's OWN "Member Login" / "Register Now" choice for a
     // beat before the real login form replaced it. Route the hash first;
     // only fall back to splash when there's nothing to route to.
     goto(routeInitialHash()||'splash');
