@@ -2201,6 +2201,13 @@ async function loadMemberHome(){
   loadBlogFeed('home-blog','home');
   loadSocialFeed();
   loadTrendingHashtags();
+  // loadNotifs() was only ever called by opening the Notifications screen itself, or by the
+  // realtime 'notifs' channel when a brand-new notification arrives while already online this
+  // session -- so the bell's unread badge showed nothing at login even when real unread
+  // notifications (a like, a reply, a connection request) were waiting from before this
+  // session. Calling it here establishes the real baseline the moment the member actually
+  // opens the app, same as every other member-home stat.
+  loadNotifs();
   setupRT();
   registerForPushNotifications();
   populatePostAsDropdown();
