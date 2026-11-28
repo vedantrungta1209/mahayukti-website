@@ -4390,7 +4390,9 @@ async function submitInsight(){
     await initSectorPicker('ins');
     toast('Posted','success');
     loadInsights(ST.insightsScope||'global');
-  }catch(e){toast('Could not post -- check it has no links and is under 500 characters','error');}
+  }catch(e){
+    toast(e.message==='insight_velocity_cap_reached'?"You've posted the max 2 insights for today -- true Flash Intelligence is rare, come back tomorrow.":'Could not post -- check it has no links and is under 500 characters','error');
+  }
 }
 
 async function loadExchange(){

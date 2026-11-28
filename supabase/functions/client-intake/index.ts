@@ -35,6 +35,43 @@ function json(body: unknown, status = 200) {
 
 const VALID_URGENCY = ["normal", "urgent", "critical"];
 
+// DPDP Act 2023 data-minimisation measure: title/description are free text a
+// client writes under urgency, and real submissions have genuinely included
+// pasted PAN numbers, phone numbers, and account numbers that have no
+// business sitting in an admin triage queue in plain text -- none of this
+// is needed to triage or route a brief to the right expert. Applied only to
+// the two free-text fields, never to contact_name/contact_email/
+// contact_phone/company, which are the structured, legitimately-collected
+// contact details the admin actually needs to act on the brief.
+//
+// Order matters: more specific patterns (PAN, Aadhaar, phone) run first and
+// replace their matches with a bracketed placeholder, so the generic
+// long-digit-run catch-all for bank/account numbers that runs last can never
+// re-match already-redacted text.
+const PII_PATTERNS: [RegExp, string][] = [
+  // PAN: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F).
+  [/\b[A-Za-z]{5}[0-9]{4}[A-Za-z]\b/g, "[PAN REDACTED]"],
+  // Aadhaar: exactly 12 digits, optionally grouped in 4s.
+  [/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, "[AADHAAR REDACTED]"],
+  // Indian mobile number, with or without a +91/91 prefix, and tolerating
+  // the common "98765 43210" / "98765-43210" split formatting.
+  [/\b(?:\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}\b/g, "[PHONE REDACTED]"],
+  // Common Indian bank names -- "specific bank names" can't be regex-matched
+  // generically, so this is a deliberately small, maintainable keyword list
+  // covering the major ones, not an exhaustive directory.
+  [/\b(?:State Bank of India|SBI|HDFC Bank|HDFC|ICICI Bank|ICICI|Axis Bank|Kotak Mahindra Bank|Kotak|Punjab National Bank|PNB|Bank of Baroda|Canara Bank|Union Bank of India|IDBI Bank|Yes Bank|IndusInd Bank|Federal Bank)\b/gi, "[BANK NAME REDACTED]"],
+  // Catch-all for a bare 9-18 digit run (bank account / other ID numbers) --
+  // runs last, after PAN/Aadhaar/phone have already been replaced with
+  // non-digit placeholders, so it only ever catches what those missed.
+  [/\b\d{9,18}\b/g, "[NUMBER REDACTED]"],
+];
+
+function scrubPII(text: string): string {
+  let out = text;
+  for (const [pattern, replacement] of PII_PATTERNS) out = out.replace(pattern, replacement);
+  return out;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
@@ -93,7 +130,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const { error } = await admin.from("client_briefs").insert({
-    title,
+    title: scrubPII(title),
     contact_name: contactName,
     contact_email: contactEmail,
     contact_phone: contactPhone || null,
@@ -101,7 +138,7 @@ Deno.serve(async (req: Request) => {
     domain_needed: domainNeeded,
     sector_tag_id: sectorTagId,
     urgency,
-    description,
+    description: scrubPII(description),
     confidentiality: confidentiality || null,
     status: "pending",
   });
