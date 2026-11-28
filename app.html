@@ -3683,17 +3683,50 @@ async function openGC(c){
   goto('group-chat');await loadGCMsgs();
 }
 
+const GC_PAGE_SIZE=40;
+ST.gcAuthorCache=ST.gcAuthorCache||{};
+function renderGCBubbles(d){
+  return d.map(m=>{const me=m.from_id===ST.profile?.id;const n=esc(dname(ST.gcAuthorCache[m.from_id]||{username:'Member'}));const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div></div>`;}).join('');
+}
+function renderGCThread(){
+  const el=$('gc-msgs');
+  if(!ST.gcAll.length){el.innerHTML='<div class="empty-state" style="padding:32px 20px"><div class="empty-text">Be the first to say something.</div></div>';return;}
+  const loadMoreBtn=ST.gcExhausted?'':`<button id="gc-load-earlier" onclick="loadEarlierGC()" style="display:block;width:100%;padding:8px;margin-bottom:8px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--muted);font-size:12px;font-family:var(--sans)">Load earlier messages</button>`;
+  el.innerHTML=loadMoreBtn+renderGCBubbles(ST.gcAll);
+}
+async function cacheGCAuthors(d){
+  const aids=[...new Set(d.map(m=>m.from_id))].filter(id=>!ST.gcAuthorCache[id]);
+  if(!aids.length)return;
+  const authors=await api('member_directory',`?id=in.(${aids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
+  (authors||[]).forEach(a=>ST.gcAuthorCache[a.id]=a);
+}
 async function loadGCMsgs(){
   if(!ST.currentGC)return;
   try{
-    const d=await api('group_messages',`?chat_id=eq.${ST.currentGC.id}&order=created_at.asc&select=id,content,created_at,from_id&limit=100`);
-    if(!d||!d.length){$('gc-msgs').innerHTML='<div class="empty-state" style="padding:32px 20px"><div class="empty-text">Be the first to say something.</div></div>';return;}
-    const aids=[...new Set(d.map(m=>m.from_id))];
-    const authors=await api('member_directory',`?id=in.(${aids.join(',')})&select=id,username,real_name,show_real_name,real_name_approved`);
-    const am={};(authors||[]).forEach(a=>am[a.id]=a);
-    $('gc-msgs').innerHTML=d.map(m=>{const me=m.from_id===ST.profile?.id;const n=esc(dname(am[m.from_id]||{username:'Member'}));const t=new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});return`<div>${!me?`<div class="bubble-author">${n}</div>`:''}<div class="bubble ${me?'me':'them'}">${esc(m.content)}<div class="bubble-time">${t}</div></div></div>`;}).join('');
+    const d=await api('group_messages',`?chat_id=eq.${ST.currentGC.id}&order=created_at.desc&select=id,content,created_at,from_id&limit=${GC_PAGE_SIZE}`)||[];
+    d.reverse();
+    await cacheGCAuthors(d);
+    ST.gcAll=d;
+    ST.gcOldestCreatedAt=d.length?d[0].created_at:null;
+    ST.gcExhausted=d.length<GC_PAGE_SIZE;
+    renderGCThread();
     const sc=$('gc-scroll');setTimeout(()=>sc.scrollTop=sc.scrollHeight,50);
   }catch(e){}
+}
+async function loadEarlierGC(){
+  const btn=$('gc-load-earlier');if(btn){btn.textContent='Loading…';btn.disabled=true;}
+  if(!ST.gcOldestCreatedAt||!ST.currentGC)return;
+  try{
+    const more=await api('group_messages',`?chat_id=eq.${ST.currentGC.id}&created_at=lt.${encodeURIComponent(ST.gcOldestCreatedAt)}&order=created_at.desc&select=id,content,created_at,from_id&limit=${GC_PAGE_SIZE}`)||[];
+    more.reverse();
+    await cacheGCAuthors(more);
+    ST.gcExhausted=more.length<GC_PAGE_SIZE;
+    if(more.length)ST.gcOldestCreatedAt=more[0].created_at;
+    const sc=$('gc-scroll');const prevHeight=sc.scrollHeight;
+    ST.gcAll=[...more,...ST.gcAll];
+    renderGCThread();
+    sc.scrollTop=sc.scrollHeight-prevHeight;
+  }catch(e){if(btn){btn.textContent='Load earlier messages';btn.disabled=false;}}
 }
 
 async function sendGC(){
