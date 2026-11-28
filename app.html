@@ -5266,6 +5266,23 @@ async function loadAdminHome(){
     const n=(flagged||[]).length;
     const b=$('flagged-badge');if(b)b.textContent=n>0?n+' pending':'';
   }catch(e){}
+  // ads-badge and pkg-badge only ever got set inside loadAdminAds()/loadAdminPackages()
+  // themselves -- functions that only run once the admin has already opened those specific
+  // tabs. Until then both cards on this very screen silently showed nothing at all (not even
+  // a dash, unlike the other four badges above), so a pending ad or seller-package request
+  // was invisible on the admin's actual landing screen. Lightweight counts only here --
+  // loadAdminAds()/loadAdminPackages() themselves also render into #admin-ads-list/
+  // #admin-packages-list, which don't exist on this screen and would throw.
+  try{
+    const ads=await api('ad_campaigns','?status=eq.pending_review&select=id');
+    const n=(ads||[]).length;
+    const b=$('ads-badge');if(b)b.textContent=n>0?n+' pending':'';
+  }catch(e){}
+  try{
+    const pkgs=await api('seller_package_subscriptions','?status=eq.pending_payment&select=id');
+    const n=(pkgs||[]).length;
+    const b=$('pkg-badge');if(b)b.textContent=n>0?n+' pending':'';
+  }catch(e){}
 }
 
 // Admin review queue -- see 20261128103000_manual_moderation_review.sql.
