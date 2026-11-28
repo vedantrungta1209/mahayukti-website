@@ -1890,15 +1890,18 @@ async function init(){
     // in a browser, never by reading the code.
     if(evt==='INITIAL_SESSION')return;
     if(evt==='PASSWORD_RECOVERY'){goto('reset-password');return;}
-    // TOKEN_REFRESHED fires silently in the background every time Supabase
-    // renews the access token (periodically, and on tab focus) -- handleSess()
-    // unconditionally calls loadMemberHome(), which navigates to Home. Taken
-    // together, that was yanking anyone back to Home mid-browse (e.g. while
-    // viewing another member's profile) a few seconds after opening any
-    // screen, with no action of their own. Only run the full
-    // handleSess()/loadMemberHome() path for an actual sign-in; a background
-    // token refresh while already in the app just needs the new token stored.
-    if(evt==='TOKEN_REFRESHED'&&document.body.classList.contains('in-app')){if(s){ST.user=s.user;ST.user.access_token=s.access_token;}return;}
+    // Originally this special-cased TOKEN_REFRESHED only (it fires silently in the
+    // background whenever Supabase renews the access token, and handleSess() unconditionally
+    // calling loadMemberHome() -> goto('home') was yanking anyone back to Home mid-browse with
+    // no action of their own). That fix left a gap: user-reported, confirmed to still happen
+    // at random, click-independent times afterward -- consistent with ANY other quiet event
+    // supabase-js can emit for an already-active session (a second SIGNED_IN from cross-tab
+    // localStorage sync when another tab/window shares the same login, a reconnect after a
+    // network blip, a future event type), each hitting the exact same unconditional-redirect
+    // bug under a different event name. Identity decides this now, not event name: if we're
+    // already in the app and this is still the same signed-in member, it's never a reason to
+    // force a full re-navigation -- just keep the token current and leave the screen alone.
+    if(s&&document.body.classList.contains('in-app')&&ST.user?.id===s.user.id){ST.user=s.user;ST.user.access_token=s.access_token;return;}
     if(s)await handleSess(s);else{ST.user=null;ST.profile=null;document.body.classList.remove('in-app');goto('splash');}
   });
   checkLinkedInReturn();
